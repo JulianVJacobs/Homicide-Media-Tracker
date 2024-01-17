@@ -48,7 +48,7 @@ const ListHomicides = () => {
             <tr key={homicide.homicide_id}>
               <td>{homicide.victim_name}</td>
               <td>{homicide.newspaper_article}</td>
-              <td>{homicide.date}</td>
+              <td><td>{new Date(homicide.date).toLocaleDateString()}</td></td> {/*needed to prevent time zone messes!*/}
               <td>{homicide.location}</td>
               <td>
                 <EditHomicides todo={homicide} />

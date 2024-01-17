@@ -5,12 +5,19 @@ const EditHomicides = ({ todo }) => {
   const [newspaperArticle, setNewspaperArticle] = useState(todo.newspaper_article);
   const [date, setDate] = useState(todo.date);
   const [location, setLocation] = useState(todo.location);
-
+  const [newsReportId, setNewsReportId] = useState(todo.news_report_id);
+  const [newsReportUrl, setNewsReportUrl] = useState(todo.news_report_url);
+  const [newsReportHeadline, setNewsReportHeadline] = useState(todo.news_report_headline);
+  const [author, setAuthor] = useState(todo.author);
   const updateDescription = async (e) => {
     e.preventDefault();
 
     try {
       const body = {
+        news_report_id: newsReportId,
+        news_report_url: newsReportUrl,
+        news_report_headline: newsReportHeadline,
+        author:author,
         victim_name: victimName,
         newspaper_article: newspaperArticle,
         date: date,
@@ -55,6 +62,32 @@ const EditHomicides = ({ todo }) => {
             </div>
 
             <div className="modal-body">
+            <input
+                type="text"
+                className="form-control"
+                value={newsReportId}
+                onChange={(e) => setNewsReportId(e.target.value)}
+              />
+              
+              <input
+                type="text"
+                className="form-control"
+                value={newsReportUrl}
+                onChange={(e) => setNewsReportUrl(e.target.value)}
+              />
+
+<input
+                type="text"
+                className="form-control"
+                value={newsReportHeadline}
+                onChange={(e) => setNewsReportHeadline(e.target.value)}
+              />
+              <input
+                type="text"
+                className="form-control"
+                value={author}
+                onChange={(e) => setAuthor(e.target.value)}
+              />
               <input
                 type="text"
                 className="form-control"
@@ -79,6 +112,7 @@ const EditHomicides = ({ todo }) => {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
               />
+              
             </div>
 
             <div className="modal-footer">

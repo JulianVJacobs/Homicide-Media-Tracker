@@ -35,10 +35,15 @@ const ListHomicides = () => {
       <table className="table mt-5 text-center">
         <thead>
           <tr>
+          <th>News Report ID</th>
+          <th>News Report URL</th>
+          <th>News Report Headline</th>
+          <th>Author</th>
             <th>Victim Name</th>
             <th>Newspaper Article</th>
             <th>Date</th>
             <th>Location</th>
+            
             <th>Edit</th>
             <th>Delete</th>
           </tr>
@@ -46,10 +51,15 @@ const ListHomicides = () => {
         <tbody>
           {homicides.map((homicide) => (
             <tr key={homicide.homicide_id}>
+              <td>{homicide.news_report_id}</td>
+              <td>{homicide.news_report_url}</td>
+              <td>{homicide.news_report_headline}</td>
+              <td>{homicide.author}</td>
               <td>{homicide.victim_name}</td>
               <td>{homicide.newspaper_article}</td>
-              <td><td>{new Date(homicide.date).toLocaleDateString()}</td></td> {/*needed to prevent time zone messes!*/}
+              <td><td>{new Date(homicide.date).toLocaleDateString('en-gb')}</td></td> {/*needed to prevent time zone messes!*/}
               <td>{homicide.location}</td>
+              
               <td>
                 <EditHomicides todo={homicide} />
               </td>

@@ -35,7 +35,7 @@ const InputHomicide = () => {
     e.preventDefault();
 
     try {
-      const body = { victim_name: victimName, newspaper_article: newsSource, date, location, news_report_id:newsReportId, news_report_url:newsReportUrl, news_report_headline:newsReportHeadline, author }; // Updated object
+      const body = { victim_name: victimName, newspaper_article: newsSource, date, location, news_report_id:newsReportId, news_report_url:newsReportUrl, news_report_headline:newsReportHeadline, author, wire_service: wireService, language:language }; // Updated object
       const response = await fetch("http://localhost:5000/homicides", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,6 +88,32 @@ const InputHomicide = () => {
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
         />
+
+<label htmlFor="wireService">Wire Service:</label>
+        <select
+          id="wireService"
+          className="form-control"
+          value={wireService}
+          onChange={(e) => setWireService(e.target.value)}
+        >
+          <option value="">Select Wire Service</option>
+          <option value="AP">AP</option>
+          <option value="Reuters">Reuters</option>
+          <option value="NUll">null</option>
+                  </select>
+
+                  <label htmlFor="language">Language :</label>
+        <select
+          id="language"
+          className="form-control"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+        >
+          <option value="">Select language of publication</option>
+          <option value="English">English</option>
+          <option value="Afrikaans">Afrikaans</option>
+          <option value="Zulu">Zulu</option>
+        </select>
 
         <label htmlFor="victimName">Victim Name:</label>
         <input

@@ -39,6 +39,8 @@ const ListHomicides = () => {
           <th>News Report URL</th>
           <th>News Report Headline</th>
           <th>Author</th>
+          <th>Wire Service</th>
+          <th>Language</th>
             <th>Victim Name</th>
             <th>Newspaper Article</th>
             <th>Date</th>
@@ -55,6 +57,8 @@ const ListHomicides = () => {
               <td>{homicide.news_report_url}</td>
               <td>{homicide.news_report_headline}</td>
               <td>{homicide.author}</td>
+              <td>{homicide.wire_service}</td>
+              <td>{homicide.language}</td>
               <td>{homicide.victim_name}</td>
               <td>{homicide.newspaper_article}</td>
               <td><td>{new Date(homicide.date).toLocaleDateString('en-gb')}</td></td> {/*needed to prevent time zone messes!*/}

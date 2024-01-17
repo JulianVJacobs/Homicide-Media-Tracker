@@ -9,6 +9,8 @@ const EditHomicides = ({ todo }) => {
   const [newsReportUrl, setNewsReportUrl] = useState(todo.news_report_url);
   const [newsReportHeadline, setNewsReportHeadline] = useState(todo.news_report_headline);
   const [author, setAuthor] = useState(todo.author);
+  const [wireService,setWireService] = useState(todo.wire_service);
+  const [language,setLanguage] = useState(todo.language);
   const updateDescription = async (e) => {
     e.preventDefault();
 
@@ -18,6 +20,8 @@ const EditHomicides = ({ todo }) => {
         news_report_url: newsReportUrl,
         news_report_headline: newsReportHeadline,
         author:author,
+        wire_service: wireService,
+        language:language,
         victim_name: victimName,
         newspaper_article: newspaperArticle,
         date: date,
@@ -87,6 +91,18 @@ const EditHomicides = ({ todo }) => {
                 className="form-control"
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
+              />
+              <input
+                type="text"
+                className="form-control"
+                value={wireService}
+                onChange={(e) => setWireService(e.target.value)}
+              />
+              <input
+                type="text"
+                className="form-control"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
               />
               <input
                 type="text"

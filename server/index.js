@@ -12,10 +12,10 @@ app.use(express.json()); //req.body
 // post request for adding a homicide entry
 app.post("/homicides", async (req, res) => {
     try {
-      const { victim_name, newspaper_article, date, location, news_report_id, news_report_url, news_report_headline, author } = req.body;
+      const { victim_name, newspaper_article, date, location, news_report_id, news_report_url, news_report_headline, author, wire_service, language } = req.body;
       const newHomicide = await pool.query(
-        "INSERT INTO homicide (victim_name, newspaper_article, date, location, news_report_id, news_report_url, news_report_headline, author) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
-        [victim_name, newspaper_article, date, location, news_report_id, news_report_url, news_report_headline, author ]
+        "INSERT INTO homicide (victim_name, newspaper_article, date, location, news_report_id, news_report_url, news_report_headline, author, wire_service, language) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+        [victim_name, newspaper_article, date, location, news_report_id, news_report_url, news_report_headline, author, wire_service, language ]
       );
   
       res.json(newHomicide.rows[0]);
@@ -38,10 +38,10 @@ app.post("/homicides", async (req, res) => {
   app.put("/homicides/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const { victim_name, newspaper_article, date, location, news_report_id, news_report_url, news_report_headline, author } = req.body;
+      const { victim_name, newspaper_article, date, location, news_report_id, news_report_url, news_report_headline, author, wire_service, language } = req.body;
       const updateHomicide = await pool.query(
-        "UPDATE homicide SET victim_name = $1, newspaper_article = $2, date = $3, location = $4 , news_report_id = $6, news_report_url =$7, news_report_headline =$8, author=$9 WHERE homicide_id = $5",
-        [victim_name, newspaper_article, date, location, id, news_report_id, news_report_url, news_report_headline, author]
+        "UPDATE homicide SET victim_name = $1, newspaper_article = $2, date = $3, location = $4 , news_report_id = $6, news_report_url =$7, news_report_headline =$8, author=$9, wire_service=$10 , language=$11 WHERE homicide_id = $5",
+        [victim_name, newspaper_article, date, location, id, news_report_id, news_report_url, news_report_headline, author, wire_service, language]
       );
       res.json("Homicide entry was updated!");
     } catch (err) {

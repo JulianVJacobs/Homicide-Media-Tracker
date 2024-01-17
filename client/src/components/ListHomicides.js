@@ -41,9 +41,15 @@ const ListHomicides = () => {
           <th>Author</th>
           <th>Wire Service</th>
           <th>Language</th>
+          <th>Source Type</th>
+          <th>Newspaper Source</th>
+            <th>Date of Publication</th>
             <th>Victim Name</th>
-            <th>Newspaper Article</th>
-            <th>Date</th>
+            <th>Date of Death</th>
+            <th>Province</th>
+            <th>Town</th>
+            <th>Location Type</th>
+            
             <th>Location</th>
             
             <th>Edit</th>
@@ -59,9 +65,14 @@ const ListHomicides = () => {
               <td>{homicide.author}</td>
               <td>{homicide.wire_service}</td>
               <td>{homicide.language}</td>
-              <td>{homicide.victim_name}</td>
+              <td>{homicide.source_type}</td>
               <td>{homicide.newspaper_article}</td>
               <td><td>{new Date(homicide.date).toLocaleDateString('en-gb')}</td></td> {/*needed to prevent time zone messes!*/}
+              <td>{homicide.victim_name}</td>
+              <td>{new Date(homicide.date_of_death).toLocaleDateString('en-gb')}</td>
+              <td>{homicide.province}</td>
+              <td>{homicide.town}</td>
+              <td>{homicide.location_type}</td>
               <td>{homicide.location}</td>
               
               <td>

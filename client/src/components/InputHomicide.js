@@ -59,7 +59,10 @@ const InputHomicide = () => {
     { value: "Matricide", label: "Matricide" },
     { value: "Patricide", label: "Patricide" },
     { value: "Natural causes", label: "Natural causes" },
-    { value: "Self-inflicted (including suicide)", label: "Self-inflicted (including suicide)" },
+    {
+      value: "Self-inflicted (including suicide)",
+      label: "Self-inflicted (including suicide)",
+    },
     { value: "Killing in police custody", label: "Killing in police custody" },
     { value: "Missing presumed dead", label: "Missing presumed dead" },
     { value: "Hired killers", label: "Hired killers" },
@@ -79,8 +82,10 @@ const InputHomicide = () => {
     e.preventDefault();
 
     try {
-      const typeOfMurderString = typeOfMurder.map((option) => option.value).join(',');
-     
+      const typeOfMurderString = typeOfMurder
+        .map((option) => option.value)
+        .join(",");
+
       const body = {
         victim_name: victimName,
         newspaper_article: newsSource,
@@ -112,7 +117,7 @@ const InputHomicide = () => {
         sentence: sentence,
         incident_notes: incidentNotes,
         age_range_of_victim: ageRangeOfVictim,
-        type_of_murder:typeOfMurderString
+        type_of_murder: typeOfMurderString,
       }; // Updated object
       const response = await fetch("http://localhost:5000/homicides", {
         method: "POST",
@@ -129,7 +134,8 @@ const InputHomicide = () => {
   return (
     <Fragment>
       <h1 className="text-center mt-5">Homicide Tracker</h1>
-      <form className="d-flex flex-column mt-5" onSubmit={onSubmitForm}>
+      <form className="d-flex flex-column mt-5 mx-auto  " onSubmit={onSubmitForm}>
+       <div className="col-md-5">
         <label htmlFor="newsReportId">News Report ID:</label>
         <input
           type="text"
@@ -213,10 +219,22 @@ const InputHomicide = () => {
           onChange={(e) => setNewsSource(e.target.value)}
         >
           <option value="">Select News Report Platform</option>
-          <option value="CNN">CNN</option>
-          <option value="The New York Times">The New York Times</option>
-          <option value="BBC">BBC</option>
           <option value="News24">News24</option>
+          <option value="Times">Times</option>
+          <option value="SS">SS</option>
+          <option value="Weekend Argus">Weekend Argus</option>
+          <option value="CP">CP</option>
+          <option value="TNA">TNA</option>
+          <option value="SABC">SABC</option>
+          <option value="PN">PN</option>
+          <option value="NETWERK24">NETWERK24</option>
+          <option value="BURGER">BURGER</option>
+          <option value="ST">ST</option>
+          <option value="Daily News">Daily News</option>
+          <option value="Post">Post</option>
+          <option value="NW">NW</option>
+          <option value="ENCA">ENCA</option>
+          <option value="Volksblad">Volksblad</option>
         </select>
 
         <label htmlFor="date">Date of publication:</label>
@@ -683,7 +701,9 @@ const InputHomicide = () => {
           onChange={(e) => setIncidentNotes(e.target.value)}
         />
 
-        <label htmlFor="typeOfMurder">Type of Murder (Select all that apply):</label>
+        <label htmlFor="typeOfMurder">
+          Type of Murder (Select all that apply):
+        </label>
         <Select
           id="typeOfMurder"
           isMulti
@@ -693,8 +713,9 @@ const InputHomicide = () => {
           onChange={(selectedOptions) => setTypeOfMurder(selectedOptions)}
         />
 
-
         <button className="btn btn-success mt-3">Add</button>
+        </div>
+        
       </form>
     </Fragment>
   );

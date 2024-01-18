@@ -225,7 +225,7 @@ const EditHomicides = ({ todo }) => {
           <option value="Website">Website</option>
           <option value="Print Media">Print Media</option>
         </select>
-        <label htmlFor="newspaperArticle">News Report Platform:</label>
+       <label htmlFor="newspaperArticle">News Report Platform:</label>
         <select
           id="newspaperArticle"
           className="form-control"
@@ -233,11 +233,24 @@ const EditHomicides = ({ todo }) => {
           onChange={(e) => setNewspaperArticle(e.target.value)}
         >
           <option value="">Select News Report Platform</option>
-          <option value="CNN">CNN</option>
-          <option value="The New York Times">The New York Times</option>
-          <option value="BBC">BBC</option>
           <option value="News24">News24</option>
+          <option value="Times">Times</option>
+          <option value="SS">SS</option>
+          <option value="Weekend Argus">Weekend Argus</option>
+          <option value="CP">CP</option>
+          <option value="TNA">TNA</option>
+          <option value="SABC">SABC</option>
+          <option value="PN">PN</option>
+          <option value="NETWERK24">NETWERK24</option>
+          <option value="BURGER">BURGER</option>
+          <option value="ST">ST</option>
+          <option value="Daily News">Daily News</option>
+          <option value="Post">Post</option>
+          <option value="NW">NW</option>
+          <option value="ENCA">ENCA</option>
+          <option value="Volksblad">Volksblad</option>
         </select>
+
 
         <label htmlFor="date">Date of publication:</label>
         <input

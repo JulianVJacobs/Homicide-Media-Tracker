@@ -1,21 +1,12 @@
-import React, {Fragment} from 'react';
+import React, { Fragment } from 'react';
 import './App.css';
-
-//components
-
-
-import ListHomicides from './components/ListHomicides';
-import InputHomicide from './components/InputHomicide';
-
+import 'bootstrap/dist/css/bootstrap.min.css';
+import NavBarComp from './components/NavBarComp';
 
 function App() {
   return (
     <Fragment>
-      <div className='container'>
-        <InputHomicide/>
-        <ListHomicides/>
-        </div>
-
+      <NavBarComp />
     </Fragment>
   );
 }

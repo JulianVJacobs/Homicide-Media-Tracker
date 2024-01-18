@@ -1,4 +1,6 @@
 import React, { Fragment, useState } from "react";
+import Select from "react-select";
+import "./InputHomicide.css"; // Import a CSS file for styling
 
 const InputHomicide = () => {
   const [victimName, setVictimName] = useState("");
@@ -32,10 +34,53 @@ const InputHomicide = () => {
   const [sentence, setSentence] = useState("");
   const [incidentNotes, setIncidentNotes] = useState("");
   const [ageRangeOfVictim, setAgeRangeOfVictim] = useState("");
+  const [typeOfMurder, setTypeOfMurder] = useState([]);
+
+  const murderOptions = [
+    { value: "Adult male homicide", label: "Adult male homicide" },
+    { value: "Adult female homicide", label: "Adult female homicide" },
+    { value: "Eldercide", label: "Eldercide" },
+    { value: "Child murder", label: "Child murder" },
+    { value: "Multiple killing", label: "Multiple killing" },
+    { value: "Political killing", label: "Political killing" },
+    { value: "Gang-related killing", label: "Gang-related killing" },
+    { value: "Family killing", label: "Family killing" },
+    { value: "Witch killing", label: "Witch killing" },
+    { value: "LGBTQ killing", label: "LGBTQ killing" },
+    { value: "Sex worker killing", label: "Sex worker killing" },
+    { value: "Farm killing", label: "Farm killing" },
+    { value: "Serial killing", label: "Serial killing" },
+    { value: "Spree killing", label: "Spree killing" },
+    { value: "Intimate partner killing", label: "Intimate partner killing" },
+    { value: "Rural killing", label: "Rural killing" },
+    { value: "Ritual killing", label: "Ritual killing" },
+    { value: "Assassination", label: "Assassination" },
+    { value: "Culpable homicide", label: "Culpable homicide" },
+    { value: "Matricide", label: "Matricide" },
+    { value: "Patricide", label: "Patricide" },
+    { value: "Natural causes", label: "Natural causes" },
+    { value: "Self-inflicted (including suicide)", label: "Self-inflicted (including suicide)" },
+    { value: "Killing in police custody", label: "Killing in police custody" },
+    { value: "Missing presumed dead", label: "Missing presumed dead" },
+    { value: "Hired killers", label: "Hired killers" },
+    { value: "Concealment of birth", label: "Concealment of birth" },
+    { value: "Terrorism or war", label: "Terrorism or war" },
+    { value: "Other (add category)", label: "Other (add category)" },
+  ];
+
+  const customStyles = {
+    control: (provided) => ({
+      ...provided,
+      border: "1px solid #ccc",
+    }),
+  };
+
   const onSubmitForm = async (e) => {
     e.preventDefault();
 
     try {
+      const typeOfMurderString = typeOfMurder.map((option) => option.value).join(',');
+     
       const body = {
         victim_name: victimName,
         newspaper_article: newsSource,
@@ -67,6 +112,7 @@ const InputHomicide = () => {
         sentence: sentence,
         incident_notes: incidentNotes,
         age_range_of_victim: ageRangeOfVictim,
+        type_of_murder:typeOfMurderString
       }; // Updated object
       const response = await fetch("http://localhost:5000/homicides", {
         method: "POST",
@@ -191,7 +237,8 @@ const InputHomicide = () => {
         />
 
         <label htmlFor="dateOfDeath">
-          Date of Death -input 01/01/1000 for default:
+          {" "}
+          Date of Death -input 01/01/1000 for default:{" "}
         </label>
         <input
           type="date"
@@ -480,20 +527,24 @@ const InputHomicide = () => {
         </select>
 
         <label htmlFor="modeOfDeathGeneral">Mode of Death -General:</label>
-      <select
-        id="modeOfDeathGeneral"
-        className="form-control"
-        value={modeOfDeathGeneral}
-        onChange={(e) => setModeOfDeathGeneral(e.target.value)}
-      >
-        <option value="">Select Mode of Death (General)</option>
-        <option value="Sharp force trauma">Sharp force trauma</option>
-        <option value="Blunt force trauma">Blunt force trauma</option>
-        <option value="Sharp-blunt/Blunt-sharp force trauma">Sharp-blunt/Blunt-sharp force trauma</option>
-        <option value="Strangulation or asphyxiation">Strangulation or asphyxiation</option>
-        <option value="Poison or burning">Poison or burning</option>
-        <option value="Firearm injury">Firearm injury</option>
-      </select>
+        <select
+          id="modeOfDeathGeneral"
+          className="form-control"
+          value={modeOfDeathGeneral}
+          onChange={(e) => setModeOfDeathGeneral(e.target.value)}
+        >
+          <option value="">Select Mode of Death (General)</option>
+          <option value="Sharp force trauma">Sharp force trauma</option>
+          <option value="Blunt force trauma">Blunt force trauma</option>
+          <option value="Sharp-blunt/Blunt-sharp force trauma">
+            Sharp-blunt/Blunt-sharp force trauma
+          </option>
+          <option value="Strangulation or asphyxiation">
+            Strangulation or asphyxiation
+          </option>
+          <option value="Poison or burning">Poison or burning</option>
+          <option value="Firearm injury">Firearm injury</option>
+        </select>
 
         <label htmlFor="nameOfPerpetrator">Name of Perpetrator:</label>
         <input
@@ -631,6 +682,18 @@ const InputHomicide = () => {
           value={incidentNotes}
           onChange={(e) => setIncidentNotes(e.target.value)}
         />
+
+        <label htmlFor="typeOfMurder">Type of Murder (Select all that apply):</label>
+        <Select
+          id="typeOfMurder"
+          isMulti
+          options={murderOptions}
+          styles={customStyles}
+          value={typeOfMurder}
+          onChange={(selectedOptions) => setTypeOfMurder(selectedOptions)}
+        />
+
+
         <button className="btn btn-success mt-3">Add</button>
       </form>
     </Fragment>

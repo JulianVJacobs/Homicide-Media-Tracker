@@ -65,6 +65,7 @@ const ListHomicides = () => {
             <th>conviction</th>
             <th>Sentence</th>
             <th>Incident Notes</th>
+            <th>Type of Murder</th>
             <th>Edit</th>
             <th>Delete</th>
           </tr>
@@ -102,6 +103,7 @@ const ListHomicides = () => {
               <td>{homicide.conviction}</td>
               <td>{homicide.sentence}</td>
               <td>{homicide.incident_notes}</td>
+              <td>{homicide.type_of_murder}</td>
               <td>
                 <EditHomicides todo={homicide} />
               </td>

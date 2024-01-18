@@ -1,0 +1,21 @@
+.dropdown-container {
+    position: relative;
+  }
+  
+  .dropdown {
+    display: inline-block;
+  }
+  
+  .dropdown-toggle {
+    cursor: pointer;
+    border: 1px solid #ccc;
+    padding: 5px;
+    background-color: #fff;
+  }
+  
+  .options-container {
+    border: 1px solid #ccc;
+    padding: 5px;
+    background-color: #fff;
+  }
+  

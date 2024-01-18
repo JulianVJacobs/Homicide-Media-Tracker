@@ -1,4 +1,6 @@
 import React, { Fragment, useState } from "react";
+import "./InputHomicide.css";
+import Select from "react-select";
 
 const EditHomicides = ({ todo }) => {
   const [victimName, setVictimName] = useState(todo.victim_name);
@@ -31,10 +33,52 @@ const EditHomicides = ({ todo }) => {
   const [sentence, setSentence] = useState(todo.sentence);
   const [incidentNotes, setIncidentNotes] = useState(todo.incident_notes);
   const [ageRangeOfVictim, setAgeRangeOfVictim] = useState(todo.age_range_of_victim);
+  const [typeOfMurder, setTypeOfMurder] = useState(todo.type_of_murder);
+
+  const murderOptions = [
+    { value: "Adult male homicide", label: "Adult male homicide" },
+    { value: "Adult female homicide", label: "Adult female homicide" },
+    { value: "Eldercide", label: "Eldercide" },
+    { value: "Child murder", label: "Child murder" },
+    { value: "Multiple killing", label: "Multiple killing" },
+    { value: "Political killing", label: "Political killing" },
+    { value: "Gang-related killing", label: "Gang-related killing" },
+    { value: "Family killing", label: "Family killing" },
+    { value: "Witch killing", label: "Witch killing" },
+    { value: "LGBTQ killing", label: "LGBTQ killing" },
+    { value: "Sex worker killing", label: "Sex worker killing" },
+    { value: "Farm killing", label: "Farm killing" },
+    { value: "Serial killing", label: "Serial killing" },
+    { value: "Spree killing", label: "Spree killing" },
+    { value: "Intimate partner killing", label: "Intimate partner killing" },
+    { value: "Rural killing", label: "Rural killing" },
+    { value: "Ritual killing", label: "Ritual killing" },
+    { value: "Assassination", label: "Assassination" },
+    { value: "Culpable homicide", label: "Culpable homicide" },
+    { value: "Matricide", label: "Matricide" },
+    { value: "Patricide", label: "Patricide" },
+    { value: "Natural causes", label: "Natural causes" },
+    { value: "Self-inflicted (including suicide)", label: "Self-inflicted (including suicide)" },
+    { value: "Killing in police custody", label: "Killing in police custody" },
+    { value: "Missing presumed dead", label: "Missing presumed dead" },
+    { value: "Hired killers", label: "Hired killers" },
+    { value: "Concealment of birth", label: "Concealment of birth" },
+    { value: "Terrorism or war", label: "Terrorism or war" },
+    { value: "Other (add category)", label: "Other (add category)" },
+  ];
+
+  const customStyles = {
+    control: (provided) => ({
+      ...provided,
+      border: "1px solid #ccc",
+    }),
+  };
+
   const updateDescription = async (e) => {
     e.preventDefault();
 
     try {
+      const typeOfMurderString = typeOfMurder.map((option) => option.value).join(',');
       const body = {
         news_report_id: newsReportId,
         news_report_url: newsReportUrl,
@@ -65,7 +109,8 @@ const EditHomicides = ({ todo }) => {
         conviction:conviction,
         sentence:sentence,
         incident_notes:incidentNotes,
-        age_range_of_victim: ageRangeOfVictim
+        age_range_of_victim: ageRangeOfVictim,
+        type_of_murder: typeOfMurderString
       };
       const response = await fetch(`http://localhost:5000/homicides/${todo.homicide_id}`, {
         method: "PUT",
@@ -594,6 +639,48 @@ const EditHomicides = ({ todo }) => {
   <option value="Unknown">Unknown</option>
   <option value="null">Null</option>
 </select>
+
+<label htmlFor="conviction">Conviction:</label>
+        <select
+          id="conviction"
+          className="form-control"
+          value={conviction}
+          onChange={(e) => setConviction(e.target.value)}
+        >
+          <option value="">Select Option</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Unknown">Unknown</option>
+          <option value="null">Null</option>
+        </select>
+
+        <label htmlFor="sentence">Sentence:</label>
+        <input
+          type="text"
+          id="sentence"
+          className="form-control"
+          value={sentence}
+          onChange={(e) => setSentence(e.target.value)}
+        />
+
+        <label htmlFor="incidentNotes">Incident Notes:</label>
+        <textarea
+          id="incidentNotes"
+          className="form-control"
+          value={incidentNotes}
+          onChange={(e) => setIncidentNotes(e.target.value)}
+        />
+
+
+<label htmlFor="typeOfMurder">Type of Murder (Select all that apply):</label>
+        <Select
+          id="typeOfMurder"
+          isMulti
+          options={murderOptions}
+          styles={customStyles}
+          value={typeOfMurder}
+          onChange={(selectedOptions) => setTypeOfMurder(selectedOptions)}
+        />
             </div>
 
             <div className="modal-footer">

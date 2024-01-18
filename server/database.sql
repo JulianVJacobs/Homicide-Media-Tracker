@@ -5,3 +5,12 @@ CREATE TABLE homicide (
   date DATE,
   location VARCHAR(255)
 );
+
+
+SELECT incident_notes, data_type
+FROM information_schema.columns
+WHERE table_name = 'homicide' AND column_name = 'incident_notes';
+
+
+ALTER TABLE homicide
+ALTER COLUMN incident_notes TYPE VARCHAR(255);

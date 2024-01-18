@@ -56,6 +56,7 @@ const ListHomicides = () => {
             <th>Age of Victim</th>
             <th>Age Range of Victim</th>
             <th>Mode of Death SPECIFIC</th>
+            <th>Mode of Death GENERAL</th>
             <th>Name of Perpetrator</th>
             <th>Relationship to victim</th>
             <th>Suspect Identified</th>
@@ -92,6 +93,7 @@ const ListHomicides = () => {
               <td>{homicide.age_of_victim}</td>
               <td>{homicide.age_range_of_victim}</td>
               <td>{homicide.mode_of_death_specific}</td>
+              <td>{homicide.mode_of_death_general}</td>
               <td>{homicide.name_of_perpetrator}</td>
               <td>{homicide.relationship_to_victim}</td>
               <td>{homicide.suspect_identified}</td>

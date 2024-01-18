@@ -21,6 +21,7 @@ const EditHomicides = ({ todo }) => {
   const [race,setRace] = useState(todo.race);
   const [ageOfVictim,setAgeOfVictim] = useState(todo.age_of_victim);
   const [modeOfDeathSpecific,setModeOfDeathSpecific] = useState(todo.mode_of_death_specific);
+  const [modeOfDeathGeneral,setModeOfDeathGeneral] = useState(todo.mode_of_death_general);
   const [nameOfPerpetrator,setNameOfPerpetrator]= useState(todo.name_of_perpetrator);
   const [relationshipToVictim,setRelationshipToVictim] = useState(todo.relationship_to_victim);
   const [suspectIdentified, setSuspectIdentified] = useState(todo.suspect_identified);
@@ -55,6 +56,7 @@ const EditHomicides = ({ todo }) => {
         race:race,
         age_of_victim:ageOfVictim,
         mode_of_death_specific:modeOfDeathSpecific,
+        mode_of_death_general:modeOfDeathGeneral,
         name_of_perpetrator:nameOfPerpetrator,
         relationship_to_victim:relationshipToVictim,
         suspect_identified:suspectIdentified,
@@ -482,6 +484,22 @@ const EditHomicides = ({ todo }) => {
   <option value="Unknown">Unknown</option>
   <option value="Other">Other</option>
 </select>
+
+<label htmlFor="modeOfDeathGeneral">Mode of Death -General:</label>
+      <select
+        id="modeOfDeathGeneral"
+        className="form-control"
+        value={modeOfDeathGeneral}
+        onChange={(e) => setModeOfDeathGeneral(e.target.value)}
+      >
+        <option value="">Select Mode of Death (General)</option>
+        <option value="Sharp force trauma">Sharp force trauma</option>
+        <option value="Blunt force trauma">Blunt force trauma</option>
+        <option value="Sharp-blunt/Blunt-sharp force trauma">Sharp-blunt/Blunt-sharp force trauma</option>
+        <option value="Strangulation or asphyxiation">Strangulation or asphyxiation</option>
+        <option value="Poison or burning">Poison or burning</option>
+        <option value="Firearm injury">Firearm injury</option>
+      </select>
 
 <label htmlFor="nameOfPerpetrator">Name of Perpetrator:</label>
         <input

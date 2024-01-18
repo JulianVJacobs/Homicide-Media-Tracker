@@ -16,6 +16,11 @@ const EditHomicides = ({ todo }) => {
   const [province,setProvince] = useState(todo.province);
   const [town,setTown] = useState(todo.town);
   const [locationType,setLocationType] = useState(todo.location_type);
+  const [sexualAssault, setSexualAssault] = useState(todo.sexual_assault);
+  const [genderOfVictim,setGenderOfVictim] = useState(todo.gender_of_victim);
+  const [race,setRace] = useState(todo.race);
+  const [ageOfVictim,setAgeOfVictim] = useState(todo.age_of_victim);
+  const [modeOfDeathSpecific,setModeOfDeathSpecific] = useState(todo.mode_of_death_specific);
   const updateDescription = async (e) => {
     e.preventDefault();
 
@@ -36,6 +41,11 @@ const EditHomicides = ({ todo }) => {
         newspaper_article: newspaperArticle,
         date: date,
         location: location,
+        sexual_assault:sexualAssault,
+        gender_of_victim: genderOfVictim,
+        race:race,
+        age_of_victim:ageOfVictim,
+        mode_of_death_specific:modeOfDeathSpecific
       };
       const response = await fetch(`http://localhost:5000/homicides/${todo.homicide_id}`, {
         method: "PUT",
@@ -343,7 +353,90 @@ const EditHomicides = ({ todo }) => {
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
+
+<label htmlFor="sexualAssault"> Sexual Assault :</label>
+        <select
+          id="sexualAssault"
+          className="form-control"
+          value={sexualAssault}
+          onChange={(e) => setSexualAssault(e.target.value)}
+        >
+          <option value="">Select an option</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Unknown">Unknown</option>
+        </select>
+        <label htmlFor="genderOfVictim"> Victim Gender  :</label>
+        <select
+          id="genderOfVictim"
+          className="form-control"
+          value={genderOfVictim}
+          onChange={(e) => setGenderOfVictim(e.target.value)}
+        >
+          <option value="">Select gender of victim</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Transgender">Transgender</option>
+          <option value="Other">Other</option>
+          <option value="Unknown">Unknown</option>
+        </select>
+
+        <label htmlFor="race"> Victim Race  :</label>
+        <select
+          id="race"
+          className="form-control"
+          value={race}
+          onChange={(e) => setRace(e.target.value)}
+        >
+          <option value="">Select Race of victim</option>
+          <option value="Black South African">Black South African</option>
+          <option value="Coloured South African">Coloured South African</option>
+          <option value="White South African">White South African</option>
+          <option value="Indian">Indian</option>
+          <option value="Asian">Asian - Chinese and other Asian heritage excluding the subcontinent</option>
+          <option value="Black Non-South African">Black Non-South African</option>
+          <option value="White Non-South African">White Non-South African</option>
+          <option value="Unknown">Unknown</option>
+        </select>
               
+        <label htmlFor="ageOfVictim">Age of Victim:</label>
+        <input
+          type="text"
+          id="ageOfVictim"
+          className="form-control"
+          value={ageOfVictim}
+          onChange={(e) => setAgeOfVictim(e.target.value)}
+        />
+
+<label htmlFor="modeOfDeathSpecific">Mode of Death - Specific:</label>
+<select
+  id="modeOfDeathSpecific"
+  className="form-control"
+  value={modeOfDeathSpecific}
+  onChange={(e) => setModeOfDeathSpecific(e.target.value)}
+>
+  <option value="">Select Mode of Death - Specific</option>
+  <option value="Gunshot">Gunshot</option>
+  <option value="Strangulation (manual or ligature)">Strangulation (manual or ligature)</option>
+  <option value="Suffocation">Suffocation</option>
+  <option value="Stabbing (knife or similar)">Stabbing (knife or similar)</option>
+  <option value="Chopping (axe or panga or similar)">Chopping (axe or panga or similar)</option>
+  <option value="Beating">Beating</option>
+  <option value="Poison">Poison</option>
+  <option value="Fire">Fire</option>
+  <option value="Chemical burns">Chemical burns</option>
+  <option value="Electrical shock">Electrical shock</option>
+  <option value="Dogs or other animals">Dogs or other animals</option>
+  <option value="Lightning">Lightning</option>
+  <option value="Drowning">Drowning</option>
+  <option value="Motor vehicle impact">Motor vehicle impact</option>
+  <option value="Falling from height">Falling from height</option>
+  <option value="Suicide">Suicide</option>
+  <option value="Explosive device/explosion">Explosive device/explosion</option>
+  <option value="Missing presumed dead">Missing presumed dead</option>
+  <option value="Unknown">Unknown</option>
+  <option value="Other">Other</option>
+</select>
             </div>
 
             <div className="modal-footer">

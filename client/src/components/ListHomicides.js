@@ -49,9 +49,12 @@ const ListHomicides = () => {
             <th>Province</th>
             <th>Town</th>
             <th>Location Type</th>
-            
             <th>Location</th>
-            
+            <th>Sexual Assault</th>
+            <th>Gender of victim</th>
+            <th>Race</th>
+            <th>Age of Victim</th>
+            <th>Mode of Death SPECIFIC</th>
             <th>Edit</th>
             <th>Delete</th>
           </tr>
@@ -74,7 +77,11 @@ const ListHomicides = () => {
               <td>{homicide.town}</td>
               <td>{homicide.location_type}</td>
               <td>{homicide.location}</td>
-              
+              <td>{homicide.sexual_assault}</td>
+              <td>{homicide.gender_of_victim}</td>
+              <td>{homicide.race}</td>
+              <td>{homicide.age_of_victim}</td>
+              <td>{homicide.mode_of_death_specific}</td>
               <td>
                 <EditHomicides todo={homicide} />
               </td>

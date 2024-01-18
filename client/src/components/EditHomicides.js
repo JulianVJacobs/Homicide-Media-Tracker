@@ -21,6 +21,11 @@ const EditHomicides = ({ todo }) => {
   const [race,setRace] = useState(todo.race);
   const [ageOfVictim,setAgeOfVictim] = useState(todo.age_of_victim);
   const [modeOfDeathSpecific,setModeOfDeathSpecific] = useState(todo.mode_of_death_specific);
+  const [nameOfPerpetrator,setNameOfPerpetrator]= useState(todo.name_of_perpetrator);
+  const [relationshipToVictim,setRelationshipToVictim] = useState(todo.relationship_to_victim);
+  const [suspectIdentified, setSuspectIdentified] = useState(todo.suspect_identified);
+  const [suspectArrested, setSuspectArrested] = useState(todo.suspect_arrested);
+  const [suspectCharged, setSuspectCharged] = useState(todo.suspect_charged);
   const updateDescription = async (e) => {
     e.preventDefault();
 
@@ -45,7 +50,12 @@ const EditHomicides = ({ todo }) => {
         gender_of_victim: genderOfVictim,
         race:race,
         age_of_victim:ageOfVictim,
-        mode_of_death_specific:modeOfDeathSpecific
+        mode_of_death_specific:modeOfDeathSpecific,
+        name_of_perpetrator:nameOfPerpetrator,
+        relationship_to_victim:relationshipToVictim,
+        suspect_identified:suspectIdentified,
+        suspect_arrested:suspectArrested,
+        suspect_charged:suspectCharged
       };
       const response = await fetch(`http://localhost:5000/homicides/${todo.homicide_id}`, {
         method: "PUT",
@@ -436,6 +446,100 @@ const EditHomicides = ({ todo }) => {
   <option value="Missing presumed dead">Missing presumed dead</option>
   <option value="Unknown">Unknown</option>
   <option value="Other">Other</option>
+</select>
+
+<label htmlFor="nameOfPerpetrator">Name of Perpetrator:</label>
+        <input
+          type="text"
+          id="nameOfPerpetrator"
+          className="form-control"
+          value={nameOfPerpetrator}
+          onChange={(e) => setNameOfPerpetrator(e.target.value)}
+        />
+
+
+<label htmlFor="relationshipToVictim">Relationship to Victim:</label>
+<select
+  id="relationshipToVictim"
+  className="form-control"
+  value={relationshipToVictim}
+  onChange={(e) => setRelationshipToVictim(e.target.value)}
+>
+  <option value="">Select Relationship</option>
+  <option value="Unknown">Unknown</option>
+  <option value="Stranger">Stranger</option>
+  <option value="Current or former intimate partner">Current or former intimate partner</option>
+  <option value="Love rival">Love rival</option>
+  <option value="Current or former employee">Current or former employee</option>
+  <option value="Current or former employer">Current or former employer</option>
+  <option value="Terrorist (state label)">Terrorist (state label)</option>
+  <option value="Parent">Parent</option>
+  <option value="Child">Child</option>
+  <option value="Grandchild">Grandchild</option>
+  <option value="Grandparent">Grandparent</option>
+  <option value="Mother-in-law">Mother-in-law</option>
+  <option value="Sister-in-law">Sister-in-law</option>
+  <option value="Brother-in-law">Brother-in-law</option>
+  <option value="Son-in-law">Son-in-law</option>
+  <option value="Daughter-in-law">Daughter-in-law</option>
+  <option value="Father-in-law">Father-in-law</option>
+  <option value="Aunt">Aunt</option>
+  <option value="Uncle">Uncle</option>
+  <option value="Niece">Niece</option>
+  <option value="Nephew">Nephew</option>
+  <option value="Cousin">Cousin</option>
+  <option value="Close family member (unknown relationship or more distant than first cousin)">Close family member (unknown relationship or more distant than first cousin)</option>
+  <option value="Stepchild">Stepchild</option>
+  <option value="Step-parent">Step-parent</option>
+  <option value="Foster child">Foster child</option>
+  <option value="Foster parent">Foster parent</option>
+  <option value="Police officer">Police officer</option>
+  <option value="Suspect in police or security custody">Suspect in police or security custody</option>
+  <option value="Security Guard">Security Guard</option>
+  <option value="Community member">Community member</option>
+  <option value="Other">Other</option>
+</select>
+
+<label htmlFor="suspectIdentified">Suspect Identified:</label>
+<select
+  id="suspectIdentified"
+  className="form-control"
+  value={suspectIdentified}
+  onChange={(e) => setSuspectIdentified(e.target.value)}
+>
+  <option value="">Select Option</option>
+  <option value="Yes">Yes</option>
+  <option value="No">No</option>
+  <option value="Unknown">Unknown</option>
+  <option value="null">Null</option>
+</select>
+
+<label htmlFor="suspectArrested">Suspect Arrested:</label>
+<select
+  id="suspectArrested"
+  className="form-control"
+  value={suspectArrested}
+  onChange={(e) => setSuspectArrested(e.target.value)}
+>
+  <option value="">Select Option</option>
+  <option value="Yes">Yes</option>
+  <option value="No">No</option>
+  <option value="Unknown">Unknown</option>
+  <option value="null">Null</option>
+</select>
+
+<label htmlFor="suspectCharged">Suspect Charged:</label>
+<select
+  id="suspectCharged"
+  className="form-control"
+  value={suspectCharged}
+  onChange={(e) => setSuspectCharged(e.target.value)}
+>
+  <option value="">Select Option</option>
+  <option value="Yes">Yes</option>
+  <option value="No">No</option>
+  <option value="Unknown">Unknown</option>
+  <option value="null">Null</option>
 </select>
             </div>
 

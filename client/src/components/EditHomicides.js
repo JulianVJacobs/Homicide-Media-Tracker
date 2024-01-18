@@ -26,6 +26,10 @@ const EditHomicides = ({ todo }) => {
   const [suspectIdentified, setSuspectIdentified] = useState(todo.suspect_identified);
   const [suspectArrested, setSuspectArrested] = useState(todo.suspect_arrested);
   const [suspectCharged, setSuspectCharged] = useState(todo.suspect_charged);
+  const [conviction,setConviction] = useState(todo.conviction);
+  const [sentence, setSentence] = useState(todo.sentence);
+  const [incidentNotes, setIncidentNotes] = useState(todo.incident_notes);
+  const [ageRangeOfVictim, setAgeRangeOfVictim] = useState(todo.age_range_of_victim);
   const updateDescription = async (e) => {
     e.preventDefault();
 
@@ -55,7 +59,11 @@ const EditHomicides = ({ todo }) => {
         relationship_to_victim:relationshipToVictim,
         suspect_identified:suspectIdentified,
         suspect_arrested:suspectArrested,
-        suspect_charged:suspectCharged
+        suspect_charged:suspectCharged,
+        conviction:conviction,
+        sentence:sentence,
+        incident_notes:incidentNotes,
+        age_range_of_victim: ageRangeOfVictim
       };
       const response = await fetch(`http://localhost:5000/homicides/${todo.homicide_id}`, {
         method: "PUT",
@@ -170,14 +178,14 @@ const EditHomicides = ({ todo }) => {
           <option value="Website">Website</option>
           <option value="Print Media">Print Media</option>
         </select>
-        <label htmlFor="newspaperArticle">News Source:</label>
+        <label htmlFor="newspaperArticle">News Report Platform:</label>
         <select
           id="newspaperArticle"
           className="form-control"
           value={newspaperArticle}
           onChange={(e) => setNewspaperArticle(e.target.value)}
         >
-          <option value="">Select News Source</option>
+          <option value="">Select News Report Platform</option>
           <option value="CNN">CNN</option>
           <option value="The New York Times">The New York Times</option>
           <option value="BBC">BBC</option>
@@ -417,6 +425,33 @@ const EditHomicides = ({ todo }) => {
           value={ageOfVictim}
           onChange={(e) => setAgeOfVictim(e.target.value)}
         />
+
+<label htmlFor="ageRangeOfVictim">Age Range of Victim:</label>
+        <select
+          id="ageRangeOfVictim"
+          className="form-control"
+          value={ageRangeOfVictim}
+          onChange={(e) => setAgeRangeOfVictim(e.target.value)}
+        >
+          <option value="">Select Age Range</option>
+          <option value="Neonate">Neonate</option>
+          <option value="Abandonment Baby">Abandonment Baby</option>
+          <option value="Infant">Infant</option>
+          <option value="Child">Child</option>
+          <option value="Teenager">Teenager</option>
+          <option value="Elderly">Elderly</option>
+          <option value="Unknown">Unknown</option>
+          <option value="0-5 years">0-5 years</option>
+          <option value="5-10 years">5-10 years</option>
+          <option value="10-14 years">10-14 years</option>
+          <option value="15-20 years">15-20 years</option>
+          <option value="20-30 years">20-30 years</option>
+          <option value="30-40 years">30-40 years</option>
+          <option value="40-50 years">40-50 years</option>
+          <option value="50-60 years">50-60 years</option>
+          <option value="60-70 years">60-70 years</option>
+          <option value="70 years+">70 years+</option>
+        </select>
 
 <label htmlFor="modeOfDeathSpecific">Mode of Death - Specific:</label>
 <select

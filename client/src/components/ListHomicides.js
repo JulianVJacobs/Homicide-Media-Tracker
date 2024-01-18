@@ -42,7 +42,7 @@ const ListHomicides = () => {
           <th>Wire Service</th>
           <th>Language</th>
           <th>Source Type</th>
-          <th>Newspaper Source</th>
+          <th>News Report Source</th>
             <th>Date of Publication</th>
             <th>Victim Name</th>
             <th>Date of Death</th>
@@ -54,12 +54,16 @@ const ListHomicides = () => {
             <th>Gender of victim</th>
             <th>Race</th>
             <th>Age of Victim</th>
+            <th>Age Range of Victim</th>
             <th>Mode of Death SPECIFIC</th>
             <th>Name of Perpetrator</th>
             <th>Relationship to victim</th>
             <th>Suspect Identified</th>
             <th>Suspect Arrested</th>
             <th>Suspect Charged</th>
+            <th>conviction</th>
+            <th>Sentence</th>
+            <th>Incident Notes</th>
             <th>Edit</th>
             <th>Delete</th>
           </tr>
@@ -86,12 +90,16 @@ const ListHomicides = () => {
               <td>{homicide.gender_of_victim}</td>
               <td>{homicide.race}</td>
               <td>{homicide.age_of_victim}</td>
+              <td>{homicide.age_range_of_victim}</td>
               <td>{homicide.mode_of_death_specific}</td>
               <td>{homicide.name_of_perpetrator}</td>
               <td>{homicide.relationship_to_victim}</td>
               <td>{homicide.suspect_identified}</td>
               <td>{homicide.suspect_arrested}</td>
               <td>{homicide.suspect_charged}</td>
+              <td>{homicide.conviction}</td>
+              <td>{homicide.sentence}</td>
+              <td>{homicide.incident_notes}</td>
               <td>
                 <EditHomicides todo={homicide} />
               </td>

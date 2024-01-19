@@ -8,6 +8,22 @@ app.use(cors());
 app.use(express.json()); //req.body
 
 //routes//
+// Add this route to your backend
+app.get('/ageDistribution', async (req, res) => {
+  try {
+    // Replace 'SELECT age, COUNT(*) FROM homicide GROUP BY age' with your actual SQL query
+    const ageDistribution = await pool.query('SELECT age_of_victim, COUNT(*) FROM homicide GROUP BY age_of_victim');
+    
+    // Extract data for Chart.js
+    const labels = ageDistribution.rows.map(row => row.age_of_victim);
+    const values = ageDistribution.rows.map(row => row.count);
+
+    res.json({ labels, values });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // post request for adding a homicide entry
 app.post("/homicides", async (req, res) => {

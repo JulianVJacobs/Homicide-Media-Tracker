@@ -198,7 +198,7 @@ const EditHomicides = ({ todo }) => {
           <option value="">Select Wire Service</option>
           <option value="AP">AP</option>
           <option value="Reuters">Reuters</option>
-          <option value="NUll">null</option>
+          <option value="NULL">null</option>
                   </select>
 
                   <label htmlFor="language">Language :</label>

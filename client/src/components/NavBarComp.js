@@ -1,84 +1,48 @@
 import React from "react";
+import { Routes, Route, Link, BrowserRouter } from "react-router-dom";
 import Home from "./Home";
-import "./InputHomicide.css";
-import ListHomicides from "./ListHomicides";
 import InputHomicide from "./InputHomicide";
-import Container from "react-bootstrap/Container";
-import Nav from "react-bootstrap/Nav";
-import Button from "react-bootstrap/Button";
-import Form from "react-bootstrap/Form";
-import Navbar from "react-bootstrap/Navbar";
-import NavDropdown from "react-bootstrap/NavDropdown";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Link,
-} from "react-router-dom";
+import ListHomicides from "./ListHomicides";
+import "../output.css"; 
 
-class NavBarComp extends React.Component {
-  render() {
-    return (
-      <Router>
-        <div>
-          <Navbar expand="lg" className="custom-navbar bg-light text-light">
-            <Container fluid>
-              <Navbar.Brand href="#" className="fs-4">
-                Homicide Tracker
-              </Navbar.Brand>
-              <Navbar.Toggle aria-controls="navbarScroll" />
-              <Navbar.Collapse id="navbarScroll">
-                <Nav
-                  className="me-auto my-2 my-lg-0"
-                  style={{ maxHeight: "100px" }}
-                  navbarScroll
-                >
-                  <Nav.Link as={Link} to={"/Home"}>
-                    Home
-                  </Nav.Link>
-                  <Nav.Link as={Link} to={"/InputHomicide"}>
-                    Add Homicides
-                  </Nav.Link>
-                  <Nav.Link as={Link} to={"/ListHomicides"}>
-                    List Homicides
-                  </Nav.Link>
-                  <NavDropdown title="Link" id="navbarScrollingDropdown">
-                    <NavDropdown.Item href="#action3">Action</NavDropdown.Item>
-                    <NavDropdown.Item href="#action4">
-                      Another action
-                    </NavDropdown.Item>
-                    <NavDropdown.Divider />
-                    <NavDropdown.Item href="#action5">
-                      Something else here
-                    </NavDropdown.Item>
-                  </NavDropdown>
-                  <Nav.Link href="#" disabled>
-                    Link
-                  </Nav.Link>
-                </Nav>
-                <Form className="d-flex">
-                  <Form.Control
-                    type="search"
-                    placeholder="Search"
-                    className="me-2"
-                    aria-label="Search"
-                  />
-                  <Button variant="outline-success">Search</Button>
-                </Form>
-              </Navbar.Collapse>
-            </Container>
-          </Navbar>
+const NavBarComp = () => {
+  return (
+    <BrowserRouter>
+      <div className="bg-gray-800 text-white">
+        <div className="max-w-screen-xl flex items-center justify-between mx-auto p-3">
+          <Link to="/Home" className="text-3xl font-bold">
+            Homicide Tracker
+          </Link>
+          <div className="hidden md:flex md:space-x-8">
+            <Link
+              to="/Home"
+              className="hover:bg-gray-700 py-2 px-3 rounded transition duration-300"
+            >
+              Home
+            </Link>
+            <Link
+              to="/InputHomicide"
+              className="hover:bg-gray-700 py-2 px-3 rounded transition duration-300"
+            >
+              Add Homicides
+            </Link>
+            <Link
+              to="/ListHomicides"
+              className="hover:bg-gray-700 py-2 px-3 rounded transition duration-300"
+            >
+              List Homicides
+            </Link>
+          </div>
         </div>
-        <div>
-          <Routes>
-            <Route path="/Home" element={<Home />} />
-            <Route path="/InputHomicide" element={<InputHomicide />} />
-            <Route path="/ListHomicides" element={<ListHomicides />} />
-          </Routes>
-        </div>
-      </Router>
-    );
-  }
-}
+
+        <Routes>
+          <Route path="/Home" element={<Home />} />
+          <Route path="/InputHomicide" element={<InputHomicide />} />
+          <Route path="/ListHomicides" element={<ListHomicides />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
+};
 
 export default NavBarComp;

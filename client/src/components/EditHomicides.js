@@ -118,7 +118,7 @@ const EditHomicides = ({ todo }) => {
         body: JSON.stringify(body),
       });
 
-      window.location = "/";
+      window.location = "/ListHomicides";
     } catch (err) {
       console.error(err.message);
     }
@@ -127,13 +127,14 @@ const EditHomicides = ({ todo }) => {
   return (
     <Fragment>
       <button
-        type="button"
-        className="btn btn-warning"
-        data-toggle="modal"
-        data-target={`#id${todo.homicide_id}`}
-      >
-        Edit
-      </button>
+  type="button"
+  className="bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-black border border-yellow-700 font-medium px-4 py-2 rounded transition duration-300"
+  data-toggle="modal"
+  data-target={`#id${todo.homicide_id}`}
+>
+  Edit
+</button>
+
 
       <div className="modal" id={`id${todo.homicide_id}`} onClick={() => setVictimName(todo.victim_name)}>
         <div className="modal-dialog">
@@ -697,22 +698,24 @@ const EditHomicides = ({ todo }) => {
             </div>
 
             <div className="modal-footer">
-              <button
-                type="button"
-                className="btn btn-warning"
-                data-dismiss="modal"
-                onClick={(e) => updateDescription(e)}
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                data-dismiss="modal"
-                onClick={() => setVictimName(todo.victim_name)}
-              >
-                Close
-              </button>
+            <button
+  type="button"
+  className="bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+  data-dismiss="modal"
+  onClick={(e) => updateDescription(e)}
+>
+  Edit
+</button>
+
+<button
+  type="button"
+  className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+  data-dismiss="modal"
+  onClick={() => setVictimName(todo.victim_name)}
+>
+  Close
+</button>
+
             </div>
           </div>
         </div>

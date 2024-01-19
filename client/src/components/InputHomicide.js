@@ -17,14 +17,14 @@ const InputHomicide = () => {
   const [wireService, setWireService] = useState("");
   const [language, setLanguage] = useState("");
   const [sourceType, setSourceType] = useState("");
-  const [dateOfDeath, setDateOfDeath] = useState("");
+  const [dateOfDeath, setDateOfDeath] = useState(null);
   const [province, setProvince] = useState("");
   const [town, setTown] = useState("");
   const [locationType, setLocationType] = useState("");
   const [sexualAssault, setSexualAssault] = useState("");
   const [genderOfVictim, setGenderOfVictim] = useState("");
   const [race, setRace] = useState("");
-  const [ageOfVictim, setAgeOfVictim] = useState("");
+  const [ageOfVictim, setAgeOfVictim] = useState(null);
   const [modeOfDeathSpecific, setModeOfDeathSpecific] = useState("");
   const [modeOfDeathGeneral, setModeOfDeathGeneral] = useState("");
   const [nameOfPerpetrator, setNameOfPerpetrator] = useState("");
@@ -281,17 +281,16 @@ const InputHomicide = () => {
               onChange={(e) => setVictimName(e.target.value)}
             />
 
-            <label htmlFor="dateOfDeath">
-              {" "}
-              Date of Death -input 01/01/1000 for default:{" "}
-            </label>
-            <input
-              type="date"
-              id="dateOfDeath"
-              className="form-control"
-              value={dateOfDeath}
-              onChange={(e) => setDateOfDeath(e.target.value)}
-            />
+<label htmlFor="dateOfDeath">
+  Date of Death:
+</label>
+<input
+  type="date"
+  id="dateOfDeath"
+  className="form-control"
+  value={dateOfDeath || ""} // Use an empty string when the value is null
+  onChange={(e) => setDateOfDeath(e.target.value)}
+/>
 
             <label htmlFor="province"> Location of death -PROVINCE :</label>
             <select
@@ -501,14 +500,16 @@ const InputHomicide = () => {
               <option value="Unknown">Unknown</option>
             </select>
 
-            <label htmlFor="ageOfVictim">Age of Victim:</label>
-            <input
-              type="text"
-              id="ageOfVictim"
-              className="form-control"
-              value={ageOfVictim}
-              onChange={(e) => setAgeOfVictim(e.target.value)}
-            />
+            <label htmlFor="ageOfVictim">
+  Age of Victim:
+</label>
+<input
+  type="text"
+  id="ageOfVictim"
+  className="form-control"
+  value={ageOfVictim || ""} // Use an empty string when the value is null
+  onChange={(e) => setAgeOfVictim(e.target.value)}
+/>
             <label htmlFor="ageRangeOfVictim">Age Range of Victim:</label>
             <select
               id="ageRangeOfVictim"

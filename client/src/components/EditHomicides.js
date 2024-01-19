@@ -14,14 +14,14 @@ const EditHomicides = ({ todo }) => {
   const [wireService,setWireService] = useState(todo.wire_service);
   const [language,setLanguage] = useState(todo.language);
   const [sourceType,setSourceType] = useState(todo.source_type);
-  const [dateOfDeath,setDateOfDeath] = useState(todo.date_of_death);
+  const [dateOfDeath,setDateOfDeath] = useState(todo.date_of_death|| null);
   const [province,setProvince] = useState(todo.province);
   const [town,setTown] = useState(todo.town);
   const [locationType,setLocationType] = useState(todo.location_type);
   const [sexualAssault, setSexualAssault] = useState(todo.sexual_assault);
   const [genderOfVictim,setGenderOfVictim] = useState(todo.gender_of_victim);
   const [race,setRace] = useState(todo.race);
-  const [ageOfVictim,setAgeOfVictim] = useState(todo.age_of_victim);
+  const [ageOfVictim,setAgeOfVictim] = useState(todo.age_of_victim||'');
   const [modeOfDeathSpecific,setModeOfDeathSpecific] = useState(todo.mode_of_death_specific);
   const [modeOfDeathGeneral,setModeOfDeathGeneral] = useState(todo.mode_of_death_general);
   const [nameOfPerpetrator,setNameOfPerpetrator]= useState(todo.name_of_perpetrator);
@@ -33,7 +33,7 @@ const EditHomicides = ({ todo }) => {
   const [sentence, setSentence] = useState(todo.sentence);
   const [incidentNotes, setIncidentNotes] = useState(todo.incident_notes);
   const [ageRangeOfVictim, setAgeRangeOfVictim] = useState(todo.age_range_of_victim);
-  const [typeOfMurder, setTypeOfMurder] = useState(todo.type_of_murder);
+  const [typeOfMurder, setTypeOfMurder] = useState(todo.type_of_murder||null);
 
   const murderOptions = [
     { value: "Adult male homicide", label: "Adult male homicide" },
@@ -78,7 +78,7 @@ const EditHomicides = ({ todo }) => {
     e.preventDefault();
 
     try {
-      const typeOfMurderString = typeOfMurder.map((option) => option.value).join(',');
+      const typeOfMurderString = typeOfMurder ? typeOfMurder.map((option) => option.value).join(',') : '';
       const body = {
         news_report_id: newsReportId,
         news_report_url: newsReportUrl,
@@ -276,7 +276,7 @@ const EditHomicides = ({ todo }) => {
           id="dateOfDeath"
           className="form-control"
           value={dateOfDeath}
-          onChange={(e) => setDateOfDeath(e.target.value)}
+          onChange={(e) => setDateOfDeath(e.target.value||null)}
         />
 
 <label htmlFor="province"> Location of death -PROVINCE  :</label>
@@ -484,7 +484,7 @@ const EditHomicides = ({ todo }) => {
           id="ageOfVictim"
           className="form-control"
           value={ageOfVictim}
-          onChange={(e) => setAgeOfVictim(e.target.value)}
+          onChange={(e) => setAgeOfVictim(e.target.value === '' ? null : e.target.value)}
         />
 
 <label htmlFor="ageRangeOfVictim">Age Range of Victim:</label>
@@ -693,7 +693,7 @@ const EditHomicides = ({ todo }) => {
           options={murderOptions}
           styles={customStyles}
           value={typeOfMurder}
-          onChange={(selectedOptions) => setTypeOfMurder(selectedOptions)}
+          onChange={(selectedOptions) => setTypeOfMurder(selectedOptions || null)}
         />
             </div>
 

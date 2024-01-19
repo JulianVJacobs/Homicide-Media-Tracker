@@ -163,7 +163,11 @@ const ListHomicides = () => {
                 {/*needed to prevent time zone messes!*/}
                 <td>{homicide.victim_name}</td>
                 <td>
-                  {new Date(homicide.date_of_death).toLocaleDateString("en-gb")}
+                  {homicide.date_of_death
+                    ? new Date(homicide.date_of_death).toLocaleDateString(
+                        "en-gb"
+                      )
+                    : ""}
                 </td>
                 <td>{homicide.province}</td>
                 <td>{homicide.town}</td>

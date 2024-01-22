@@ -136,7 +136,7 @@ const EditHomicides = ({ todo }) => {
 </button>
 
 
-      <div className="modal" id={`id${todo.homicide_id}`} onClick={() => setVictimName(todo.victim_name)}>
+      <div className="modal" id={`id${todo.homicide_id}`} >{/* onClick={() => setVictimName(todo.victim_name)} */}
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
@@ -711,7 +711,7 @@ const EditHomicides = ({ todo }) => {
   type="button"
   className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300"
   data-dismiss="modal"
-  onClick={() => setVictimName(todo.victim_name)}
+  onClick={() => setVictimName(todo.victim_name) }
 >
   Close
 </button>

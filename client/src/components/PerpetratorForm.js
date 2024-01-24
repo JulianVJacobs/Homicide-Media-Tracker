@@ -1,38 +1,55 @@
 import React, { useState } from "react";
 import Select from "react-select";
+// ... (import statements)
 
 const PerpetratorForm = ({ onSubmit }) => {
-  const [currentPerpetrator, setCurrentPerpetrator] = useState({
-    perpetratorName: "",
-    relationshipToVictim: "",
-    suspectIdentified: "",
-    suspectArrested: "",
-    suspectCharged: "",
-    conviction: "",
-    sentence: "",
-    typeOfMurder: [],
-  });
-
-  const [perpetratorData, setPerpetratorData] = useState([]);
-
-  const handleAddPerpetrator = () => {
-    setPerpetratorData((prevData) => [...prevData, currentPerpetrator]);
-    setCurrentPerpetrator({
-      perpetratorName: "",
-      relationshipToVictim: "",
-      suspectIdentified: "",
-      suspectArrested: "",
-      suspectCharged: "",
-      conviction: "",
-      sentence: "",
-      typeOfMurder: [],
-    });
-  };
-
-  const handlePerpetratorSubmit = () => {
-    setPerpetratorData((prevData) => [...prevData, currentPerpetrator]);
-    onSubmit(perpetratorData);
-  };
+    const [currentPerpetrator, setCurrentPerpetrator] = useState({
+        perpetratorName: "",
+        relationshipToVictim: "",
+        suspectIdentified: "",
+        suspectArrested: "",
+        suspectCharged: "",
+        conviction: "",
+        sentence: "",
+        typeOfMurder: [],  // <-- Ensure it's an empty array initially
+      });
+      
+  
+    const [perpetratorData, setPerpetratorData] = useState([]);
+  
+    const handleAddPerpetrator = () => {
+      setPerpetratorData((prevData) => [...prevData, { ...currentPerpetrator }]);
+      setCurrentPerpetrator({
+        perpetratorName: "",
+        relationshipToVictim: "",
+        suspectIdentified: "",
+        suspectArrested: "",
+        suspectCharged: "",
+        conviction: "",
+        sentence: "",
+        typeOfMurder: [],
+      });
+    };
+  
+    const handlePerpetratorSubmit = () => {
+        // Group values by field and join them together
+        const formattedPerpetrators = Object.keys(currentPerpetrator).reduce(
+          (acc, key) => {
+            if (key === "typeOfMurder") {
+              acc[key] = currentPerpetrator[key].join("; ");
+            } else {
+              acc[key] = perpetratorData.map((perpetrator) => perpetrator[key]).join("; ");
+            }
+            return acc;
+          },
+          {}
+        );
+      
+        // Call the onSubmit callback with the formatted data
+        onSubmit(formattedPerpetrators);
+      };
+      
+      
 
   const murderOptions = [
     { value: "Adult male homicide", label: "Adult male homicide" },
@@ -71,21 +88,21 @@ const PerpetratorForm = ({ onSubmit }) => {
 
   const customStyles = {
     control: (provided) => ({
-        ...provided,
-        border: "1px solid #ccc",
-      }),
-      option: (provided, state) => ({
-        ...provided,
-        color: "#000", // Set the text color to black
-        background: state.isSelected ? "#f0f0f0" : "#fff", // Background color on selection
-        "&:hover": {
-          background: "#f0f0f0", // Background color on hover
-        },
-      }),
+      ...provided,
+      border: "1px solid #ccc",
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      color: "#000", // Set the text color to black
+      background: state.isSelected ? "#f0f0f0" : "#fff", // Background color on selection
+      "&:hover": {
+        background: "#f0f0f0", // Background color on hover
+      },
+    }),
   };
 
   return (
-    <div className="col-md-20">
+    <div className="col-md-20 text-gray-800">
       <label htmlFor="perpetratorName">Perpetrator Name:</label>
       <input
         type="text"
@@ -112,52 +129,50 @@ const PerpetratorForm = ({ onSubmit }) => {
           }))
         }
       >
-         <option value="">Select Relationship</option>
-              <option value="Unknown">Unknown</option>
-              <option value="Stranger">Stranger</option>
-              <option value="Current or former intimate partner">
-                Current or former intimate partner
-              </option>
-              <option value="Love rival">Love rival</option>
-              <option value="Current or former employee">
-                Current or former employee
-              </option>
-              <option value="Current or former employer">
-                Current or former employer
-              </option>
-              <option value="Terrorist (state label)">
-                Terrorist (state label)
-              </option>
-              <option value="Parent">Parent</option>
-              <option value="Child">Child</option>
-              <option value="Grandchild">Grandchild</option>
-              <option value="Grandparent">Grandparent</option>
-              <option value="Mother-in-law">Mother-in-law</option>
-              <option value="Sister-in-law">Sister-in-law</option>
-              <option value="Brother-in-law">Brother-in-law</option>
-              <option value="Son-in-law">Son-in-law</option>
-              <option value="Daughter-in-law">Daughter-in-law</option>
-              <option value="Father-in-law">Father-in-law</option>
-              <option value="Aunt">Aunt</option>
-              <option value="Uncle">Uncle</option>
-              <option value="Niece">Niece</option>
-              <option value="Nephew">Nephew</option>
-              <option value="Cousin">Cousin</option>
-              <option value="Close family member (unknown relationship or more distant than first cousin)">
-                Close family member (unknown relationship or more distant than
-                first cousin)
-              </option>
-              <option value="Stepchild">Stepchild</option>
-              <option value="Step-parent">Step-parent</option>
-              <option value="Foster child">Foster child</option>
-              <option value="Foster parent">Foster parent</option>
-              <option value="Police officer">Police officer</option>
-              <option value="Suspect in police or security custody">
-                Suspect in police or security custody
-              </option>
-              <option value="Security Guard">Security Guard</option>
-              <option value="Community member">Community member</option>
-              <option value="Other">Other</option>
+        <option value="">Select Relationship</option>
+        <option value="Unknown">Unknown</option>
+        <option value="Stranger">Stranger</option>
+        <option value="Current or former intimate partner">
+          Current or former intimate partner
+        </option>
+        <option value="Love rival">Love rival</option>
+        <option value="Current or former employee">
+          Current or former employee
+        </option>
+        <option value="Current or former employer">
+          Current or former employer
+        </option>
+        <option value="Terrorist (state label)">Terrorist (state label)</option>
+        <option value="Parent">Parent</option>
+        <option value="Child">Child</option>
+        <option value="Grandchild">Grandchild</option>
+        <option value="Grandparent">Grandparent</option>
+        <option value="Mother-in-law">Mother-in-law</option>
+        <option value="Sister-in-law">Sister-in-law</option>
+        <option value="Brother-in-law">Brother-in-law</option>
+        <option value="Son-in-law">Son-in-law</option>
+        <option value="Daughter-in-law">Daughter-in-law</option>
+        <option value="Father-in-law">Father-in-law</option>
+        <option value="Aunt">Aunt</option>
+        <option value="Uncle">Uncle</option>
+        <option value="Niece">Niece</option>
+        <option value="Nephew">Nephew</option>
+        <option value="Cousin">Cousin</option>
+        <option value="Close family member (unknown relationship or more distant than first cousin)">
+          Close family member (unknown relationship or more distant than first
+          cousin)
+        </option>
+        <option value="Stepchild">Stepchild</option>
+        <option value="Step-parent">Step-parent</option>
+        <option value="Foster child">Foster child</option>
+        <option value="Foster parent">Foster parent</option>
+        <option value="Police officer">Police officer</option>
+        <option value="Suspect in police or security custody">
+          Suspect in police or security custody
+        </option>
+        <option value="Security Guard">Security Guard</option>
+        <option value="Community member">Community member</option>
+        <option value="Other">Other</option>
       </select>
 
       <label htmlFor="suspectIdentified">Suspect Identified:</label>
@@ -172,11 +187,11 @@ const PerpetratorForm = ({ onSubmit }) => {
           }))
         }
       >
-       <option value="">Select Option</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-              <option value="Unknown">Unknown</option>
-              <option value="null">Null</option>
+        <option value="">Select Option</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="Unknown">Unknown</option>
+        <option value="null">Null</option>
       </select>
       <label htmlFor="suspectArrested">Suspect Arrested:</label>
       <select
@@ -190,11 +205,11 @@ const PerpetratorForm = ({ onSubmit }) => {
           }))
         }
       >
-       <option value="">Select Option</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-              <option value="Unknown">Unknown</option>
-              <option value="null">Null</option>
+        <option value="">Select Option</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="Unknown">Unknown</option>
+        <option value="null">Null</option>
       </select>
 
       <label htmlFor="suspectCharged">Suspect Charged:</label>
@@ -209,14 +224,13 @@ const PerpetratorForm = ({ onSubmit }) => {
           }))
         }
       >
-       <option value="">Select Option</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-              <option value="Unknown">Unknown</option>
-              <option value="null">Null</option>
+        <option value="">Select Option</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="Unknown">Unknown</option>
+        <option value="null">Null</option>
       </select>
 
-      
       <label htmlFor="conviction">Suspect Convicted:</label>
       <select
         id="conviction"
@@ -229,11 +243,11 @@ const PerpetratorForm = ({ onSubmit }) => {
           }))
         }
       >
-       <option value="">Select Option</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-              <option value="Unknown">Unknown</option>
-              <option value="null">Null</option>
+        <option value="">Select Option</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="Unknown">Unknown</option>
+        <option value="null">Null</option>
       </select>
 
       <label htmlFor="sentence">Sentence:</label>
@@ -250,7 +264,9 @@ const PerpetratorForm = ({ onSubmit }) => {
         }
       />
 
-      <label htmlFor="typeOfMurder">Type of Murder (Select all that apply):</label>
+      <label htmlFor="typeOfMurder">
+        Type of Murder (Select all that apply):
+      </label>
       <Select
         id="typeOfMurder"
         isMulti
@@ -265,7 +281,12 @@ const PerpetratorForm = ({ onSubmit }) => {
         }
       />
 
-      <button onClick={handleAddPerpetrator}>Add Perpetrator</button>
+      <button
+        className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+        onClick={handleAddPerpetrator}
+      >
+        Add Perpetrator
+      </button>
 
       {perpetratorData.length > 0 && (
         <div>
@@ -289,7 +310,8 @@ const PerpetratorForm = ({ onSubmit }) => {
                   <td>{perpetrator.suspectCharged}</td>
                   <td>{perpetrator.conviction}</td>
                   <td>{perpetrator.sentence}</td>
-                  <td>{perpetrator.typeOfMurder}</td>
+                  <td>{perpetrator.typeOfMurder.map(murder => murder.label).join(', ')}</td>
+
                 </tr>
               ))}
             </tbody>
@@ -297,7 +319,12 @@ const PerpetratorForm = ({ onSubmit }) => {
         </div>
       )}
 
-      <button onClick={handlePerpetratorSubmit}>Submit All Perpetrators</button>
+      <button
+        className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+        onClick={handlePerpetratorSubmit}
+      >
+        Submit All Perpetrators
+      </button>
     </div>
   );
 };

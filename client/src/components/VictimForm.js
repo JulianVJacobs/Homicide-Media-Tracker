@@ -1,3 +1,6 @@
+
+
+
 import React, { useState } from "react";
 
 const VictimForm = ({ onSubmit }) => {
@@ -18,10 +21,7 @@ const VictimForm = ({ onSubmit }) => {
     modeOfDeathGeneral: "",
   });
 
-  // State for the list of entered victims
-  const [victimData, setVictimData] = useState([]);
 
-  // State for town options based on the selected province
   const [towns, setTowns] = useState([]);
 
   // Hard-coded townsByProvince for simplicity
@@ -131,10 +131,22 @@ const VictimForm = ({ onSubmit }) => {
     setTowns(townsByProvince[selectedProvince] || []);
   };
 
+  // State for the list of entered victims
+  const [victimData, setVictimData] = useState([]);
+
   // Event handler for adding a victim
   const handleAddVictim = () => {
-    // Save the current victim data to the list
-    setVictimData((prevData) => [...prevData, currentVictim]);
+    // Concatenate the current victim data with the existing data
+    const concatenatedVictim = Object.keys(currentVictim).reduce(
+      (acc, key) => ({
+        ...acc,
+        [key]: victimData.map((victim) => victim[key]).concat(currentVictim[key]).join(","),
+      }),
+      {}
+    );
+
+    // Save the concatenated victim data to the list
+    setVictimData((prevData) => [...prevData, concatenatedVictim]);
 
     // Clear the current victim data for the next entry
     setCurrentVictim({
@@ -156,17 +168,24 @@ const VictimForm = ({ onSubmit }) => {
 
   // Event handler for submitting all victim data
   const handleVictimSubmit = () => {
-    // Save the last victim data to the list
-    setVictimData((prevData) => [...prevData, currentVictim]);
-
-    // Submit all victim data to the parent component
-    onSubmit(victimData);
+    // Ensure there is at least one victim in the array
+    if (victimData.length > 0) {
+      // Submit the last victim data to the parent component
+      const lastVictim = victimData[victimData.length - 1];
+      onSubmit({
+        victims: lastVictim,
+        // ... (other fields)
+      });
+    } else {
+      // Handle the case where there are no victims
+      console.error("No victim data to submit.");
+    }
   };
+  
 
   return (
-    <div className="col-md-20">
-      {/* ... other form fields for the current victim */}
-      <label htmlFor="victimName">Victim Name:</label>
+    <div className="col-md-20 text-gray-800">
+     <label htmlFor="victimName">Victim Name:</label>
       <input
         type="text"
         id="victimName"
@@ -447,31 +466,26 @@ const VictimForm = ({ onSubmit }) => {
         <option value="Poison or burning">Poison or burning</option>
         <option value="Firearm injury">Firearm injury</option>
       </select>
+      <button className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300" onClick={handleAddVictim}>Add Victim</button>
 
-      {/* Button to add the current victim to the list */}
-      <button onClick={handleAddVictim}>Add Victim</button>
 
-      {/* Display table of entered victim data */}
       {victimData.length > 0 && (
         <div>
           <h3>Entered Victims</h3>
           <table>
-            <thead>
-              <tr>
-                <th>Victim Name</th>
-                <th>Date of Death</th>
-                <th>Province</th>
-                <th>Town</th>
-                <th>Location Type</th>
-                <th>Sexual Assault</th>
-                <th>Gender of Victim</th>
-                <th>Race of Victim</th>
-                <th>Age of Victim</th>
-                <th>Age Range of Victim</th>
-                <th>Mode Of Death Specific</th>
-                <th>Mode of Death General</th>
-              </tr>
-            </thead>
+            <th>Victim Name</th>
+            <th>Date of death</th>
+            <th>Province</th>
+            <th>Town</th>
+            <th>Location Type</th>
+            <th>sexual Assault</th>
+            <th>Gender</th>
+            <th>Race</th>
+            <th>Age</th>
+            <th>Age Range</th>
+            <th>Mode of death specific</th>
+            <th>Mode of death general</th>
+
             <tbody>
               {victimData.map((victim, index) => (
                 <tr key={index}>
@@ -481,21 +495,22 @@ const VictimForm = ({ onSubmit }) => {
                   <td>{victim.town}</td>
                   <td>{victim.locationType}</td>
                   <td>{victim.sexualAssault}</td>
-                <td>{victim.genderOfVictim}</td>
-                <td>{victim.race}</td>
-                <td>{victim.ageOfVictim}</td>
-                <td>{victim.ageRangeOfVictim}</td>
-                <td>{victim.modeOfDeathSpecific}</td>
-                <td>{victim.modeOfDeathGeneral}</td>
+                  <td>{victim.genderOfVictim}</td>
+                  <td>{victim.race}</td>
+                  <td>{victim.ageOfVictim}</td>
+                  <td>{victim.ageRangeOfVictim}</td>
+                  <td>{victim.modeOfDeathSpecific}</td>
+                  <td>{victim.modeOfDeathGeneral}</td>
+
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-
-    
-      <button onClick={handleVictimSubmit}>Submit All Victims</button>
+     
+      {/* Button to submit victim data */}
+      <button className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-black font-medium px-4 py-2 rounded transition duration-300" onClick={handleVictimSubmit}>Submit Victims</button>
     </div>
   );
 };

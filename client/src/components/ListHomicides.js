@@ -1,4 +1,3 @@
-
 import React, { Fragment, useEffect, useState } from "react";
 import EditHomicides from "./EditHomicides";
 import "../output.css";
@@ -75,7 +74,7 @@ const ListHomicides = () => {
         <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
-            <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-6 py-3">
                 News Report ID
               </th>
               <th scope="col" className="px-6 py-3">
@@ -102,73 +101,14 @@ const ListHomicides = () => {
               <th
                 scope="col"
                 className="px-6 py-3 cursor-pointer"
-                onClick={() => handleSort("date")}
+                onClick={() => handleSort("date_of_publication")}
               >
                 Date of Publication
-                {sortCriteria === "date" && (
+                {sortCriteria === "date_of_publication" && (
                   <span>{sortOrder === "asc" ? " ▲" : " ▼"}</span>
                 )}
               </th>
-              <th
-                scope="col"
-                className="px-6 py-3 cursor-pointer"
-                onClick={() => handleSort("victim_name")}
-              >
-                Victim Name
-                {sortCriteria === "victim_name" && (
-                  <span>{sortOrder === "asc" ? " ▲" : " ▼"}</span>
-                )}
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 cursor-pointer"
-                onClick={() => handleSort("date_of_death")}
-              >
-                Date of Death
-                {sortCriteria === "date_of_death" && (
-                  <span>{sortOrder === "asc" ? " ▲" : " ▼"}</span>
-                )}
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Province
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Town
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Location Type
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Location
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Sexual Assault
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Gender of victim
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Race
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 cursor-pointer"
-                onClick={() => handleSort("age_of_victim")}
-              >
-                Age Of Victim
-                {sortCriteria === "age_of_victim" && (
-                  <span>{sortOrder === "asc" ? " ▲" : " ▼"}</span>
-                )}
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Age Range of Victim
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Mode of Death SPECIFIC
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Mode of Death GENERAL
-              </th>
+
               <th
                 scope="col"
                 className="px-6 py-3 cursor-pointer"
@@ -197,20 +137,17 @@ const ListHomicides = () => {
               <th scope="col" className="px-6 py-3">
                 Sentence
               </th>
-              <th scope="col" className="px-6 py-3">
-                Incident Notes
-              </th>
+
               <th scope="col" className="px-6 py-3">
                 Type of Murder
               </th>
-
               <th scope="col" className="px-6 py-3">
                 Edit
               </th>
               <th scope="col" className="px-6 py-3">
                 Delete
               </th>
-              </tr>
+            </tr>
           </thead>
           <tbody>
             {sortedHomicides.map((homicide) => (
@@ -231,9 +168,7 @@ const ListHomicides = () => {
                 <td>
                   <td>{new Date(homicide.date).toLocaleDateString("en-gb")}</td>
                 </td>{" "}
-                
                 <td>{homicide.victim_name}</td>
-                
                 <td>
                   {homicide.date_of_death
                     ? new Date(homicide.date_of_death).toLocaleDateString(

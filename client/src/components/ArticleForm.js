@@ -1,35 +1,61 @@
-import React, { useState } from "react";
 
-const [newsReportId, setNewsReportId] = useState(generateUniqueId());
-const [newsReportUrl, setNewsReportUrl] = useState("");
-const [newsReportHeadline, setNewsReportHeadline] = useState("");
-const [author, setAuthor] = useState("");
-const [wireService, setWireService] = useState("");
-const [language, setLanguage] = useState("");
-const [sourceType, setSourceType] = useState("");
-const [newsSource, setNewsSource] = useState("");
-const [dateOfPublication, setDateOfPublication] = useState("");
-const [victimName, setVictimName] = useState("");
 
-const ArticleForm = () => {
-  const [counter, setCounter] = useState(1); // Starting counter value
 
-  const generateUniqueId = () => {
-    // Increment the counter for each new ID
-    const uniqueId = counter;
-    setCounter(counter + 1);
-    return uniqueId;
+import React, { useState, useEffect } from "react";
+
+const ArticleForm = ({ onSubmit }) => {
+  const [newsReportId, setNewsReportId] = useState("");
+  const [newsReportUrl, setNewsReportUrl] = useState("");
+  const [newsReportHeadline, setNewsReportHeadline] = useState("");
+  const [dateOfPublication, setDateOfPublication] = useState("");
+  const [author, setAuthor] = useState("");
+  const [wireService, setWireService] = useState("");
+  const [language, setLanguage] = useState("");
+  const [sourceType, setSourceType] = useState("");
+  const [newsSource, setNewsSource] = useState("");
+
+  useEffect(() => {
+    console.log("Updated Article Data:", {
+      newsReportId,
+      newsReportUrl,
+      newsReportHeadline,
+      dateOfPublication,
+      author,
+      wireService,
+      language,
+      sourceType,
+      newsSource,
+    });
+  }, [
+    [newsReportId, onSubmit]
+  ]);
+
+  const handleSubmit = () => {
+    const articleData = {
+      newsReportId,
+      newsReportUrl,
+      newsReportHeadline,
+      dateOfPublication,
+      author,
+      wireService,
+      language,
+      sourceType,
+      newsSource,
+    };
+
+    // Call the parent onSubmit function to update the state in InputHomicidePage
+    onSubmit(articleData);
   };
 
   return (
-    <div className="col-md-20">
+    <div className="col-md-20 text-gray-800">
       <label htmlFor="newsReportId">News Report ID:</label>
       <input
         type="text"
         id="newsReportId"
         className="form-control"
         value={newsReportId}
-        readOnly // Make the input read-only
+        onChange={(e) => setNewsReportId(e.target.value)}
       />
 
       <label htmlFor="newsReportUrl">News Report URL:</label>
@@ -126,21 +152,16 @@ const ArticleForm = () => {
 
       <label htmlFor="dateOfPublication">Date of publication:</label>
       <input
-        type="dateOfPublication"
+        type="date"
         id="dateOfPublication"
         className="form-control"
         value={dateOfPublication}
         onChange={(e) => setDateOfPublication(e.target.value)}
       />
 
-      <label htmlFor="victimName">Victim Name:</label>
-      <input
-        type="text"
-        id="victimName"
-        className="form-control"
-        value={victimName}
-        onChange={(e) => setVictimName(e.target.value)}
-      />
+      <button className="btn btn-primary mt-3" onClick={handleSubmit}>
+        Save Article Details
+      </button>
     </div>
   );
 };

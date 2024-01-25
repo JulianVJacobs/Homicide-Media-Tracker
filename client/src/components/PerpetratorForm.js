@@ -36,9 +36,9 @@ const PerpetratorForm = ({ onSubmit }) => {
         const formattedPerpetrators = Object.keys(currentPerpetrator).reduce(
           (acc, key) => {
             if (key === "typeOfMurder") {
-              acc[key] = currentPerpetrator[key].join("; ");
+              acc[key] = currentPerpetrator[key].join(", ");
             } else {
-              acc[key] = perpetratorData.map((perpetrator) => perpetrator[key]).join("; ");
+              acc[key] = perpetratorData.map((perpetrator) => perpetrator[key]).join(", ");
             }
             return acc;
           },

@@ -26,9 +26,9 @@ const ArticleForm = ({ onSubmit }) => {
       sourceType,
       newsSource,
     });
-  }, [
+  }, 
     [newsReportId, onSubmit]
-  ]);
+  );
 
   const handleSubmit = () => {
     const articleData = {

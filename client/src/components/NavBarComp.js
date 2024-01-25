@@ -4,6 +4,7 @@ import Home from './Home';
 import InputHomicide from "./InputHomicide";
 import ListHomicides from "./ListHomicides";
 import DataAnalysis from "./DataAnalysis";
+import ImportExport from "./ImportExport";
 import "../output.css"; 
 
 const NavBarComp = () => {
@@ -34,6 +35,12 @@ const NavBarComp = () => {
               List Homicides
             </Link>
             <Link
+              to="/ImportExport"
+              className="hover:bg-gray-700 py-2 px-3  text-xl rounded transition duration-300"
+            >
+              Import Export 
+            </Link>
+            <Link
               to="/DataAnalysis"
               className="hover:bg-gray-700 py-2 px-3  text-xl rounded transition duration-300"
             >
@@ -46,6 +53,7 @@ const NavBarComp = () => {
           <Route path="/Home" element={<Home />} />
           <Route path="/InputHomicide" element={<InputHomicide />} />
           <Route path="/ListHomicides" element={<ListHomicides />} />
+          <Route path="/ImportExport" element={<ImportExport />} />
           <Route path="/DataAnalysis" element={<DataAnalysis />} />
         </Routes>
       </div>

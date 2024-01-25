@@ -4,69 +4,50 @@ import "../output.css";
 
 const ListHomicides = () => {
   const [homicides, setHomicides] = useState([]);
-  const [sortCriteria, setSortCriteria] = useState(null);
-  const [sortOrder, setSortOrder] = useState("asc"); // "asc" or "desc"
 
-  const deleteHomicide = async (id) => {
-    try {
-      const deleteHomicide = await fetch(
-        `http://localhost:5000/homicides/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      setHomicides(homicides.filter((homicide) => homicide.homicide_id !== id));
-    } catch (err) {
-      console.error(err.message);
-    }
-  };
-
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortColumn, setSortColumn] = useState("date_of_publication");
   const getHomicides = async () => {
     try {
       const response = await fetch("http://localhost:5000/homicides");
       const jsonData = await response.json();
+      console.log("Homicides data:", jsonData); // Log the data
       setHomicides(jsonData);
     } catch (err) {
       console.error(err.message);
     }
   };
+  
+
+
+
+  const handleDelete = async (id) => {
+    try {
+      if (!id) {
+        console.error("Invalid id for deletion");
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000/homicides/${id}`, {
+        method: "DELETE",
+      });
+
+      const responseData = await response.json();
+
+      // Optionally, you can display a message or handle the UI as needed
+
+      // Refresh the list of homicides after deletion
+      getHomicides();
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
+
+  // ...
 
   useEffect(() => {
     getHomicides();
   }, []);
-
-  const handleSort = (criteria) => {
-    // If the same criteria is clicked again, toggle the sort order
-    if (sortCriteria === criteria) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      // If a new criteria is clicked, set the criteria and default to ascending order
-      setSortCriteria(criteria);
-      setSortOrder("asc");
-    }
-  };
-
-  const sortHomicides = () => {
-    if (sortCriteria) {
-      const sortedHomicides = [...homicides].sort((a, b) => {
-        const aValue = a[sortCriteria];
-        const bValue = b[sortCriteria];
-
-        if (sortOrder === "asc") {
-          return aValue < bValue ? -1 : 1;
-        } else {
-          return aValue > bValue ? -1 : 1;
-        }
-      });
-
-      return sortedHomicides;
-    } else {
-      return homicides;
-    }
-  };
-
-  const sortedHomicides = sortHomicides();
 
   return (
     <Fragment>
@@ -84,6 +65,9 @@ const ListHomicides = () => {
                 News Report Headline
               </th>
               <th scope="col" className="px-6 py-3">
+                Date of Publication
+              </th>
+              <th scope="col" className="px-6 py-3">
                 Author
               </th>
               <th scope="col" className="px-6 py-3">
@@ -93,34 +77,52 @@ const ListHomicides = () => {
                 Language
               </th>
               <th scope="col" className="px-6 py-3">
-                Source Type
+                Type of Source
               </th>
               <th scope="col" className="px-6 py-3">
-                News Report Source
-              </th>
-              <th
-                scope="col"
-                className="px-6 py-3 cursor-pointer"
-                onClick={() => handleSort("date_of_publication")}
-              >
-                Date of Publication
-                {sortCriteria === "date_of_publication" && (
-                  <span>{sortOrder === "asc" ? " ▲" : " ▼"}</span>
-                )}
-              </th>
-
-              <th
-                scope="col"
-                className="px-6 py-3 cursor-pointer"
-                onClick={() => handleSort("name_of_perpetrator")}
-              >
-                Name of Perpetrator
-                {sortCriteria === "name_of_perpetrator" && (
-                  <span>{sortOrder === "asc" ? " ▲" : " ▼"}</span>
-                )}
+                News Report Platform
               </th>
               <th scope="col" className="px-6 py-3">
-                Relationship to victim
+                Victim Name
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Date of Death
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Place of Death Province
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Place of Death Town
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Type of Location
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Sexual Assault
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Gender of Victim
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Race of Victim
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Age of Victim
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Age Range of Victim
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Mode of Death Specific
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Mode of Death General
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Perpetrator Name
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Perpetrator Relationship to Victim
               </th>
               <th scope="col" className="px-6 py-3">
                 Suspect Identified
@@ -132,12 +134,11 @@ const ListHomicides = () => {
                 Suspect Charged
               </th>
               <th scope="col" className="px-6 py-3">
-                conviction
+                Conviction
               </th>
               <th scope="col" className="px-6 py-3">
                 Sentence
               </th>
-
               <th scope="col" className="px-6 py-3">
                 Type of Murder
               </th>
@@ -150,59 +151,67 @@ const ListHomicides = () => {
             </tr>
           </thead>
           <tbody>
-            {sortedHomicides.map((homicide) => (
+            {homicides.map((homicide) => (
               <tr
-                key={homicide.homicide_id}
+                key={homicide.article_id}
                 className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
               >
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  {homicide.news_report_id}
+                <td className="px-6 py-4">{homicide.news_report_id}</td>
+                <td className="px-6 py-4">{homicide.news_report_url}</td>
+                <td className="px-6 py-4">{homicide.news_report_headline}</td>
+                <td className="px-6 py-4">
+                  {new Date(homicide.date_of_publication).toLocaleDateString(
+                    "en-gb"
+                  )}
                 </td>
-                <td>{homicide.news_report_url}</td>
-                <td>{homicide.news_report_headline}</td>
-                <td>{homicide.author}</td>
-                <td>{homicide.wire_service}</td>
-                <td>{homicide.language}</td>
-                <td>{homicide.source_type}</td>
-                <td>{homicide.newspaper_article}</td>
-                <td>
-                  <td>{new Date(homicide.date).toLocaleDateString("en-gb")}</td>
-                </td>{" "}
-                <td>{homicide.victim_name}</td>
-                <td>
+                <td className="px-6 py-4">{homicide.author}</td>
+                <td className="px-6 py-4">{homicide.wire_service}</td>
+                <td className="px-6 py-4">{homicide.language}</td>
+                <td className="px-6 py-4">{homicide.type_of_source}</td>
+                <td className="px-6 py-4">{homicide.news_report_platform}</td>
+                <td className="px-6 py-4">{homicide.victim_name}</td>
+                <td className="px-6 py-4">
                   {homicide.date_of_death
                     ? new Date(homicide.date_of_death).toLocaleDateString(
                         "en-gb"
                       )
                     : ""}
                 </td>
-                <td>{homicide.province}</td>
-                <td>{homicide.town}</td>
-                <td>{homicide.location_type}</td>
-                <td>{homicide.location}</td>
-                <td>{homicide.sexual_assault}</td>
-                <td>{homicide.gender_of_victim}</td>
-                <td>{homicide.race}</td>
-                <td>{homicide.age_of_victim}</td>
-                <td>{homicide.age_range_of_victim}</td>
-                <td>{homicide.mode_of_death_specific}</td>
-                <td>{homicide.mode_of_death_general}</td>
-                <td>{homicide.name_of_perpetrator}</td>
-                <td>{homicide.relationship_to_victim}</td>
-                <td>{homicide.suspect_identified}</td>
-                <td>{homicide.suspect_arrested}</td>
-                <td>{homicide.suspect_charged}</td>
-                <td>{homicide.conviction}</td>
-                <td>{homicide.sentence}</td>
-                <td>{homicide.incident_notes}</td>
-                <td>{homicide.type_of_murder}</td>
+                <td className="px-6 py-4">
+                  {homicide.place_of_death_province}
+                </td>
+                <td className="px-6 py-4">{homicide.place_of_death_town}</td>
+                <td className="px-6 py-4">{homicide.type_of_location}</td>
+                <td className="px-6 py-4">{homicide.sexual_assault}</td>
+                <td className="px-6 py-4">{homicide.gender_of_victim}</td>
+                <td className="px-6 py-4">{homicide.race_of_victim}</td>
+                <td className="px-6 py-4">{homicide.age_of_victim}</td>
+                <td className="px-6 py-4">{homicide.age_range_of_victim}</td>
+                <td className="px-6 py-4">{homicide.mode_of_death_specific}</td>
+                <td className="px-6 py-4">{homicide.mode_of_death_general}</td>
+                <td className="px-6 py-4">{homicide.perpetrator_name}</td>
+                <td className="px-6 py-4">
+                  {homicide.perpetrator_relationship_to_victim}
+                </td>
+                <td className="px-6 py-4">{homicide.suspect_identified}</td>
+                <td className="px-6 py-4">{homicide.suspect_arrested}</td>
+                <td className="px-6 py-4">{homicide.suspect_charged}</td>
+                <td className="px-6 py-4">{homicide.conviction}</td>
+                <td className="px-6 py-4">{homicide.sentence}</td>
+                <td className="px-6 py-4">{homicide.type_of_murder}</td>
                 <td className="px-6 py-4 text-right">
                   <EditHomicides todo={homicide} />
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-6 py-4">
                   <button
-                    className="font-medium text-black bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 px-3 py-2 rounded transition duration-300"
-                    onClick={() => deleteHomicide(homicide.homicide_id)}
+                    className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+                    onClick={() => {
+                      console.log(
+                        "Deleting homicide with ID:",
+                        homicide.article_id
+                      );
+                      handleDelete(homicide.article_id);
+                    }}
                   >
                     Delete
                   </button>

@@ -6,8 +6,7 @@ const pool = new Pool({
   host: "localhost",
   port: 5432,
   database: "Homicide_main",
-  ssl: false, // Add this line
+  ssl: false, 
 });
 
 module.exports = pool;
-

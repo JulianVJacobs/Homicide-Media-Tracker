@@ -3,84 +3,144 @@ const app = express();
 const cors = require("cors");
 const pool = require("./db");
 const router = express.Router();
-// const csv = require("fast-csv");
-// const fs = require("fs");
+const fastcsv = require("fast-csv");
+const fs = require("fs");
 const xlsx = require("xlsx");
+const exceljs = require('exceljs');
 app.use(cors());
 app.use(express.json());
 
 
-
-
-router.get("/export-to-excel", async (req, res) => {
+app.get("/exportxlsx", async (req, res) => {
   try {
-    const allHomicides = await pool.query(`SELECT
-    a.article_id,
-    a.news_report_id,
-    a.news_report_url,
-    a.news_report_headline,
-    a.date_of_publication,
-    a.author,
-    a.wire_service,
-    a.language,
-    a.type_of_source,
-    a.news_report_platform,
-    v.victim_name,
-    v.date_of_death,
-    v.place_of_death_province,
-    v.place_of_death_town,
-    v.type_of_location,
-    v.sexual_assault,
-    v.gender_of_victim,
-    v.race_of_victim,
-    v.age_of_victim,
-    v.age_range_of_victim,
-    v.mode_of_death_specific,
-    v.mode_of_death_general,
-    p.perpetrator_name,
-    p.perpetrator_relationship_to_victim,
-    p.suspect_identified,
-    p.suspect_arrested,
-    p.suspect_charged,
-    p.conviction,
-    p.sentence,
-    p.type_of_murder
-  FROM articles a
-  LEFT JOIN victim v ON a.article_id = v.article_id
-  LEFT JOIN perpetrator p ON a.article_id = p.article_id`);
-    const dataToExport = allHomicides.rows;
+    const result = await pool.query(`
+      SELECT
+        a.article_id,
+        a.news_report_id,
+        a.news_report_url,
+        a.news_report_headline,
+        a.date_of_publication,
+        a.author,
+        a.wire_service,
+        a.language,
+        a.type_of_source,
+        a.news_report_platform,
+        v.victim_name,
+        v.date_of_death,
+        v.place_of_death_province,
+        v.place_of_death_town,
+        v.type_of_location,
+        v.sexual_assault,
+        v.gender_of_victim,
+        v.race_of_victim,
+        v.age_of_victim,
+        v.age_range_of_victim,
+        v.mode_of_death_specific,
+        v.mode_of_death_general,
+        p.perpetrator_name,
+        p.perpetrator_relationship_to_victim,
+        p.suspect_identified,
+        p.suspect_arrested,
+        p.suspect_charged,
+        p.conviction,
+        p.sentence,
+        p.type_of_murder
+      FROM articles a
+      LEFT JOIN victim v ON a.article_id = v.article_id
+      LEFT JOIN perpetrator p ON a.article_id = p.article_id
+    `);
 
-    // Create a new workbook
-    const wb = xlsx.utils.book_new();
-    const ws = xlsx.utils.json_to_sheet(dataToExport);
+    const jsonData = JSON.parse(JSON.stringify(result.rows));
 
-    // Add the worksheet to the workbook
-    xlsx.utils.book_append_sheet(wb, ws, "Sheet 1");
+    const workbook = new exceljs.Workbook();
+    const worksheet = workbook.addWorksheet('Data');
 
-    // Write the workbook to a buffer
-    const buffer = xlsx.write(wb, { bookType: "xlsx", type: "buffer" });
+    // Add headers to the worksheet
+    const headers = Object.keys(jsonData[0]);
+    worksheet.addRow(headers);
 
-    // Set the Content-Type header for Excel
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=exported_data.xlsx"
-    );
+    // Add data rows to the worksheet
+    jsonData.forEach(row => {
+      const values = headers.map(header => row[header]);
+      worksheet.addRow(values);
+    });
 
-    // Send the buffer as the response
-    res.end(buffer, "binary");
+    // Save the workbook to a buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    // Send the buffer as a response
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=exported_data.xlsx');
+    res.send(buffer);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
-module.exports = router;
 
+// Existing imports...
+app.get("/exportcsv", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        a.article_id,
+        a.news_report_id,
+        a.news_report_url,
+        a.news_report_headline,
+        a.date_of_publication,
+        a.author,
+        a.wire_service,
+        a.language,
+        a.type_of_source,
+        a.news_report_platform,
+        v.victim_name,
+        v.date_of_death,
+        v.place_of_death_province,
+        v.place_of_death_town,
+        v.type_of_location,
+        v.sexual_assault,
+        v.gender_of_victim,
+        v.race_of_victim,
+        v.age_of_victim,
+        v.age_range_of_victim,
+        v.mode_of_death_specific,
+        v.mode_of_death_general,
+        p.perpetrator_name,
+        p.perpetrator_relationship_to_victim,
+        p.suspect_identified,
+        p.suspect_arrested,
+        p.suspect_charged,
+        p.conviction,
+        p.sentence,
+        p.type_of_murder
+      FROM articles a
+      LEFT JOIN victim v ON a.article_id = v.article_id
+      LEFT JOIN perpetrator p ON a.article_id = p.article_id
+    `);
 
+    const jsonData = JSON.parse(JSON.stringify(result.rows));
+    const ws = fs.createWriteStream("exported_data.csv");
+
+    fastcsv
+      .writeToStream(ws, jsonData, { headers: true })
+      .on("finish", function () {
+        console.log("Write to exported_data.csv successfully!");
+        res.download("exported_data.csv", "exported_data.csv", (err) => {
+          if (err) {
+            console.error(err.message);
+            res.status(500).json({ error: "Internal Server Error" });
+          } else {
+            // Clean up the exported file after download
+            fs.unlinkSync("exported_data.csv");
+          }
+        });
+      });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 app.get("/ageDistribution", async (req, res) => {
   try {
@@ -92,6 +152,119 @@ app.get("/ageDistribution", async (req, res) => {
     const values = ageDistribution.rows.map((row) => row.count);
 
     res.json({ labels, values });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/homicidesBulk", async (req, res) => {
+  try {
+    const {
+      news_report_id,
+      news_report_url,
+      news_report_headline,
+      date_of_publication,
+      author,
+      wire_service,
+      language,
+      type_of_source,
+      news_report_platform,
+      victim_name,
+      date_of_death,
+      place_of_death_province,
+      place_of_death_town,
+      type_of_location,
+      sexual_assault,
+      gender_of_victim,
+      race_of_victim,
+      age_of_victim,
+      age_range_of_victim,
+      mode_of_death_specific,
+      mode_of_death_general,
+      perpetrator_name,
+      perpetrator_relationship_to_victim,
+      suspect_identified,
+      suspect_arrested,
+      suspect_charged,
+      conviction,
+      sentence,
+      type_of_murder,
+    } = req.body;
+
+    console.log("Data received from frontend:", req.body);
+
+    // Insert into Articles table
+    const articleResult = await pool.query(
+      "INSERT INTO articles (news_report_id, news_report_url, news_report_headline, date_of_publication, author, wire_service, language, type_of_source, news_report_platform) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING article_id",
+      [
+        news_report_id,
+        news_report_url,
+        news_report_headline,
+        date_of_publication,
+        author,
+        wire_service,
+        language,
+        type_of_source,
+        news_report_platform,
+      ]
+    );
+
+    const articleId = articleResult.rows[0].article_id;
+
+    // Insert into Victims table
+    const victimResult = await pool.query(
+      "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province, place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING victim_id",
+      [
+        articleId,
+        victim_name,
+        date_of_death,
+        place_of_death_province,
+        place_of_death_town,
+        type_of_location,
+        sexual_assault,
+        gender_of_victim,
+        race_of_victim,
+        age_of_victim,
+        age_range_of_victim,
+        mode_of_death_specific,
+        mode_of_death_general,
+      ]
+    );
+
+    const victimId = victimResult.rows[0].victim_id;
+
+    // Insert into ArticleVictim linking table
+    await pool.query(
+      "INSERT INTO ArticleVictim (article_id, victim_id) VALUES ($1, $2)",
+      [articleId, victimId]
+    );
+
+    // Insert into Perpetrators table
+    const perpetratorResult = await pool.query(
+      "INSERT INTO perpetrator (article_id, perpetrator_name, perpetrator_relationship_to_victim, suspect_identified, suspect_arrested, suspect_charged, conviction, sentence, type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING perpetrator_id",
+      [
+        articleId,
+        perpetrator_name,
+        perpetrator_relationship_to_victim,
+        suspect_identified,
+        suspect_arrested,
+        suspect_charged,
+        conviction,
+        sentence,
+        type_of_murder,
+      ]
+    );
+
+    const perpetratorId = perpetratorResult.rows[0].perpetrator_id;
+
+    // Insert into ArticlePerpetrator linking table
+    await pool.query(
+      "INSERT INTO ArticlePerpetrator (article_id, perpetrator_id) VALUES ($1, $2)",
+      [articleId, perpetratorId]
+    );
+
+    res.json("Homicide entry was added!");
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: "Internal Server Error" });

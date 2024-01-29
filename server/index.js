@@ -7,6 +7,7 @@ const fastcsv = require("fast-csv");
 const fs = require("fs");
 const xlsx = require("xlsx");
 const exceljs = require('exceljs');
+const axios = require('axios');
 app.use(cors());
 app.use(express.json());
 
@@ -75,6 +76,34 @@ app.get("/exportxlsx", async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//this is for checking wayback archival status:
+app.post('/checkArchivalStatus', async (req, res) => {
+  const { url } = req.body;
+
+  if (!url) {
+    return res.status(400).json({ error: 'URL is required' });
+  }
+
+  try {
+    // Make a request to the Wayback CDX Server API
+    const response = await axios.get(`http://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json`);
+
+    // Parse the JSON response
+    const data = response.data;
+
+    // Check if there are captures for the URL
+    const isArchived = Array.isArray(data) && data.length > 1;
+
+    // You can update your database here if needed
+
+    // Return the archival status
+    res.json({ url, isArchived });
+  } catch (error) {
+    console.error(`Error checking archival status for ${url}: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

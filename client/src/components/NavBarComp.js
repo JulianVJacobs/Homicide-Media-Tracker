@@ -6,6 +6,7 @@ import ListHomicides from "./ListHomicides";
 import DataAnalysis from "./DataAnalysis";
 import ImportExport from "./ImportExport";
 import SearchDatabase from "./SearchDatabase";
+import CheckArchive from "./CheckArchive";
 import "../output.css"; 
 
 const NavBarComp = () => {
@@ -53,6 +54,11 @@ const NavBarComp = () => {
             >
               Search Database
             </Link>
+            <Link
+            to= "/CheckArchive"
+            className="hover:bg-gray-700 py-2 px-3  text-xl rounded transition duration-300">
+            Check Archive Status
+            </Link>
           </div>
         </div>
 
@@ -63,6 +69,7 @@ const NavBarComp = () => {
           <Route path="/ImportExport" element={<ImportExport />} />
           <Route path="/DataAnalysis" element={<DataAnalysis />} />
           <Route path="/SearchDatabase" element={<SearchDatabase />} />
+          <Route path = "/CheckArchive" element={<CheckArchive/>}/>
         </Routes>
       </div>
     </BrowserRouter>

@@ -11,7 +11,7 @@ const PerpetratorForm = ({ onSubmit }) => {
         suspectCharged: "",
         conviction: "",
         sentence: "",
-        typeOfMurder: [],  // <-- Ensure it's an empty array initially
+        typeOfMurder: "",  // <-- Ensure it's an empty array initially
       });
       
   
@@ -27,7 +27,7 @@ const PerpetratorForm = ({ onSubmit }) => {
         suspectCharged: "",
         conviction: "",
         sentence: "",
-        typeOfMurder: [],
+        typeOfMurder: "",
       });
     };
   
@@ -35,11 +35,9 @@ const PerpetratorForm = ({ onSubmit }) => {
         // Group values by field and join them together
         const formattedPerpetrators = Object.keys(currentPerpetrator).reduce(
           (acc, key) => {
-            if (key === "typeOfMurder") {
-              acc[key] = currentPerpetrator[key].join(", ");
-            } else {
+            
               acc[key] = perpetratorData.map((perpetrator) => perpetrator[key]).join(", ");
-            }
+            
             return acc;
           },
           {}
@@ -268,18 +266,23 @@ const PerpetratorForm = ({ onSubmit }) => {
         Type of Murder (Select all that apply):
       </label>
       <Select
-        id="typeOfMurder"
-        isMulti
-        options={murderOptions}
-        styles={customStyles}
-        value={currentPerpetrator.typeOfMurder}
-        onChange={(selectedOptions) =>
-          setCurrentPerpetrator((prevPerpetrator) => ({
-            ...prevPerpetrator,
-            typeOfMurder: selectedOptions,
-          }))
-        }
-      />
+  id="typeOfMurder"
+  isMulti
+  options={murderOptions}
+  styles={customStyles}
+  value={murderOptions.filter((option) => currentPerpetrator.typeOfMurder.includes(option.label))}
+  onChange={(selectedOptions) => {
+    const selectedLabels = selectedOptions.map((option) => option.label);
+    const selectedString = selectedLabels.join(';');
+
+    setCurrentPerpetrator((prevPerpetrator) => ({
+      ...prevPerpetrator,
+      typeOfMurder: selectedString,
+    }));
+  }}
+/>
+
+
 
       <button
         className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300"
@@ -310,7 +313,7 @@ const PerpetratorForm = ({ onSubmit }) => {
                   <td>{perpetrator.suspectCharged}</td>
                   <td>{perpetrator.conviction}</td>
                   <td>{perpetrator.sentence}</td>
-                  <td>{perpetrator.typeOfMurder.map(murder => murder.label).join(', ')}</td>
+                  <td>{perpetrator.typeOfMurder}</td>
 
                 </tr>
               ))}

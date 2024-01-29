@@ -104,24 +104,20 @@ const InputHomicide = () => {
         (perpetratorObject) => perpetratorObject.suspectCharged
       );
       const SubmitSuspectCharged = suspectCharged[0];
+      
       const Suspectconviction = perpetratorData.map(
         (perpetratorObject) => perpetratorObject.conviction
       );
       const SubmitSuspectConviction = Suspectconviction[0];
+
       const sentence = perpetratorData.map(
         (perpetratorObject) => perpetratorObject.sentence
       );
       const SubmitSentence = sentence[0];
-      
-      const typeOfMurder = perpetratorData.map((perpetratorObject) => {
-        if (perpetratorObject && Array.isArray(perpetratorObject.typeOfMurder) && perpetratorObject.typeOfMurder.length > 0) {
-          return perpetratorObject.typeOfMurder.map((murder) => murder.label).join(', ');
-        } else {
-          return ''; // or handle it based on your specific use case
-        }
-      });
-      
-      
+
+      const typeOfMurder = perpetratorData.map(
+        (perpetratorObject) => perpetratorObject.typeOfMurder
+      );
       const SubmitTypeOfMurder = typeOfMurder[0];
       
       

@@ -458,6 +458,63 @@ app.get("/homicides", async (req, res) => {
   }
 });
 
+// This get request is for user search parameters!
+app.get("/search", async (req, res) => {
+  try {
+    const { dateOfPublication, place_of_death_province, newsReportPlatform } = req.query;
+
+    // Build the query based on the provided parameters
+    const query = `
+      SELECT
+        a.article_id,
+        a.news_report_id,
+        a.news_report_url,
+        a.news_report_headline,
+        a.date_of_publication,
+        a.author,
+        a.wire_service,
+        a.language,
+        a.type_of_source,
+        a.news_report_platform,
+        v.victim_name,
+        v.date_of_death,
+        v.place_of_death_province,
+        v.place_of_death_town,
+        v.type_of_location,
+        v.sexual_assault,
+        v.gender_of_victim,
+        v.race_of_victim,
+        v.age_of_victim,
+        v.age_range_of_victim,
+        v.mode_of_death_specific,
+        v.mode_of_death_general,
+        p.perpetrator_name,
+        p.perpetrator_relationship_to_victim,
+        p.suspect_identified,
+        p.suspect_arrested,
+        p.suspect_charged,
+        p.conviction,
+        p.sentence,
+        p.type_of_murder
+      FROM articles a
+      LEFT JOIN victim v ON a.article_id = v.article_id
+      LEFT JOIN perpetrator p ON a.article_id = p.article_id
+      WHERE
+      ($1::date IS NULL OR a.date_of_publication = $1::date)
+      AND ($2::text IS NULL OR v.place_of_death_province = $2::text)
+      AND ($3::text IS NULL OR a.news_report_platform = $3::text)
+    `;
+
+    const result = await pool.query(query, [dateOfPublication || null, place_of_death_province || null, newsReportPlatform || null]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
 //This get request retrieves data based off article id
 app.get("/homicides/:article_id", async (req, res) => {
   const { article_id } = req.params;
@@ -511,64 +568,6 @@ app.get("/homicides/:article_id", async (req, res) => {
   }
 });
 
-// //This put request dynamically generates SQL queries to change only the edited fields. _NB FIX
-// app.put("/homicides/:article_id", async (req, res) => {
-//   const { article_id } = req.params;
-//   const { news_report_id, ...updatedFields } = req.body;
-//   console.log("edit request received", req.body);
-
-//   try {
-//     // Ensure that 'news_report_id' is a valid integer
-//     if (news_report_id !== undefined && !Number.isInteger(news_report_id)) {
-//       console.log("Invalid 'news_report_id'. It should be an integer.");
-//       return res.status(400).json({ error: "Invalid 'news_report_id'. It should be an integer." });
-//     }
-
-//     const existingHomicide = await pool.query(`
-//       SELECT *
-//       FROM articles
-//       WHERE article_id = $1
-//     `, [article_id]);
-
-//     if (existingHomicide.rows.length === 0) {
-//       return res.status(404).json({ error: "Homicide not found" });
-//     }
-
-//     const currentFields = existingHomicide.rows[0];
-
-//     // Generate dynamic SET clause for the SQL query
-//     const setClause = Object.entries(updatedFields)
-//       .map(([key, value]) => {
-//         if (value !== undefined) {
-//           return `${key} = $${Object.keys(currentFields).indexOf(key) + 1}`;
-//         }
-//         return null;
-//       })
-//       .filter((clause) => clause !== null) // Remove null values
-//       .join(', ');
-
-//     // Check if there are fields to update
-//     if (setClause === '') {
-//       return res.status(400).json({ error: "No valid fields provided for update." });
-//     }
-
-//     const updateQuery = `
-//       UPDATE articles
-//       SET ${setClause}
-//       WHERE article_id = $${Object.keys(currentFields).length + 1}
-//       RETURNING *
-//     `;
-
-//     const values = [...Object.values(updatedFields).filter((value) => value !== undefined), article_id];
-
-//     const updatedHomicide = await pool.query(updateQuery, values);
-
-//     res.json(updatedHomicide.rows[0]);
-//   } catch (err) {
-//     console.error(err.message);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// });
 app.put("/homicides/:article_id", async (req, res) => {
   const { article_id } = req.params;
   const { news_report_url, news_report_headline, ...updatedFields } = req.body;

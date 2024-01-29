@@ -5,6 +5,7 @@ import InputHomicide from "./InputHomicide";
 import ListHomicides from "./ListHomicides";
 import DataAnalysis from "./DataAnalysis";
 import ImportExport from "./ImportExport";
+import SearchDatabase from "./SearchDatabase";
 import "../output.css"; 
 
 const NavBarComp = () => {
@@ -46,6 +47,12 @@ const NavBarComp = () => {
             >
               Data Analysis
             </Link>
+            <Link
+              to="/SearchDatabase"
+              className="hover:bg-gray-700 py-2 px-3  text-xl rounded transition duration-300"
+            >
+              Search Database
+            </Link>
           </div>
         </div>
 
@@ -55,6 +62,7 @@ const NavBarComp = () => {
           <Route path="/ListHomicides" element={<ListHomicides />} />
           <Route path="/ImportExport" element={<ImportExport />} />
           <Route path="/DataAnalysis" element={<DataAnalysis />} />
+          <Route path="/SearchDatabase" element={<SearchDatabase />} />
         </Routes>
       </div>
     </BrowserRouter>

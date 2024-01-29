@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 const SearchDatabase = () => {
+
   const [searchParams, setSearchParams] = useState({
     dateOfPublication: "",
     place_of_death_province: "",
@@ -13,6 +15,53 @@ const SearchDatabase = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+
+  const handleExport = () => {
+    if (searchResults.length === 0) {
+      // No results to export
+      return;
+    }
+
+    const exportData = searchResults.map((result) => ({
+        "News Report ID": result.news_report_id,
+        "News Report URL": result.news_report_url,
+        "News Report Headline": result.news_report_headline,
+        "Date of Publication": new Date(result.date_of_publication).toLocaleDateString("en-gb"),
+        "Author": result.author,
+        "Wire Service": result.wire_service,
+        "Language": result.language,
+        "Type of Source": result.type_of_source,
+        "News Report Platform": result.news_report_platform,
+        "Victim Name": result.victim_name,
+        "Date of Death": result.date_of_death ? new Date(result.date_of_death).toLocaleDateString("en-gb") : "",
+        "Place of Death Province": result.place_of_death_province,
+        "Place of Death Town": result.place_of_death_town,
+        "Type of Location": result.type_of_location,
+        "Sexual Assault": result.sexual_assault,
+        "Gender of Victim": result.gender_of_victim,
+        "Race of Victim": result.race_of_victim,
+        "Age of Victim": result.age_of_victim,
+        "Age Range of Victim": result.age_range_of_victim,
+        "Mode of Death Specific": result.mode_of_death_specific,
+        "Mode of Death General": result.mode_of_death_general,
+        "Perpetrator Name": result.perpetrator_name,
+        "Perpetrator Relationship to Victim": result.perpetrator_relationship_to_victim,
+        "Suspect Identified": result.suspect_identified,
+        "Suspect Arrested": result.suspect_arrested,
+        "Suspect Charged": result.suspect_charged,
+        "Conviction": result.conviction,
+        "Sentence": result.sentence,
+        "Type of Murder": result.type_of_murder,
+      }));
+      
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Search Results");
+
+    // Save the file
+    XLSX.writeFile(wb, "search_results.xlsx");
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -97,6 +146,13 @@ const SearchDatabase = () => {
             onClick={handleClearResults}
           >
             Clear Results
+          </button>
+          <button
+            type="button"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-3 ml-5"
+            onClick={handleExport}
+          >
+            Export to XLSX
           </button>
 
           {error && <p className="text-red-500 mt-2">{error}</p>}

@@ -16,7 +16,7 @@ const PerpetratorForm = ({ onSubmit }) => {
       
   
     const [perpetratorData, setPerpetratorData] = useState([]);
-  
+    const [hasPerpetrators, setHasPerpetrators] = useState(false); // Step 1
     const handleAddPerpetrator = () => {
       setPerpetratorData((prevData) => [...prevData, { ...currentPerpetrator }]);
       setCurrentPerpetrator({
@@ -29,6 +29,13 @@ const PerpetratorForm = ({ onSubmit }) => {
         sentence: "",
         typeOfMurder: "",
       });
+      setHasPerpetrators(true);
+    };
+  
+
+    const handleClearAllPerpetrators = () => {
+      setPerpetratorData([]); // Clear all victim data
+      setHasPerpetrators(false); // Update hasPerpetrators when victims are cleared
     };
   
     const handlePerpetratorSubmit = () => {
@@ -290,6 +297,14 @@ const PerpetratorForm = ({ onSubmit }) => {
       >
         Add Perpetrator
       </button>
+      {hasPerpetrators && ( // Step 2
+        <button
+          className="bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+          onClick={handleClearAllPerpetrators}
+        >
+          Clear All Perpetrators
+        </button>
+      )}
 
       {perpetratorData.length > 0 && (
         <div>

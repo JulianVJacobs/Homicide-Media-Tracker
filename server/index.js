@@ -354,7 +354,7 @@ app.post("/homicides", async (req, res) => {
     const articleId = articleResult.rows[0].article_id;
 
     // Insert into Victims table
-    const victimNames = victim_name.split(",");
+    const victimNames = victim_name.split(",").map((name) => name.trim());
     const datesOfDeath = date_of_death.split(",");
     const provinces = place_of_death_province.split(",");
     const town = place_of_death_town.split(",");
@@ -369,7 +369,7 @@ app.post("/homicides", async (req, res) => {
     // ... split other fields as needed
 
     //insert into perp table
-    const PerpetratorNames = perpetrator_name.split(",");
+    const PerpetratorNames = perpetrator_name.split(",").map((name) => name.trim());
     const PerpetratorRelatioshipsToVictims =
       perpetrator_relationship_to_victim.split(",");
     const SuspectsIdentified = suspect_identified.split(",");
@@ -490,7 +490,7 @@ app.get("/homicides", async (req, res) => {
 // This get request is for user search parameters!
 app.get("/search", async (req, res) => {
   try {
-    const { dateOfPublication, place_of_death_province, newsReportPlatform } = req.query;
+    const { dateOfPublication, place_of_death_province, newsReportPlatform, victim_name, perpetrator_name } = req.query;
 
     // Build the query based on the provided parameters
     const query = `
@@ -532,9 +532,11 @@ app.get("/search", async (req, res) => {
       ($1::date IS NULL OR a.date_of_publication = $1::date)
       AND ($2::text IS NULL OR v.place_of_death_province = $2::text)
       AND ($3::text IS NULL OR a.news_report_platform = $3::text)
+      AND ($4::text IS NULL OR v.victim_name = $4::text)
+      AND ($5::text IS NULL OR p.perpetrator_name = $5::text)
     `;
 
-    const result = await pool.query(query, [dateOfPublication || null, place_of_death_province || null, newsReportPlatform || null]);
+    const result = await pool.query(query, [dateOfPublication || null, place_of_death_province || null, newsReportPlatform || null, victim_name|| null, perpetrator_name||null]);
 
     res.json(result.rows);
   } catch (err) {

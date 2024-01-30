@@ -8,6 +8,8 @@ const SearchDatabase = () => {
     dateOfPublication: "",
     place_of_death_province: "",
     newsReportPlatform: "",
+    perpetrator_name: "",
+    victim_name:"",
   });
 
   const [searchResults, setSearchResults] = useState([]);
@@ -81,10 +83,10 @@ const SearchDatabase = () => {
       const formattedDate = searchParams.dateOfPublication.replace(/\//g, '');
   
       // Destructure the searchParams object
-      const { dateOfPublication, place_of_death_province, newsReportPlatform } = searchParams;
+      const { dateOfPublication, place_of_death_province, newsReportPlatform, victim_name,perpetrator_name } = searchParams;
   
       // Build the query string with all parameters
-      const queryString = `?dateOfPublication=${formattedDate}&place_of_death_province=${place_of_death_province}&newsReportPlatform=${newsReportPlatform}`;
+      const queryString = `?dateOfPublication=${formattedDate}&place_of_death_province=${place_of_death_province}&newsReportPlatform=${newsReportPlatform}&victim_name=${victim_name}&perpetrator_name=${perpetrator_name}`;
   
       // Make a request to your backend API with the updated queryString
       const response = await fetch(`http://localhost:5000/search${queryString}`);
@@ -130,6 +132,22 @@ const SearchDatabase = () => {
             className="form-control"
             value={searchParams.newsReportPlatform}
             onChange={(e) => setSearchParams((prevParams) => ({ ...prevParams, newsReportPlatform: e.target.value }))}
+          />
+          <label htmlFor="victim_name">Victim Name:</label>
+          <input
+            type="text"
+            id="victim_name"
+            className="form-control"
+            value={searchParams.victim_name}
+            onChange={(e) => setSearchParams((prevParams) => ({ ...prevParams, victim_name: e.target.value }))}
+          />
+          <label htmlFor="Perpetrator_name">Perpetrator Name:</label>
+          <input
+            type="text"
+            id="perpetrator_name"
+            className="form-control"
+            value={searchParams.perpetrator_name}
+            onChange={(e) => setSearchParams((prevParams) => ({ ...prevParams, perpetrator_name: e.target.value }))}
           />
 
           <button

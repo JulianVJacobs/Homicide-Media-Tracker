@@ -1,10 +1,6 @@
-
-
-
 import React, { useState } from "react";
-
+import townsByProvince from "./townsByProvince";
 const VictimForm = ({ onSubmit }) => {
-  // State for the current victim
   const [currentVictim, setCurrentVictim] = useState({
     victimName: "",
     dateOfDeath: "",
@@ -21,106 +17,16 @@ const VictimForm = ({ onSubmit }) => {
     modeOfDeathGeneral: "",
   });
 
-
+  const [hasVictims, setHasVictims] = useState(false);
   const [towns, setTowns] = useState([]);
+  const [customTown, setCustomTown] = useState(""); // Added state for custom town
 
-  // Hard-coded townsByProvince for simplicity
+  
 
-  const townsByProvince = {
-    "Eastern Cape": [
-      "Alice",
-      "Butterworth",
-      "East London",
-      "Graaff-Reinet",
-      "Grahamstown",
-      "King William’s Town",
-      "Mthatha",
-      "Port Elizabeth",
-      "Queenstown",
-      "Uitenhage",
-      "Zwelitsha",
-    ],
-
-    "Free State": [
-      "Bethlehem",
-      "Bloemfontein",
-      "Jagersfontein",
-      "Kroonstad",
-      "Odendaalsrus",
-      "Parys",
-      "Phuthaditjhaba",
-      "Sasolburg",
-      "Virginia",
-      "Welkom",
-    ],
-
-    Gauteng: [
-      "Benoni",
-      "Boksburg",
-      "Brakpan",
-      "Carletonville",
-      "Germiston",
-      "Johannesburg",
-      "Krugersdorp",
-      "Pretoria",
-      "Randburg",
-      "Randfontein",
-      "Roodepoort",
-      "Soweto",
-      "Springs",
-      "Vanderbijlpark",
-      "Vereeniging",
-    ],
-
-    "KwaZulu-Natal": [
-      "Durban",
-      "Empangeni",
-      "Ladysmith",
-      "Newcastle",
-      "Pietermaritzburg",
-      "Pinetown",
-      "Ulundi",
-      "Umlazi",
-    ],
-
-    Limpopo: [
-      "Giyani",
-      "Lebowakgomo",
-      "Musina",
-      "Phalaborwa",
-      "Polokwane",
-      "Seshego",
-      "Sibasa",
-      "Thabazimbi",
-    ],
-
-    " Mpumalanga": ["Emalahleni", "Nelspruit", "Secunda"],
-
-    "North West": [
-      "Klerksdorp",
-      "Mahikeng",
-      "Mmabatho",
-      "Potchefstroom",
-      "Rustenburg",
-    ],
-
-    "Northern Cape": ["Kimberley", "Kuruman", "Port Nolloth"],
-
-    "Western Cape": [
-      "Bellville",
-      "Cape Town",
-      "Constantia",
-      "George",
-      "Hopefield",
-      "Oudtshoorn",
-      "Paarl",
-      "Simon’s Town",
-      "Stellenbosch",
-      "Swellendam",
-      "Worcester",
-    ],
+  const handleClearAllVictims = () => {
+    setVictimData([]); // Clear all victim data
+    setHasVictims(false); // Update hasVictims when victims are cleared
   };
-
   // Event handler for province change
   const handleProvinceChange = (e) => {
     const selectedProvince = e.target.value;
@@ -136,19 +42,25 @@ const VictimForm = ({ onSubmit }) => {
 
   // Event handler for adding a victim
   const handleAddVictim = () => {
-    // Concatenate the current victim data with the existing data
+    const townToUse =
+      currentVictim.town === "Other" ? customTown : currentVictim.town;
+
     const concatenatedVictim = Object.keys(currentVictim).reduce(
       (acc, key) => ({
         ...acc,
-        [key]: victimData.map((victim) => victim[key]).concat(currentVictim[key]).join(","),
+        [key]: victimData
+          .map((victim) => victim[key])
+          .concat(currentVictim[key])
+          .join(","),
       }),
       {}
     );
 
-    // Save the concatenated victim data to the list
-    setVictimData((prevData) => [...prevData, concatenatedVictim]);
-
-    // Clear the current victim data for the next entry
+    setVictimData((prevData) => [
+      ...prevData,
+      { ...concatenatedVictim, town: townToUse },
+    ]);
+    setHasVictims(true);
     setCurrentVictim({
       victimName: "",
       dateOfDeath: "",
@@ -164,6 +76,7 @@ const VictimForm = ({ onSubmit }) => {
       modeOfDeathSpecific: "",
       modeOfDeathGeneral: "",
     });
+    setCustomTown(""); // Clear custom town input
   };
 
   // Event handler for submitting all victim data
@@ -181,11 +94,10 @@ const VictimForm = ({ onSubmit }) => {
       console.error("No victim data to submit.");
     }
   };
-  
 
   return (
     <div className="col-md-20 text-gray-800">
-     <label htmlFor="victimName">Victim Name:</label>
+      <label htmlFor="victimName">Victim Name:</label>
       <input
         type="text"
         id="victimName"
@@ -232,7 +144,6 @@ const VictimForm = ({ onSubmit }) => {
         <option value="Mpumalanga">Mpumalanga</option>
         <option value="Limpopo">Limpopo</option>
         <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-        <option value="Cape of Good Hope">Cape of Good Hope</option>
         <option value="Orange Free State">Orange Free State</option>
         <option value="Transvaal">Transvaal</option>
         <option value="Natal">Natal</option>
@@ -248,20 +159,34 @@ const VictimForm = ({ onSubmit }) => {
         id="town"
         className="form-control"
         value={currentVictim.town}
-        onChange={(e) =>
+        onChange={(e) => {
           setCurrentVictim((prevVictim) => ({
             ...prevVictim,
             town: e.target.value,
-          }))
-        }
+          }));
+          // Clear custom town input when selecting a town from the dropdown
+          setCustomTown("");
+        }}
       >
-        {/* Dynamically generate options based on the selected province */}
         {towns.map((town) => (
           <option key={town} value={town}>
             {town}
           </option>
         ))}
+        <option value="Other">Other</option>
       </select>
+
+      {/* Render input field for custom town if "Other" is selected */}
+      {currentVictim.town === "Other" && (
+        <input
+          type="text"
+          id="customTown"
+          className="form-control"
+          placeholder="Enter custom town"
+          value={customTown}
+          onChange={(e) => setCustomTown(e.target.value)}
+        />
+      )}
 
       {/* ... other form fields for the current victim */}
       <label htmlFor="locationType">Type of Location:</label>
@@ -466,8 +391,20 @@ const VictimForm = ({ onSubmit }) => {
         <option value="Poison or burning">Poison or burning</option>
         <option value="Firearm injury">Firearm injury</option>
       </select>
-      <button className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300" onClick={handleAddVictim}>Add Victim</button>
-
+      <button
+        className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+        onClick={handleAddVictim}
+      >
+        Add Victim
+      </button>
+      {hasVictims && ( // Step 2
+        <button
+          className="bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+          onClick={handleClearAllVictims}
+        >
+          Clear All Victims
+        </button>
+      )}
 
       {victimData.length > 0 && (
         <div>
@@ -501,16 +438,20 @@ const VictimForm = ({ onSubmit }) => {
                   <td>{victim.ageRangeOfVictim}</td>
                   <td>{victim.modeOfDeathSpecific}</td>
                   <td>{victim.modeOfDeathGeneral}</td>
-
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
-     
+
       {/* Button to submit victim data */}
-      <button className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-black font-medium px-4 py-2 rounded transition duration-300" onClick={handleVictimSubmit}>Submit Victims</button>
+      <button
+        className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-black font-medium px-4 py-2 rounded transition duration-300"
+        onClick={handleVictimSubmit}
+      >
+        Submit Victims
+      </button>
     </div>
   );
 };

@@ -184,29 +184,29 @@ const InputHomicide = () => {
       <h1 className="text-center text-4xl font-bold text-gray-500 mb-5">
         Input Data
       </h1>
-
+  
       {/* Article Details Section */}
-      <div className="bg-white p-5 mb-5">
+      <div className="bg-white p-5 mb-5 border rounded-md shadow-md">
         <h2 className="text-xl font-bold mb-3 text-gray-800">
           Article Details
         </h2>
         <ArticleForm onSubmit={onSubmitArticleForm} />
       </div>
-
+  
       {/* Victim Details Section */}
-      <div className="bg-white p-5 mb-5">
+      <div className="bg-white p-5 mb-5 border rounded-md shadow-md">
         <h2 className="text-xl font-bold mb-3 text-gray-800">Victim Details</h2>
         <VictimForm onSubmit={onSubmitVictimForm} />
       </div>
-
+  
       {/* Perpetrator Details Section */}
-      <div className="bg-white p-5 mb-5">
+      <div className="bg-white p-5 mb-5 border rounded-md shadow-md">
         <h2 className="text-xl font-bold mb-3 text-gray-800">
           Perpetrator Details
         </h2>
         <PerpetratorForm onSubmit={onSubmitPerpetratorForm} />
       </div>
-
+  
       <button
         className="btn btn-success mt-3"
         onClick={onSubmitForm}
@@ -214,12 +214,12 @@ const InputHomicide = () => {
       >
         {loading ? "Adding..." : "Add"}
       </button>
-
+  
       {successMessage && (
         <div className="text-green-500 mt-3">{successMessage}</div>
       )}
     </div>
   );
-};
+      }
 
 export default InputHomicide;

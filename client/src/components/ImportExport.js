@@ -64,7 +64,6 @@ const ImportExport = () => {
           news_report_id: row["news_report_id"],
           news_report_url: row["news_report_url"],
           news_report_headline: row["news_report_headline"],
-         // date_of_publication: row["date_of_publication"],
           author: row["author"],
           wire_service: row["wire_service"],
           language: row["language"],
@@ -168,8 +167,8 @@ const ImportExport = () => {
                     className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                   >
                     {Object.entries(info).map(([key, value], cellIndex) => (
-                      <td key={cellIndex} className="px-6 py-4">
-                        {key === "date_of_publication"
+                      <td key={cellIndex} className="px-5 py-4">
+                        {key === " date_of_publication"
                           ? excelDateToJSDate(value).toLocaleDateString("en-gb")
                           : value}
                           

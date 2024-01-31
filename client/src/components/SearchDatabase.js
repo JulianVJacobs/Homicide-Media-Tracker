@@ -105,8 +105,8 @@ const SearchDatabase = () => {
   
   return (
     <div className="bg-gradient-to-b from-gray-200 to-gray-600 p-5">
-      <form onSubmit={handleSubmit}>
-        <div className="col-md-20 text-gray-800 font-bold">
+    <form onSubmit={handleSubmit}>
+      <div className="col-md-20 text-gray-800 font-bold">
           <label htmlFor="dateOfPublication">Date of Publication:</label>
           <input
             type="date"
@@ -178,10 +178,10 @@ const SearchDatabase = () => {
       </form>
 
       {searchResults.length > 0 && (
-        <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-          <h2 className="text-xl font-bold mb-2">Search Results</h2>
-          <table className="table-auto">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <div className="relative overflow-x-auto shadow-md sm:rounded-lg ">
+          <h2 className="text-xl font-bold mb-2 text-gray-900 mt-5 ">Search Results</h2>
+          <table className="table-auto ">
+          <thead className="text-l text-gray-700 uppercase bg-gray-400 dark:bg-gray-700 text-black ">
               <tr>
               <th scope="col" className="px-6 py-3">
                 News Report ID
@@ -274,7 +274,7 @@ const SearchDatabase = () => {
             </thead>
             <tbody>
               {searchResults.map((result) => (
-                <tr key={result.news_report_id}>
+                <tr key={result.news_report_id}className="border-b  border-gray-700 font-bold bg-gray-200  text-gray-800">
                   <td className="px-6 py-4">{result.news_report_id}</td>
                 <td className="px-6 py-4">{result.news_report_url}</td>
                 <td className="px-6 py-4">{result.news_report_headline}</td>

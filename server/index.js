@@ -494,46 +494,55 @@ app.get("/search", async (req, res) => {
 
     // Build the query based on the provided parameters
     const query = `
-      SELECT
-        a.article_id,
-        a.news_report_id,
-        a.news_report_url,
-        a.news_report_headline,
-        a.date_of_publication,
-        a.author,
-        a.wire_service,
-        a.language,
-        a.type_of_source,
-        a.news_report_platform,
-        v.victim_name,
-        v.date_of_death,
-        v.place_of_death_province,
-        v.place_of_death_town,
-        v.type_of_location,
-        v.sexual_assault,
-        v.gender_of_victim,
-        v.race_of_victim,
-        v.age_of_victim,
-        v.age_range_of_victim,
-        v.mode_of_death_specific,
-        v.mode_of_death_general,
-        p.perpetrator_name,
-        p.perpetrator_relationship_to_victim,
-        p.suspect_identified,
-        p.suspect_arrested,
-        p.suspect_charged,
-        p.conviction,
-        p.sentence,
-        p.type_of_murder
-      FROM articles a
-      LEFT JOIN victim v ON a.article_id = v.article_id
-      LEFT JOIN perpetrator p ON a.article_id = p.article_id
-      WHERE
-      ($1::date IS NULL OR a.date_of_publication = $1::date)
-      AND ($2::text IS NULL OR v.place_of_death_province = $2::text)
-      AND ($3::text IS NULL OR a.news_report_platform = $3::text)
-      AND ($4::text IS NULL OR v.victim_name = $4::text)
-      AND ($5::text IS NULL OR p.perpetrator_name = $5::text)
+    SELECT
+    a.article_id,
+    a.news_report_id,
+    a.news_report_url,
+    a.news_report_headline,
+    a.date_of_publication,
+    a.author,
+    a.wire_service,
+    a.language,
+    a.type_of_source,
+    a.news_report_platform,
+    v.victim_name,
+    v.date_of_death,
+    v.place_of_death_province,
+    v.place_of_death_town,
+    v.type_of_location,
+    v.sexual_assault,
+    v.gender_of_victim,
+    v.race_of_victim,
+    v.age_of_victim,
+    v.age_range_of_victim,
+    v.mode_of_death_specific,
+    v.mode_of_death_general,
+    p.perpetrator_name,
+    p.perpetrator_relationship_to_victim,
+    p.suspect_identified,
+    p.suspect_arrested,
+    p.suspect_charged,
+    p.conviction,
+    p.sentence,
+    p.type_of_murder
+FROM articles a
+LEFT JOIN victim v ON a.article_id = v.article_id
+LEFT JOIN perpetrator p ON a.article_id = p.article_id
+WHERE
+    ($1::date IS NULL OR a.date_of_publication = $1::date)
+    AND ($2::text IS NULL OR (
+        LOWER(split_part(v.victim_name, ' ', 1)) LIKE LOWER($2::text)
+        OR LOWER(split_part(v.victim_name, ' ', 2)) LIKE LOWER($2::text)
+        OR LOWER(v.victim_name) LIKE LOWER($2::text)
+    ))
+    AND ($3::text IS NULL OR a.news_report_platform ILIKE $3::text)
+    AND ($4::text IS NULL OR (
+        LOWER(split_part(v.victim_name, ' ', 1)) LIKE LOWER($4::text)
+        OR LOWER(split_part(v.victim_name, ' ', 2)) LIKE LOWER($4::text)
+        OR LOWER(v.victim_name) LIKE LOWER($4::text)
+    ))
+    AND ($5::text IS NULL OR p.perpetrator_name ILIKE $5::text)
+
     `;
 
     const result = await pool.query(query, [dateOfPublication || null, place_of_death_province || null, newsReportPlatform || null, victim_name|| null, perpetrator_name||null]);

@@ -56,7 +56,7 @@ const ImportExport = () => {
   const handleAddToDatabase = async () => {
     try {
       setLoading(true);
-
+      const failedIds = [];
       // Iterate through each row and send it to the backend
       for (const row of excelData) {
         const rowData = {
@@ -105,14 +105,22 @@ const ImportExport = () => {
 
         if (!response.ok) {
           console.error("Failed to add data to the database");
+          console.log("PROBLEM WITH", rowData);
+          // Handle error appropriately
+          failedIds.push(row["news_report_id"]);
           // Handle error appropriately
         }
       }
-      setCompleted(true);
-      setTimeout(() => {
-        navigate("/ListHomicides"); // Redirect after completion
-      }, 3000); // Redirect after 3 seconds (adjust as needed)
-      console.log("All data added to the database successfully!");
+      if (failedIds.length > 0) {
+        // Display an error message with the failed news_report_ids
+        alert(`Failed to add data for news_report_ids: ${failedIds.join(", ")}`);
+      } else {
+        setCompleted(true);
+        setTimeout(() => {
+          navigate("/ListHomicides"); // Redirect after successful completion
+        }, 3000); // Redirect after 3 seconds (adjust as needed)
+        console.log("All data added to the database successfully!");
+      }
     } catch (error) {
       console.error("Error adding data to the database", error.message);
       // Handle error appropriately

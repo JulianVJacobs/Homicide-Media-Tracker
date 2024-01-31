@@ -126,7 +126,7 @@ const ImportExport = () => {
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">
-            Choose Excel or CSV file:
+            Choose Excel File:
           </label>
           <input
             type="file"

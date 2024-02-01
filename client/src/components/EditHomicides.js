@@ -6,93 +6,48 @@ import ArticleForm from "./ArticleForm";
 import ListHomicides from "./ListHomicides";
 
 const EditHomicides = ({ todo }) => {
-  // State for each form
+  const [editStep, setEditStep] = useState(0); // 0: Select, 1: Edit Article, 2: Edit Victim, 3: Edit Perpetrator
+
   const [victimData, setVictimData] = useState({
-    victimName: todo.victim_name,
-    ageOfVictim: todo.age_of_victim,
-    dateOfDeath: todo.date_of_death,
-    province: todo.province,
-    town: todo.town,
-    locationType: todo.location_type,
-    sexualAssault: todo.sexual_assault,
-    genderOfVictim: todo.gender_of_victim,
-    race: todo.race,
-    modeOfDeathSpecific: todo.mode_of_death_specific,
-    modeOfDeathGeneral: todo.mode_of_death_general,
-    ageRangeOfVictim: todo.age_range_of_victim,
+    // ... your initial victimData
   });
 
   const [perpetratorData, setPerpetratorData] = useState({
-    nameOfPerpetrator: todo.name_of_perpetrator,
-    relationshipToVictim: todo.relationship_to_victim,
-    suspectIdentified: todo.suspect_identified,
-    suspectArrested: todo.suspect_arrested,
-    suspectCharged: todo.suspect_charged,
-    conviction: todo.conviction,
-    sentence: todo.sentence,
-    typeOfMurder: todo.typeOfMurder,
+    // ... your initial perpetratorData
   });
 
   const [articleData, setArticleData] = useState({
-    // newsReportId: todo.news_report_id,
-    newspaperArticle: todo.newspaper_article,
-    date: todo.date,
-    newsReportUrl: todo.news_report_url,
-    newsReportHeadline: todo.news_report_headline,
-    author: todo.author,
-    wireService: todo.wire_service,
-    language: todo.language,
-    sourceType: todo.source_type,
+    // ... your initial articleData
   });
 
-  // Function to update data in the backend
+  const handleEditStepChange = (step) => {
+    setEditStep(step);
+  };
+
+  const handleBack = () => {
+    setEditStep(0);
+  };
 
   const updateDescription = async (e) => {
     e.preventDefault();
 
     try {
-      // Filter out empty or undefined values
-      const filteredVictimData = filterData(victimData);
-      const filteredPerpetratorData = filterData(perpetratorData);
-      const filteredArticleData = Object.fromEntries(
-        Object.entries(articleData).filter(
-          ([key, value]) =>
-            key !== "newsReportId" && value !== undefined && value !== ""
-        )
-      );
+      let body = {};
 
-      // Handle undefined values explicitly
-      for (const key in filteredVictimData) {
-        if (filteredVictimData[key] === undefined) {
-          delete filteredVictimData[key];
-        }
+      switch (editStep) {
+        case 1:
+          body = filterData(articleData);
+          break;
+        case 2:
+          body = filterData(victimData);
+          break;
+        case 3:
+          body = filterData(perpetratorData);
+          break;
+        default:
+          // Handle default case
+          break;
       }
-
-      for (const key in filteredPerpetratorData) {
-        if (filteredPerpetratorData[key] === undefined) {
-          delete filteredPerpetratorData[key];
-        }
-      }
-
-      for (const key in filteredArticleData) {
-        if (filteredArticleData[key] === undefined) {
-          delete filteredArticleData[key];
-        }
-      }
-
-      // Convert newsReportId to an integer if it's not undefined
-      // if (filteredArticleData.newsReportId !== undefined) {
-      //   filteredArticleData.newsReportId = parseInt(
-      //     filteredArticleData.newsReportId
-      //   );
-      // }
-
-      // Merge filtered data from all forms into a single object
-      const body = {
-        ...filteredVictimData,
-        ...filteredPerpetratorData,
-        ...filteredArticleData,
-      };
 
       const response = await fetch(
         `http://localhost:5000/homicides/${todo.homicide_id}`,
@@ -109,28 +64,12 @@ const EditHomicides = ({ todo }) => {
     }
   };
 
-  // Helper function to filter out empty or undefined values
   const filterData = (data) => {
     return Object.fromEntries(
       Object.entries(data).filter(
         ([_, value]) => value !== undefined && value !== ""
       )
     );
-  };
-
-  // Function to handle article form submission
-  const handleArticleFormSubmit = (data) => {
-    setArticleData(data);
-  };
-
-  // Function to handle victim form submission
-  const handleVictimFormSubmit = (data) => {
-    setVictimData(data);
-  };
-
-  // Function to handle perpetrator form submission
-  const handlePerpetratorFormSubmit = (data) => {
-    setPerpetratorData(data);
   };
 
   return (
@@ -154,26 +93,75 @@ const EditHomicides = ({ todo }) => {
               </button>
             </div>
 
-            <div className="modal-body">
-              {/* Render article form */}
-              <ArticleForm
-                articleData={articleData}
-                setArticleData={setArticleData}
-                onSubmit={handleArticleFormSubmit}
-              />
-              {/* Render victim form */}
-              <VictimForm
-                victimData={victimData}
-                setVictimData={setVictimData}
-                onSubmit={handleVictimFormSubmit}
-              />
+            <div className="modal-body flex flex-wrap justify-center">
+              {editStep === 0 && (
+                <Fragment>
+                  {/* Select edit type */}
+                  <button
+                    className="btn btn-primary m-2"
+                    onClick={() => handleEditStepChange(1)}
+                  >
+                    Edit Article Data
+                  </button>
+                  <button
+                    className="btn btn-primary m-2"
+                    onClick={() => handleEditStepChange(2)}
+                  >
+                    Edit Victim Data
+                  </button>
+                  <button
+                    className="btn btn-primary m-2"
+                    onClick={() => handleEditStepChange(3)}
+                  >
+                    Edit Perpetrator Data
+                  </button>
+                </Fragment>
+              )}
 
-              {/* Render perpetrator form */}
-              <PerpetratorForm
-                perpetratorData={perpetratorData}
-                setPerpetratorData={setPerpetratorData}
-                onSubmit={handlePerpetratorFormSubmit}
-              />
+              {editStep === 1 && (
+                <Fragment>
+                  <ArticleForm
+                    articleData={articleData}
+                    setArticleData={setArticleData}
+                  />
+                  <button
+                    className="btn btn-secondary "
+                    onClick={() => handleBack()}
+                  >
+                    Back
+                  </button>
+                </Fragment>
+              )}
+
+              {editStep === 2 && (
+                <Fragment>
+                  <VictimForm
+                    victimData={victimData}
+                    setVictimData={setVictimData}
+                  />
+                  <button
+                    className="btn btn-secondary m-2"
+                    onClick={() => handleBack()}
+                  >
+                    Back
+                  </button>
+                </Fragment>
+              )}
+
+              {editStep === 3 && (
+                <Fragment>
+                  <PerpetratorForm
+                    perpetratorData={perpetratorData}
+                    setPerpetratorData={setPerpetratorData}
+                  />
+                  <button
+                    className="btn btn-secondary m-2"
+                    onClick={() => handleBack()}
+                  >
+                    Back
+                  </button>
+                </Fragment>
+              )}
             </div>
 
             <div className="modal-footer">
@@ -183,7 +171,7 @@ const EditHomicides = ({ todo }) => {
                 data-dismiss="modal"
                 onClick={(e) => updateDescription(e)}
               >
-                Edit
+                Submit
               </button>
 
               <button

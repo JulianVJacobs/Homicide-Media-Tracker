@@ -21,7 +21,10 @@ const VictimForm = ({ onSubmit }) => {
   const [towns, setTowns] = useState([]);
   const [customTown, setCustomTown] = useState(""); // Added state for custom town
 
-  
+  const getLastCommaSeparatedValue = (str) => {
+    const values = str.split(',').map(value => value.trim());
+    return values.length > 0 ? values[values.length - 1] : '';
+  };
 
   const handleClearAllVictims = () => {
     setVictimData([]); // Clear all victim data
@@ -426,18 +429,18 @@ const VictimForm = ({ onSubmit }) => {
             <tbody>
               {victimData.map((victim, index) => (
                 <tr key={index}>
-                  <td>{victim.victimName}</td>
-                  <td>{victim.dateOfDeath}</td>
-                  <td>{victim.province}</td>
-                  <td>{victim.town}</td>
-                  <td>{victim.locationType}</td>
-                  <td>{victim.sexualAssault}</td>
-                  <td>{victim.genderOfVictim}</td>
-                  <td>{victim.race}</td>
-                  <td>{victim.ageOfVictim}</td>
-                  <td>{victim.ageRangeOfVictim}</td>
-                  <td>{victim.modeOfDeathSpecific}</td>
-                  <td>{victim.modeOfDeathGeneral}</td>
+                  <td>{getLastCommaSeparatedValue(victim.victimName)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.dateOfDeath)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.province)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.town)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.locationType)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.sexualAssault)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.genderOfVictim)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.race)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.ageOfVictim)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.ageRangeOfVictim)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.modeOfDeathSpecific)}</td>
+                  <td>{getLastCommaSeparatedValue(victim.modeOfDeathGeneral)}</td>
                 </tr>
               ))}
             </tbody>

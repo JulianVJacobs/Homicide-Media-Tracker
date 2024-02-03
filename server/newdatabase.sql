@@ -28,6 +28,7 @@ CREATE TABLE Victim (
     age_range_of_victim VARCHAR(255),
     mode_of_death_specific VARCHAR(100),
     mode_of_death_general VARCHAR(100)
+    type_of_murder VARCHAR(255)
 );
 
 -- Create Perpetrator Table
@@ -41,7 +42,7 @@ CREATE TABLE Perpetrator (
     suspect_charged VARCHAR(255),
     conviction VARCHAR(255),
     sentence VARCHAR(255),
-    type_of_murder VARCHAR(255)
+    
 );
 
 -- Create ArticleVictim Linking Table

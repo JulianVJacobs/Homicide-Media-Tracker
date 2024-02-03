@@ -157,6 +157,7 @@ const ArticleForm = ({ onSubmit }) => {
         className="form-control"
         value={dateOfPublication}
         onChange={(e) => setDateOfPublication(e.target.value)}
+        max="9999-12-31"
       />
 
       <button className="btn btn-primary mt-3" onClick={handleSubmit}>

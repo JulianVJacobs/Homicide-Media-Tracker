@@ -80,6 +80,13 @@ const InputHomicide = () => {
       const victimRace = victimData.map(
         (victimObject) => victimObject.victims.race
       );
+
+      const typeOfMurder = victimData.map(
+        (victimObject) => victimObject.typeOfMurder
+      );
+      const SubmitTypeOfMurder = typeOfMurder[0];
+
+      
       const SubmitRace = victimRace[0];
       const perpetratorName = perpetratorData.map(
         (perpetratorObject) => perpetratorObject.perpetratorName
@@ -115,10 +122,7 @@ const InputHomicide = () => {
       );
       const SubmitSentence = sentence[0];
 
-      const typeOfMurder = perpetratorData.map(
-        (perpetratorObject) => perpetratorObject.typeOfMurder
-      );
-      const SubmitTypeOfMurder = typeOfMurder[0];
+    
       
       
       // Combine all data for the API request
@@ -144,6 +148,7 @@ const InputHomicide = () => {
         age_range_of_victim:SubmitAgeRange,
         mode_of_death_specific:SubmitModeOfDeathSpecific,
         mode_of_death_general:SubmitModeGeneral,
+        type_of_murder: SubmitTypeOfMurder,
         perpetrator_name: SubmitPerpetratorName,
         perpetrator_relationship_to_victim: SubmitRelationshipToVictim,
                 suspect_identified: SubmitSuspectIdentified,
@@ -151,7 +156,7 @@ const InputHomicide = () => {
         suspect_charged: SubmitSuspectCharged,
         conviction: SubmitSuspectConviction,
         sentence: SubmitSentence,
-        type_of_murder: SubmitTypeOfMurder,
+       
           
         
       };

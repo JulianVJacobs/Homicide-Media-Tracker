@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import townsByProvince from "./townsByProvince";
+import Select from "react-select";
+
+
 const VictimForm = ({ onSubmit }) => {
   const [currentVictim, setCurrentVictim] = useState({
     victimName: "",
@@ -7,7 +10,6 @@ const VictimForm = ({ onSubmit }) => {
     province: "",
     town: "",
     locationType: "",
-    location: "",
     sexualAssault: "",
     genderOfVictim: "",
     race: "",
@@ -15,6 +17,7 @@ const VictimForm = ({ onSubmit }) => {
     ageRangeOfVictim: "",
     modeOfDeathSpecific: "",
     modeOfDeathGeneral: "",
+    typeOfMurder: "",
   });
 
   const [hasVictims, setHasVictims] = useState(false);
@@ -29,6 +32,7 @@ const VictimForm = ({ onSubmit }) => {
   const handleClearAllVictims = () => {
     setVictimData([]); // Clear all victim data
     setHasVictims(false); // Update hasVictims when victims are cleared
+    setTowns([]);
   };
   // Event handler for province change
   const handleProvinceChange = (e) => {
@@ -42,27 +46,55 @@ const VictimForm = ({ onSubmit }) => {
 
   // State for the list of entered victims
   const [victimData, setVictimData] = useState([]);
+  const murderOptions = [
+    { value: "Adult male homicide", label: "Adult male homicide" },
+    { value: "Adult female homicide", label: "Adult female homicide" },
+    { value: "Eldercide", label: "Eldercide" },
+    { value: "Child murder", label: "Child murder" },
+    { value: "Multiple killing", label: "Multiple killing" },
+    { value: "Political killing", label: "Political killing" },
+    { value: "Gang-related killing", label: "Gang-related killing" },
+    { value: "Family killing", label: "Family killing" },
+    { value: "Witch killing", label: "Witch killing" },
+    { value: "LGBTQ killing", label: "LGBTQ killing" },
+    { value: "Sex worker killing", label: "Sex worker killing" },
+    { value: "Farm killing", label: "Farm killing" },
+    { value: "Serial killing", label: "Serial killing" },
+    { value: "Spree killing", label: "Spree killing" },
+    { value: "Intimate partner killing", label: "Intimate partner killing" },
+    { value: "Rural killing", label: "Rural killing" },
+    { value: "Ritual killing", label: "Ritual killing" },
+    { value: "Assassination", label: "Assassination" },
+    { value: "Culpable homicide", label: "Culpable homicide" },
+    { value: "Matricide", label: "Matricide" },
+    { value: "Patricide", label: "Patricide" },
+    { value: "Natural causes", label: "Natural causes" },
+    {
+      value: "Self-inflicted (including suicide)",
+      label: "Self-inflicted (including suicide)",
+    },
+    { value: "Killing in police custody", label: "Killing in police custody" },
+    { value: "Missing presumed dead", label: "Missing presumed dead" },
+    { value: "Hired killers", label: "Hired killers" },
+    { value: "Concealment of birth", label: "Concealment of birth" },
+    { value: "Terrorism or war", label: "Terrorism or war" },
+    { value: "Other (add category)", label: "Other (add category)" },
+  ];
 
   // Event handler for adding a victim
   const handleAddVictim = () => {
     const townToUse =
       currentVictim.town === "Other" ? customTown : currentVictim.town;
-
-    const concatenatedVictim = Object.keys(currentVictim).reduce(
-      (acc, key) => ({
-        ...acc,
-        [key]: victimData
-          .map((victim) => victim[key])
-          .concat(currentVictim[key])
-          .join(","),
-      }),
-      {}
-    );
-
+  
+    // Add the current victim to victimData array directly
     setVictimData((prevData) => [
       ...prevData,
-      { ...concatenatedVictim, town: townToUse },
+      {
+        ...currentVictim,
+        town: townToUse,
+      },
     ]);
+  
     setHasVictims(true);
     setCurrentVictim({
       victimName: "",
@@ -70,7 +102,6 @@ const VictimForm = ({ onSubmit }) => {
       province: "",
       town: "",
       locationType: "",
-      location: "",
       sexualAssault: "",
       genderOfVictim: "",
       race: "",
@@ -78,24 +109,53 @@ const VictimForm = ({ onSubmit }) => {
       ageRangeOfVictim: "",
       modeOfDeathSpecific: "",
       modeOfDeathGeneral: "",
+      typeOfMurder: "",
     });
     setCustomTown(""); // Clear custom town input
   };
-
+  
+  
   // Event handler for submitting all victim data
-  const handleVictimSubmit = () => {
-    // Ensure there is at least one victim in the array
-    if (victimData.length > 0) {
-      // Submit the last victim data to the parent component
-      const lastVictim = victimData[victimData.length - 1];
-      onSubmit({
-        victims: lastVictim,
-        // ... (other fields)
-      });
-    } else {
-      // Handle the case where there are no victims
-      console.error("No victim data to submit.");
-    }
+  // Event handler for submitting all victim data
+// Event handler for submitting all victim data
+const handleVictimSubmit = () => {
+  console.log("Victim data", victimData);
+
+  if (victimData.length > 0) {
+    const formattedVictims = Object.keys(currentVictim).reduce(
+      (acc, key) => {
+        acc[key] = victimData.map((victim) => victim[key]).join(", ");
+        return acc;
+      },
+      {}
+    );
+
+    onSubmit({
+      victims: formattedVictims, // Wrap in an array to match the expected structure
+      // ... (other fields)
+    });
+
+    console.log("formatted victims: ", formattedVictims);
+  } else {
+    console.error("No victim data to submit.");
+  }
+};
+
+
+  
+  const customStyles = {
+    control: (provided) => ({
+      ...provided,
+      border: "1px solid #ccc",
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      color: "#000", // Set the text color to black
+      background: state.isSelected ? "#f0f0f0" : "#fff", // Background color on selection
+      "&:hover": {
+        background: "#f0f0f0", // Background color on hover
+      },
+    }),
   };
 
   return (
@@ -127,7 +187,11 @@ const VictimForm = ({ onSubmit }) => {
             dateOfDeath: e.target.value,
           }))
         }
+        max="9999-12-31"
       />
+      <label htmlFor="date_of_death">Date of Death:</label>
+
+
 
       {/* ... other form fields for the current victim */}
       <label htmlFor="province">Location of death - PROVINCE:</label>
@@ -394,6 +458,26 @@ const VictimForm = ({ onSubmit }) => {
         <option value="Poison or burning">Poison or burning</option>
         <option value="Firearm injury">Firearm injury</option>
       </select>
+
+      <label htmlFor="typeOfMurder">
+        Type of Murder (Select all that apply):
+      </label>
+      <Select
+  id="typeOfMurder"
+  isMulti
+  options={murderOptions}
+  styles={customStyles}
+  value={murderOptions.filter((option) => currentVictim.typeOfMurder.includes(option.label))}
+  onChange={(selectedOptions) => {
+    const selectedLabels = selectedOptions.map((option) => option.label);
+    const selectedString = selectedLabels.join(';');
+
+    setCurrentVictim((prevVictim) => ({
+      ...prevVictim,
+      typeOfMurder: selectedString,
+    }));
+  }}
+/>
       <button
         className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-black font-medium px-4 py-2 rounded transition duration-300"
         onClick={handleAddVictim}
@@ -425,24 +509,25 @@ const VictimForm = ({ onSubmit }) => {
             <th>Age Range</th>
             <th>Mode of death specific</th>
             <th>Mode of death general</th>
-
+            <th>Type of murder</th>
             <tbody>
-              {victimData.map((victim, index) => (
-                <tr key={index}>
-                  <td>{getLastCommaSeparatedValue(victim.victimName)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.dateOfDeath)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.province)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.town)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.locationType)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.sexualAssault)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.genderOfVictim)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.race)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.ageOfVictim)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.ageRangeOfVictim)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.modeOfDeathSpecific)}</td>
-                  <td>{getLastCommaSeparatedValue(victim.modeOfDeathGeneral)}</td>
-                </tr>
-              ))}
+            {victimData.map((victim, index) => (
+          <tr key={index}>
+            <td>{victim.victimName}</td>
+            <td>{victim.dateOfDeath}</td>
+            <td>{victim.province}</td>
+            <td>{victim.town}</td>
+            <td>{victim.locationType}</td>
+            <td>{victim.sexualAssault}</td>
+            <td>{victim.genderOfVictim}</td>
+            <td>{victim.race}</td>
+            <td>{victim.ageOfVictim}</td>
+            <td>{victim.ageRangeOfVictim}</td>
+            <td>{victim.modeOfDeathSpecific}</td>
+            <td>{victim.modeOfDeathGeneral}</td>
+            <td>{victim.typeOfMurder}</td>
+          </tr>
+        ))}
             </tbody>
           </table>
         </div>

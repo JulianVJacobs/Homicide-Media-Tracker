@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Select from "react-select";
+
 // ... (import statements)
 
 const PerpetratorForm = ({ onSubmit }) => {
@@ -11,7 +11,7 @@ const PerpetratorForm = ({ onSubmit }) => {
         suspectCharged: "",
         conviction: "",
         sentence: "",
-        typeOfMurder: "",  // <-- Ensure it's an empty array initially
+          // <-- Ensure it's an empty array initially
       });
       
   
@@ -27,7 +27,7 @@ const PerpetratorForm = ({ onSubmit }) => {
         suspectCharged: "",
         conviction: "",
         sentence: "",
-        typeOfMurder: "",
+        
       });
       setHasPerpetrators(true);
     };
@@ -56,55 +56,8 @@ const PerpetratorForm = ({ onSubmit }) => {
       
       
 
-  const murderOptions = [
-    { value: "Adult male homicide", label: "Adult male homicide" },
-    { value: "Adult female homicide", label: "Adult female homicide" },
-    { value: "Eldercide", label: "Eldercide" },
-    { value: "Child murder", label: "Child murder" },
-    { value: "Multiple killing", label: "Multiple killing" },
-    { value: "Political killing", label: "Political killing" },
-    { value: "Gang-related killing", label: "Gang-related killing" },
-    { value: "Family killing", label: "Family killing" },
-    { value: "Witch killing", label: "Witch killing" },
-    { value: "LGBTQ killing", label: "LGBTQ killing" },
-    { value: "Sex worker killing", label: "Sex worker killing" },
-    { value: "Farm killing", label: "Farm killing" },
-    { value: "Serial killing", label: "Serial killing" },
-    { value: "Spree killing", label: "Spree killing" },
-    { value: "Intimate partner killing", label: "Intimate partner killing" },
-    { value: "Rural killing", label: "Rural killing" },
-    { value: "Ritual killing", label: "Ritual killing" },
-    { value: "Assassination", label: "Assassination" },
-    { value: "Culpable homicide", label: "Culpable homicide" },
-    { value: "Matricide", label: "Matricide" },
-    { value: "Patricide", label: "Patricide" },
-    { value: "Natural causes", label: "Natural causes" },
-    {
-      value: "Self-inflicted (including suicide)",
-      label: "Self-inflicted (including suicide)",
-    },
-    { value: "Killing in police custody", label: "Killing in police custody" },
-    { value: "Missing presumed dead", label: "Missing presumed dead" },
-    { value: "Hired killers", label: "Hired killers" },
-    { value: "Concealment of birth", label: "Concealment of birth" },
-    { value: "Terrorism or war", label: "Terrorism or war" },
-    { value: "Other (add category)", label: "Other (add category)" },
-  ];
+ 
 
-  const customStyles = {
-    control: (provided) => ({
-      ...provided,
-      border: "1px solid #ccc",
-    }),
-    option: (provided, state) => ({
-      ...provided,
-      color: "#000", // Set the text color to black
-      background: state.isSelected ? "#f0f0f0" : "#fff", // Background color on selection
-      "&:hover": {
-        background: "#f0f0f0", // Background color on hover
-      },
-    }),
-  };
 
   return (
     <div className="col-md-20 text-gray-800">
@@ -269,25 +222,7 @@ const PerpetratorForm = ({ onSubmit }) => {
         }
       />
 
-      <label htmlFor="typeOfMurder">
-        Type of Murder (Select all that apply):
-      </label>
-      <Select
-  id="typeOfMurder"
-  isMulti
-  options={murderOptions}
-  styles={customStyles}
-  value={murderOptions.filter((option) => currentPerpetrator.typeOfMurder.includes(option.label))}
-  onChange={(selectedOptions) => {
-    const selectedLabels = selectedOptions.map((option) => option.label);
-    const selectedString = selectedLabels.join(';');
-
-    setCurrentPerpetrator((prevPerpetrator) => ({
-      ...prevPerpetrator,
-      typeOfMurder: selectedString,
-    }));
-  }}
-/>
+      
 
 
 
@@ -315,9 +250,9 @@ const PerpetratorForm = ({ onSubmit }) => {
             <th>Suspect Identified</th>
             <th>Suspect Arrested</th>
             <th>Suspect Charged</th>
-            <th>Convition</th>
+            <th>Conviction</th>
             <th>Sentence</th>
-            <th>Type of Murder</th>
+            
             <tbody>
               {perpetratorData.map((perpetrator, index) => (
                 <tr key={index}>
@@ -328,7 +263,7 @@ const PerpetratorForm = ({ onSubmit }) => {
                   <td>{perpetrator.suspectCharged}</td>
                   <td>{perpetrator.conviction}</td>
                   <td>{perpetrator.sentence}</td>
-                  <td>{perpetrator.typeOfMurder}</td>
+                  
 
                 </tr>
               ))}

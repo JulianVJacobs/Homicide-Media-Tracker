@@ -6,11 +6,10 @@ const router = express.Router();
 const fastcsv = require("fast-csv");
 const fs = require("fs");
 const xlsx = require("xlsx");
-const exceljs = require('exceljs');
-const axios = require('axios');
+const exceljs = require("exceljs");
+const axios = require("axios");
 app.use(cors());
 app.use(express.json());
-
 
 app.get("/exportxlsx", async (req, res) => {
   try {
@@ -38,6 +37,7 @@ app.get("/exportxlsx", async (req, res) => {
         v.age_range_of_victim,
         v.mode_of_death_specific,
         v.mode_of_death_general,
+        v.type_of_murder,
         p.perpetrator_name,
         p.perpetrator_relationship_to_victim,
         p.suspect_identified,
@@ -45,7 +45,7 @@ app.get("/exportxlsx", async (req, res) => {
         p.suspect_charged,
         p.conviction,
         p.sentence,
-        p.type_of_murder
+        
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id
       LEFT JOIN perpetrator p ON a.article_id = p.article_id
@@ -54,15 +54,15 @@ app.get("/exportxlsx", async (req, res) => {
     const jsonData = JSON.parse(JSON.stringify(result.rows));
 
     const workbook = new exceljs.Workbook();
-    const worksheet = workbook.addWorksheet('Data');
+    const worksheet = workbook.addWorksheet("Data");
 
     // Add headers to the worksheet
     const headers = Object.keys(jsonData[0]);
     worksheet.addRow(headers);
 
     // Add data rows to the worksheet
-    jsonData.forEach(row => {
-      const values = headers.map(header => row[header]);
+    jsonData.forEach((row) => {
+      const values = headers.map((header) => row[header]);
       worksheet.addRow(values);
     });
 
@@ -70,8 +70,14 @@ app.get("/exportxlsx", async (req, res) => {
     const buffer = await workbook.xlsx.writeBuffer();
 
     // Send the buffer as a response
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', 'attachment; filename=exported_data.xlsx');
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=exported_data.xlsx"
+    );
     res.send(buffer);
   } catch (err) {
     console.error(err.message);
@@ -80,16 +86,20 @@ app.get("/exportxlsx", async (req, res) => {
 });
 
 //this is for checking wayback archival status:
-app.post('/checkArchivalStatus', async (req, res) => {
+app.post("/checkArchivalStatus", async (req, res) => {
   const { url } = req.body;
 
   if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+    return res.status(400).json({ error: "URL is required" });
   }
 
   try {
     // Make a request to the Wayback CDX Server API
-    const response = await axios.get(`http://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(url)}&output=json`);
+    const response = await axios.get(
+      `http://web.archive.org/cdx/search/cdx?url=${encodeURIComponent(
+        url
+      )}&output=json`
+    );
 
     // Parse the JSON response
     const data = response.data;
@@ -102,11 +112,12 @@ app.post('/checkArchivalStatus', async (req, res) => {
     // Return the archival status
     res.json({ url, isArchived });
   } catch (error) {
-    console.error(`Error checking archival status for ${url}: ${error.message}`);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error(
+      `Error checking archival status for ${url}: ${error.message}`
+    );
+    res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 // Existing imports...
 app.get("/exportcsv", async (req, res) => {
@@ -135,6 +146,7 @@ app.get("/exportcsv", async (req, res) => {
         v.age_range_of_victim,
         v.mode_of_death_specific,
         v.mode_of_death_general,
+        v.type_of_murder,
         p.perpetrator_name,
         p.perpetrator_relationship_to_victim,
         p.suspect_identified,
@@ -142,7 +154,7 @@ app.get("/exportcsv", async (req, res) => {
         p.suspect_charged,
         p.conviction,
         p.sentence,
-        p.type_of_murder
+       
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id
       LEFT JOIN perpetrator p ON a.article_id = p.article_id
@@ -211,6 +223,7 @@ app.post("/homicidesBulk", async (req, res) => {
       age_range_of_victim,
       mode_of_death_specific,
       mode_of_death_general,
+      type_of_murder,
       perpetrator_name,
       perpetrator_relationship_to_victim,
       suspect_identified,
@@ -218,7 +231,6 @@ app.post("/homicidesBulk", async (req, res) => {
       suspect_charged,
       conviction,
       sentence,
-      type_of_murder,
     } = req.body;
 
     console.log("Data received from frontend:", req.body);
@@ -243,7 +255,7 @@ app.post("/homicidesBulk", async (req, res) => {
 
     // Insert into Victims table
     const victimResult = await pool.query(
-      "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province, place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING victim_id",
+      "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province, place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general,  type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING victim_id",
       [
         articleId,
         victim_name,
@@ -258,6 +270,7 @@ app.post("/homicidesBulk", async (req, res) => {
         age_range_of_victim,
         mode_of_death_specific,
         mode_of_death_general,
+        type_of_murder,
       ]
     );
 
@@ -271,7 +284,7 @@ app.post("/homicidesBulk", async (req, res) => {
 
     // Insert into Perpetrators table
     const perpetratorResult = await pool.query(
-      "INSERT INTO perpetrator (article_id, perpetrator_name, perpetrator_relationship_to_victim, suspect_identified, suspect_arrested, suspect_charged, conviction, sentence, type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING perpetrator_id",
+      "INSERT INTO perpetrator (article_id, perpetrator_name, perpetrator_relationship_to_victim, suspect_identified, suspect_arrested, suspect_charged, conviction, sentence) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING perpetrator_id",
       [
         articleId,
         perpetrator_name,
@@ -281,7 +294,6 @@ app.post("/homicidesBulk", async (req, res) => {
         suspect_charged,
         conviction,
         sentence,
-        type_of_murder,
       ]
     );
 
@@ -325,6 +337,7 @@ app.post("/homicides", async (req, res) => {
       age_range_of_victim,
       mode_of_death_specific,
       mode_of_death_general,
+      type_of_murder,
       perpetrator_name,
       perpetrator_relationship_to_victim,
       suspect_identified,
@@ -332,7 +345,6 @@ app.post("/homicides", async (req, res) => {
       suspect_charged,
       conviction,
       sentence,
-      type_of_murder,
     } = req.body;
     console.log("Data received from frontend:", req.body);
     // Insert into Articles table
@@ -354,34 +366,34 @@ app.post("/homicides", async (req, res) => {
     const articleId = articleResult.rows[0].article_id;
 
     // Insert into Victims table
-    const victimNames = victim_name.split(",").map((name) => name.trim());
-    const datesOfDeath = date_of_death.split(",");
-    const provinces = place_of_death_province.split(",");
-    const town = place_of_death_town.split(",");
-    const locationType = type_of_location.split(",");
-    const sexualAssault = sexual_assault.split(",");
-    const genderOfVictim = gender_of_victim.split(",");
-    const race = race_of_victim.split(",");
-    const ageOfVictim = age_of_victim.split(",");
-    const ageRangeOfVictim = age_range_of_victim.split(",");
-    const modeOfDeathSpecific = mode_of_death_specific.split(",");
-    const modeOfDeathGeneral = mode_of_death_general.split(",");
+    const victimNames = victim_name ? victim_name.split(",").map((name) => name.trim()) : [];
+const datesOfDeath = date_of_death ? date_of_death.split(",") : [];
+const provinces = place_of_death_province ? place_of_death_province.split(",") : [];
+const town = place_of_death_town ? place_of_death_town.split(",") : [];
+const locationType = type_of_location ? type_of_location.split(",") : [];
+const sexualAssault = sexual_assault ? sexual_assault.split(",") : [];
+const genderOfVictim = gender_of_victim ? gender_of_victim.split(",") : [];
+const race = race_of_victim ? race_of_victim.split(",") : [];
+const ageOfVictim = age_of_victim ? age_of_victim.split(",") : [];
+const ageRangeOfVictim = age_range_of_victim ? age_range_of_victim.split(",") : [];
+const modeOfDeathSpecific = mode_of_death_specific ? mode_of_death_specific.split(",") : [];
+const modeOfDeathGeneral = mode_of_death_general ? mode_of_death_general.split(",") : [];
+const TypeOfMurder = type_of_murder ? type_of_murder.split(",") : [];
+
     // ... split other fields as needed
 
     //insert into perp table
-    const PerpetratorNames = perpetrator_name.split(",").map((name) => name.trim());
-    const PerpetratorRelatioshipsToVictims =
-      perpetrator_relationship_to_victim.split(",");
-    const SuspectsIdentified = suspect_identified.split(",");
-    const SuspectsArrested = suspect_arrested.split(",");
-    const SuspectsCharged = suspect_charged.split(",");
-    const Convictions = conviction.split(",");
-    const Sentences = sentence.split(",");
-    const TypesOfMurder = type_of_murder.split(",");
+    const PerpetratorNames = perpetrator_name ? perpetrator_name.split(",").map((name) => name.trim()) : [];
+    const PerpetratorRelatioshipsToVictims = perpetrator_relationship_to_victim ? perpetrator_relationship_to_victim.split(",") : [];
+    const SuspectsIdentified = suspect_identified ? suspect_identified.split(",") : [];
+    const SuspectsArrested = suspect_arrested ? suspect_arrested.split(",") : [];
+    const SuspectsCharged = suspect_charged ? suspect_charged.split(",") : [];
+    const Convictions = conviction ? conviction.split(",") : [];
+    const Sentences = sentence ? sentence.split(",") : [];
 
     for (let i = 0; i < victimNames.length; i++) {
       const victimResult = await pool.query(
-        "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province,place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING victim_id",
+        "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province,place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general, type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING victim_id",
         [
           articleId,
           victimNames[i],
@@ -396,6 +408,7 @@ app.post("/homicides", async (req, res) => {
           ageRangeOfVictim[i],
           modeOfDeathSpecific[i],
           modeOfDeathGeneral[i],
+          TypeOfMurder[i],
         ]
       );
 
@@ -410,7 +423,7 @@ app.post("/homicides", async (req, res) => {
     // Insert into Perpetrators table
     for (let j = 0; j < PerpetratorNames.length; j++) {
       const perpetratorResult = await pool.query(
-        "INSERT INTO perpetrator (article_id, perpetrator_name, perpetrator_relationship_to_victim, suspect_identified, suspect_arrested, suspect_charged, conviction, sentence, type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING perpetrator_id",
+        "INSERT INTO perpetrator (article_id, perpetrator_name, perpetrator_relationship_to_victim, suspect_identified, suspect_arrested, suspect_charged, conviction, sentence) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING perpetrator_id",
         [
           articleId,
           PerpetratorNames[j],
@@ -420,7 +433,7 @@ app.post("/homicides", async (req, res) => {
           SuspectsCharged[j],
           Convictions[j],
           Sentences[j],
-          TypesOfMurder[j],
+          
         ]
       );
 
@@ -467,14 +480,15 @@ app.get("/homicides", async (req, res) => {
         v.age_range_of_victim,
         v.mode_of_death_specific,
         v.mode_of_death_general,
+        v.type_of_murder,
         p.perpetrator_name,
         p.perpetrator_relationship_to_victim,
         p.suspect_identified,
         p.suspect_arrested,
         p.suspect_charged,
         p.conviction,
-        p.sentence,
-        p.type_of_murder
+        p.sentence
+        
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id
       LEFT JOIN perpetrator p ON a.article_id = p.article_id
@@ -490,7 +504,13 @@ app.get("/homicides", async (req, res) => {
 // This get request is for user search parameters!
 app.get("/search", async (req, res) => {
   try {
-    const { dateOfPublication, place_of_death_province, newsReportPlatform, victim_name, perpetrator_name } = req.query;
+    const {
+      dateOfPublication,
+      place_of_death_province,
+      newsReportPlatform,
+      victim_name,
+      perpetrator_name,
+    } = req.query;
 
     // Build the query based on the provided parameters
     const query = `
@@ -517,14 +537,15 @@ app.get("/search", async (req, res) => {
     v.age_range_of_victim,
     v.mode_of_death_specific,
     v.mode_of_death_general,
+    v.type_of_murder,
     p.perpetrator_name,
     p.perpetrator_relationship_to_victim,
     p.suspect_identified,
     p.suspect_arrested,
     p.suspect_charged,
     p.conviction,
-    p.sentence,
-    p.type_of_murder
+    p.sentence
+    
 FROM articles a
 LEFT JOIN victim v ON a.article_id = v.article_id
 LEFT JOIN perpetrator p ON a.article_id = p.article_id
@@ -545,7 +566,13 @@ WHERE
 
     `;
 
-    const result = await pool.query(query, [dateOfPublication || null, place_of_death_province || null, newsReportPlatform || null, victim_name|| null, perpetrator_name||null]);
+    const result = await pool.query(query, [
+      dateOfPublication || null,
+      place_of_death_province || null,
+      newsReportPlatform || null,
+      victim_name || null,
+      perpetrator_name || null,
+    ]);
 
     res.json(result.rows);
   } catch (err) {
@@ -553,7 +580,6 @@ WHERE
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
 
 //This get request retrieves data based off article id
 app.get("/homicides/:article_id", async (req, res) => {
@@ -585,14 +611,14 @@ app.get("/homicides/:article_id", async (req, res) => {
         v.age_range_of_victim,
         v.mode_of_death_specific,
         v.mode_of_death_general,
+        v.type_of_murder,
         p.perpetrator_name,
         p.perpetrator_relationship_to_victim,
         p.suspect_identified,
         p.suspect_arrested,
         p.suspect_charged,
         p.conviction,
-        p.sentence,
-        p.type_of_murder
+        p.sentence
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id
       LEFT JOIN perpetrator p ON a.article_id = p.article_id

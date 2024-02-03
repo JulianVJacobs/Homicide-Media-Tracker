@@ -581,9 +581,9 @@ WHERE
   }
 });
 
-//This get request retrieves data based off article id
-app.get("/homicides/:article_id", async (req, res) => {
-  const { article_id } = req.params;
+//This get request retrieves data based off news report id
+app.get("/homicides/:news_report_id", async (req, res) => {
+  const { news_report_id } = req.params;
 
   try {
     const homicideDetails = await pool.query(
@@ -622,9 +622,9 @@ app.get("/homicides/:article_id", async (req, res) => {
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id
       LEFT JOIN perpetrator p ON a.article_id = p.article_id
-      WHERE a.article_id = $1
+      WHERE a.news_report_id = $1
     `,
-      [article_id]
+      [news_report_id]
     );
 
     res.json(homicideDetails.rows);

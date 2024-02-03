@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { utils, read } from "xlsx";
 import ExportData from "./ExportData";
 import { Navigate, useNavigate } from "react-router-dom";
-
+import { v4 as uuidv4 } from 'uuid';
 const ImportExport = () => {
   const [excelData, setExcelData] = useState([]);
   const [excelError, setExcelError] = useState("");
@@ -61,7 +61,7 @@ const ImportExport = () => {
       for (const row of excelData) {
         const rowData = {
           // Adjust the keys based on your API requirements
-          news_report_id: row["news_report_id"],
+          news_report_id: uuidv4(),
           news_report_url: row["news_report_url"],
           news_report_headline: row["news_report_headline"],
           author: row["author"],

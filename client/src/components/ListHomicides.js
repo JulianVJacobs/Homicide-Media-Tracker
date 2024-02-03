@@ -5,8 +5,8 @@ import "../output.css";
 const ListHomicides = () => {
   const [homicides, setHomicides] = useState([]);
 
-  const [sortOrder, setSortOrder] = useState("asc");
-  const [sortColumn, setSortColumn] = useState("date_of_publication");
+  // const [sortOrder, setSortOrder] = useState("asc");
+  // const [sortColumn, setSortColumn] = useState("date_of_publication");
   const getHomicides = async () => {
     try {
       const response = await fetch("http://localhost:5000/homicides");

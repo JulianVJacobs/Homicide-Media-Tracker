@@ -24,10 +24,7 @@ const VictimForm = ({ onSubmit }) => {
   const [towns, setTowns] = useState([]);
   const [customTown, setCustomTown] = useState(""); // Added state for custom town
 
-  const getLastCommaSeparatedValue = (str) => {
-    const values = str.split(',').map(value => value.trim());
-    return values.length > 0 ? values[values.length - 1] : '';
-  };
+ 
 
   const handleClearAllVictims = () => {
     setVictimData([]); // Clear all victim data

@@ -2,9 +2,11 @@
 
 
 import React, { useState, useEffect } from "react";
+import { v4 as uuidv4 } from 'uuid';
+
 
 const ArticleForm = ({ onSubmit }) => {
-  const [newsReportId, setNewsReportId] = useState("");
+  //const [newsReportId, setNewsReportId] = useState("");
   const [newsReportUrl, setNewsReportUrl] = useState("");
   const [newsReportHeadline, setNewsReportHeadline] = useState("");
   const [dateOfPublication, setDateOfPublication] = useState("");
@@ -16,7 +18,7 @@ const ArticleForm = ({ onSubmit }) => {
 
   useEffect(() => {
     console.log("Updated Article Data:", {
-      newsReportId,
+      
       newsReportUrl,
       newsReportHeadline,
       dateOfPublication,
@@ -27,12 +29,12 @@ const ArticleForm = ({ onSubmit }) => {
       newsSource,
     });
   }, 
-    [newsReportId, onSubmit]
+    [ onSubmit]
   );
 
   const handleSubmit = () => {
     const articleData = {
-      newsReportId,
+      newsReportId: uuidv4(),
       newsReportUrl,
       newsReportHeadline,
       dateOfPublication,
@@ -49,14 +51,14 @@ const ArticleForm = ({ onSubmit }) => {
 
   return (
     <div className="col-md-20 text-gray-800">
-      <label htmlFor="newsReportId">News Report ID:</label>
+      {/* <label htmlFor="newsReportId">News Report ID:</label>
       <input
         type="text"
         id="newsReportId"
         className="form-control"
         value={newsReportId}
         onChange={(e) => setNewsReportId(e.target.value)}
-      />
+      /> */}
 
       <label htmlFor="newsReportUrl">News Report URL:</label>
       <input

@@ -8,9 +8,9 @@ function App() {
   return (
     <Fragment >
       <NavBarComp />
-      <div className="bg-gray-300 p-4">
-      <div className="w-full h-full bg-cover " style={{ backgroundImage: `url(${icon})` }}/> 
-      </div>
+    
+      {/* <div className="w-full h-full bg-cover " style={{ backgroundImage: `url(${icon})` }}/>  */}
+     
     </Fragment>
   );
 }

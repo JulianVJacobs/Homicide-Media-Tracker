@@ -3,10 +3,11 @@ import { Routes, Route, Link, BrowserRouter } from "react-router-dom";
 import Home from './Home';
 import InputHomicide from "./InputHomicide";
 import ListHomicides from "./ListHomicides";
-import DataAnalysis from "./DataAnalysis";
+// import DataAnalysis from "./DataAnalysis";
 import ImportExport from "./ImportExport";
 import SearchDatabase from "./SearchDatabase";
 import CheckArchive from "./CheckArchive";
+import CheckForDuplicates from "./CheckForDuplicates";
 import "../output.css"; 
 
 const NavBarComp = () => {
@@ -42,12 +43,12 @@ const NavBarComp = () => {
             >
               Import Export 
             </Link>
-            <Link
+            {/* <Link
               to="/DataAnalysis"
               className="hover:bg-gray-700 py-2 px-3  text-xl rounded transition duration-300"
             >
               Data Analysis
-            </Link>
+            </Link> */}
             <Link
               to="/SearchDatabase"
               className="hover:bg-gray-700 py-2 px-3  text-xl rounded transition duration-300"
@@ -59,6 +60,11 @@ const NavBarComp = () => {
             className="hover:bg-gray-700 py-2 px-3  text-xl rounded transition duration-300">
             Check Archive Status
             </Link>
+            <Link
+            to= "/CheckForDuplicates"
+            className="hover:bg-gray-700 py-2 px-3  text-xl rounded transition duration-300">
+            Check for duplicates
+            </Link>
           </div>
         </div>
 
@@ -67,9 +73,10 @@ const NavBarComp = () => {
           <Route path="/InputHomicide" element={<InputHomicide />} />
           <Route path="/ListHomicides" element={<ListHomicides />} />
           <Route path="/ImportExport" element={<ImportExport />} />
-          <Route path="/DataAnalysis" element={<DataAnalysis />} />
+          {/* <Route path="/DataAnalysis" element={<DataAnalysis />} /> */}
           <Route path="/SearchDatabase" element={<SearchDatabase />} />
           <Route path = "/CheckArchive" element={<CheckArchive/>}/>
+          <Route path = "CheckForDuplicates" element={<CheckForDuplicates/>}/>
         </Routes>
       </div>
     </BrowserRouter>

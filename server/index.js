@@ -241,9 +241,9 @@ app.post("/homicidesBulk", async (req, res) => {
       [
         news_report_id,
         news_report_url,
-        news_report_headline,
+        news_report_headline.trim(),
         date_of_publication,
-        author,
+        author.trim(),
         wire_service,
         language,
         type_of_source,
@@ -729,6 +729,92 @@ app.delete("/homicides/:id", async (req, res) => {
     client.release();
   }
 });
+
+
+//this endpoint searchers for duplicate data: 
+// app.get("/checkForDuplicates", async (req, res) => {
+//   try {
+//     const result = await pool.query(`
+//       SELECT news_report_id
+//       FROM (
+//         SELECT
+//           a.news_report_id,
+//           COUNT(*) OVER (PARTITION BY a.date_of_publication, a.author, a.news_report_headline) AS duplicate_count
+//         FROM articles a
+//         LEFT JOIN victim v ON a.article_id = v.article_id
+//         LEFT JOIN perpetrator p ON a.article_id = p.article_id
+//       ) subquery
+//       WHERE duplicate_count > 1
+//     `);
+
+//     const duplicateIds = result.rows.map(row => row.news_report_id);
+
+//     res.json({ duplicateIds });
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+app.get("/checkForDuplicates", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        a.news_report_id,
+        a.news_report_url,
+        a.news_report_headline,
+        a.date_of_publication,
+        a.author,
+        a.wire_service,
+        a.language,
+        a.type_of_source,
+        a.news_report_platform,
+        v.victim_name,
+        v.date_of_death,
+        v.place_of_death_province,
+        v.place_of_death_town,
+        v.type_of_location,
+        v.sexual_assault,
+        v.gender_of_victim,
+        v.race_of_victim,
+        v.age_of_victim,
+        v.age_range_of_victim,
+        v.mode_of_death_specific,
+        v.mode_of_death_general,
+        v.type_of_murder,
+        p.perpetrator_name,
+        p.perpetrator_relationship_to_victim,
+        p.suspect_identified,
+        p.suspect_arrested,
+        p.suspect_charged,
+        p.conviction,
+        p.sentence
+      FROM articles a
+      LEFT JOIN victim v ON a.article_id = v.article_id
+      LEFT JOIN perpetrator p ON a.article_id = p.article_id
+      WHERE a.news_report_id IN (
+        SELECT news_report_id
+        FROM (
+          SELECT
+            a.news_report_id,
+            COUNT(*) OVER (PARTITION BY a.date_of_publication, a.author, a.news_report_headline) AS duplicate_count
+          FROM articles a
+          LEFT JOIN victim v ON a.article_id = v.article_id
+          LEFT JOIN perpetrator p ON a.article_id = p.article_id
+        ) subquery
+        WHERE duplicate_count > 1
+      )
+    `);
+
+    const duplicateData = result.rows;
+
+    res.json({ duplicateData });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 app.listen(5000, () => {
   console.log("server has started on port 5000");

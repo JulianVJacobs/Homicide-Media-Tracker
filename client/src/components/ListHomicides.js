@@ -1,10 +1,13 @@
 import React, { Fragment, useEffect, useState } from "react";
 import EditHomicides from "./EditHomicides";
 import "../output.css";
+import { Link, useNavigate } from "react-router-dom";
+import CheckForDuplicates from "./CheckForDuplicates";
 
 const ListHomicides = () => {
   const [homicides, setHomicides] = useState([]);
-
+  const [showDuplicatesMessage, setShowDuplicatesMessage] = useState(false);
+const navigate = useNavigate();
   // const [sortOrder, setSortOrder] = useState("asc");
   // const [sortColumn, setSortColumn] = useState("date_of_publication");
   const getHomicides = async () => {
@@ -46,11 +49,39 @@ const ListHomicides = () => {
   // ...
 
   useEffect(() => {
+    // Trigger the check for duplicates when the component is mounted
+    const checkForDuplicatesOnMount = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/checkForDuplicates");
+        const duplicateData = await response.json();
+
+        if (duplicateData && duplicateData.duplicateData.length > 0) {
+          setShowDuplicatesMessage(true);
+        }
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+
+    checkForDuplicatesOnMount();
     getHomicides();
   }, []);
 
+  const handleNavigateToDuplicates = () => {
+    navigate("/CheckForDuplicates");
+  };
+
   return (
     <Fragment>
+        {showDuplicatesMessage && (
+        <div className="bg-red-500 text-white p-4 text-center">
+          Duplicate entries found! Please go to the{" "}
+          <span className="underline cursor-pointer" onClick={handleNavigateToDuplicates}>
+            Check for Duplicates
+          </span>{" "}
+          page to fix them.
+        </div>
+      )}
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
         <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">

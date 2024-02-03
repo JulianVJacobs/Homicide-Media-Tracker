@@ -1,7 +1,7 @@
  -- Create Articles Table
 CREATE TABLE Articles (
     article_id SERIAL PRIMARY KEY,
-    news_report_id INT UNIQUE,
+    news_report_id UUID,
     news_report_url VARCHAR(255),
     news_report_headline VARCHAR(255),
     news_report_platform VARCHAR(255),

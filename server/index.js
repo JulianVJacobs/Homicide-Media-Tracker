@@ -366,27 +366,45 @@ app.post("/homicides", async (req, res) => {
     const articleId = articleResult.rows[0].article_id;
 
     // Insert into Victims table
-    const victimNames = victim_name ? victim_name.split(",").map((name) => name.trim()) : [];
-const datesOfDeath = date_of_death ? date_of_death.split(",") : [];
-const provinces = place_of_death_province ? place_of_death_province.split(",") : [];
-const town = place_of_death_town ? place_of_death_town.split(",") : [];
-const locationType = type_of_location ? type_of_location.split(",") : [];
-const sexualAssault = sexual_assault ? sexual_assault.split(",") : [];
-const genderOfVictim = gender_of_victim ? gender_of_victim.split(",") : [];
-const race = race_of_victim ? race_of_victim.split(",") : [];
-const ageOfVictim = age_of_victim ? age_of_victim.split(",") : [];
-const ageRangeOfVictim = age_range_of_victim ? age_range_of_victim.split(",") : [];
-const modeOfDeathSpecific = mode_of_death_specific ? mode_of_death_specific.split(",") : [];
-const modeOfDeathGeneral = mode_of_death_general ? mode_of_death_general.split(",") : [];
-const TypeOfMurder = type_of_murder ? type_of_murder.split(",") : [];
+    const victimNames = victim_name
+      ? victim_name.split(",").map((name) => name.trim())
+      : [];
+    const datesOfDeath = date_of_death ? date_of_death.split(",") : [];
+    const provinces = place_of_death_province
+      ? place_of_death_province.split(",")
+      : [];
+    const town = place_of_death_town ? place_of_death_town.split(",") : [];
+    const locationType = type_of_location ? type_of_location.split(",") : [];
+    const sexualAssault = sexual_assault ? sexual_assault.split(",") : [];
+    const genderOfVictim = gender_of_victim ? gender_of_victim.split(",") : [];
+    const race = race_of_victim ? race_of_victim.split(",") : [];
+    const ageOfVictim = age_of_victim ? age_of_victim.split(",") : [];
+    const ageRangeOfVictim = age_range_of_victim
+      ? age_range_of_victim.split(",")
+      : [];
+    const modeOfDeathSpecific = mode_of_death_specific
+      ? mode_of_death_specific.split(",")
+      : [];
+    const modeOfDeathGeneral = mode_of_death_general
+      ? mode_of_death_general.split(",")
+      : [];
+    const TypeOfMurder = type_of_murder ? type_of_murder.split(",") : [];
 
     // ... split other fields as needed
 
     //insert into perp table
-    const PerpetratorNames = perpetrator_name ? perpetrator_name.split(",").map((name) => name.trim()) : [];
-    const PerpetratorRelatioshipsToVictims = perpetrator_relationship_to_victim ? perpetrator_relationship_to_victim.split(",") : [];
-    const SuspectsIdentified = suspect_identified ? suspect_identified.split(",") : [];
-    const SuspectsArrested = suspect_arrested ? suspect_arrested.split(",") : [];
+    const PerpetratorNames = perpetrator_name
+      ? perpetrator_name.split(",").map((name) => name.trim())
+      : [];
+    const PerpetratorRelatioshipsToVictims = perpetrator_relationship_to_victim
+      ? perpetrator_relationship_to_victim.split(",")
+      : [];
+    const SuspectsIdentified = suspect_identified
+      ? suspect_identified.split(",")
+      : [];
+    const SuspectsArrested = suspect_arrested
+      ? suspect_arrested.split(",")
+      : [];
     const SuspectsCharged = suspect_charged ? suspect_charged.split(",") : [];
     const Convictions = conviction ? conviction.split(",") : [];
     const Sentences = sentence ? sentence.split(",") : [];
@@ -433,7 +451,6 @@ const TypeOfMurder = type_of_murder ? type_of_murder.split(",") : [];
           SuspectsCharged[j],
           Convictions[j],
           Sentences[j],
-          
         ]
       );
 
@@ -730,36 +747,13 @@ app.delete("/homicides/:id", async (req, res) => {
   }
 });
 
-
-//this endpoint searchers for duplicate data: 
-// app.get("/checkForDuplicates", async (req, res) => {
-//   try {
-//     const result = await pool.query(`
-//       SELECT news_report_id
-//       FROM (
-//         SELECT
-//           a.news_report_id,
-//           COUNT(*) OVER (PARTITION BY a.date_of_publication, a.author, a.news_report_headline) AS duplicate_count
-//         FROM articles a
-//         LEFT JOIN victim v ON a.article_id = v.article_id
-//         LEFT JOIN perpetrator p ON a.article_id = p.article_id
-//       ) subquery
-//       WHERE duplicate_count > 1
-//     `);
-
-//     const duplicateIds = result.rows.map(row => row.news_report_id);
-
-//     res.json({ duplicateIds });
-//   } catch (err) {
-//     console.error(err.message);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// });
+//this endpoint searchers for duplicate data:
 
 app.get("/checkForDuplicates", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
+      a.article_id,
         a.news_report_id,
         a.news_report_url,
         a.news_report_headline,
@@ -801,6 +795,7 @@ app.get("/checkForDuplicates", async (req, res) => {
           FROM articles a
           LEFT JOIN victim v ON a.article_id = v.article_id
           LEFT JOIN perpetrator p ON a.article_id = p.article_id
+          WHERE a.duplicate_ignored IS NULL OR a.duplicate_ignored = 'No'
         ) subquery
         WHERE duplicate_count > 1
       )
@@ -815,6 +810,23 @@ app.get("/checkForDuplicates", async (req, res) => {
   }
 });
 
+//this endpoint marks duplicates to be ignored
+// Express route to update duplicate_ignored field
+app.put("/ignoreDuplicate/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const query = `
+      UPDATE articles
+      SET duplicate_ignored = 'Yes'
+      WHERE news_report_id = $1
+    `;
+    await pool.query(query, [id]);
+    res.json({ message: "Duplicate ignored successfully." });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 app.listen(5000, () => {
   console.log("server has started on port 5000");

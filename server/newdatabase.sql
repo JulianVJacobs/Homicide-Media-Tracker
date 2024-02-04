@@ -9,7 +9,10 @@ CREATE TABLE Articles (
     author VARCHAR(255),
     wire_service VARCHAR(255),
     language VARCHAR(255),
-    type_of_source VARCHAR(255)
+    type_of_source VARCHAR(255),
+    duplicate_ignored BOOLEAN,
+    notes VARCHAR(255)
+
 );
 
 -- Create Victim Table
@@ -27,8 +30,9 @@ CREATE TABLE Victim (
     age_of_victim INT,
     age_range_of_victim VARCHAR(255),
     mode_of_death_specific VARCHAR(100),
-    mode_of_death_general VARCHAR(100)
+    mode_of_death_general VARCHAR(100),
     type_of_murder VARCHAR(255)
+    
 );
 
 -- Create Perpetrator Table
@@ -41,7 +45,7 @@ CREATE TABLE Perpetrator (
     suspect_arrested VARCHAR(255),
     suspect_charged VARCHAR(255),
     conviction VARCHAR(255),
-    sentence VARCHAR(255),
+    sentence VARCHAR(255)
     
 );
 

@@ -1,24 +1,23 @@
+
+
 import React, { Fragment, useState } from "react";
 import axios from "axios";
-
-
 
 const CheckForDuplicates = () => {
   const [loading, setLoading] = useState(false);
   const [groupedDuplicates, setGroupedDuplicates] = useState([]);
+  const [selectedDuplicate, setSelectedDuplicate] = useState(null);
+  const [noteInput, setNoteInput] = useState("");
+  const [characterCount, setCharacterCount] = useState(0);
 
   const handleCheckDuplicates = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
-        "http://localhost:5000/checkForDuplicates"
-      );
+      const response = await axios.get("http://localhost:5000/checkForDuplicates");
 
       // Group duplicates based on headline, author, and date_of_publication
       const groupedDuplicates = groupDuplicates(response.data.duplicateData);
       setGroupedDuplicates(groupedDuplicates);
-
-      console.log("RESPONSE POES:", response.data);
     } catch (error) {
       console.error(error.message);
     } finally {
@@ -26,26 +25,6 @@ const CheckForDuplicates = () => {
     }
   };
 
-  const handleIgnoreDuplicate = async (id) => {
-    // Display a confirmation dialog
-    const userConfirmed = window.confirm(
-      "Are you sure you want to ignore this duplicate? This action cannot be undone."
-    );
-
-    // If the user confirms, proceed with ignoring the duplicate
-    if (userConfirmed) {
-      try {
-        await axios.put(`http://localhost:5000/ignoreDuplicate/${id}`);
-        // After ignoring duplicate, re-fetch the list of duplicates
-        handleCheckDuplicates();
-      } catch (error) {
-        console.error(error.message);
-      }
-    }
-    // If the user cancels, do nothing
-  };
-
-  // Function to group duplicates based on headline, author, and date_of_publication
   const groupDuplicates = (duplicateData) => {
     const groupedDuplicates = {};
 
@@ -60,6 +39,59 @@ const CheckForDuplicates = () => {
     });
 
     return Object.values(groupedDuplicates);
+  };
+
+  const handleIgnoreDuplicate = async (id) => {
+    const userConfirmed = window.confirm(
+      "Are you sure you want to ignore this duplicate? This action cannot be undone."
+    );
+
+    if (userConfirmed) {
+      try {
+        await axios.put(`http://localhost:5000/ignoreDuplicate/${id}`);
+        handleCheckDuplicates();
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+  };
+
+ 
+  const handleAddNote = (duplicate) => {
+    setSelectedDuplicate(duplicate);
+    setNoteInput("");
+    setCharacterCount(0);
+  };
+
+  const handleNoteInputChange = (e) => {
+    const inputText = e.target.value;
+    setNoteInput(inputText);
+    setCharacterCount(inputText.length);
+  };
+
+  const handleSaveNote = async () => {
+    try {
+      if (selectedDuplicate) {
+        const response = await axios.put(
+          `http://localhost:5000/api/addNote/${selectedDuplicate.article_id}`,
+          {
+            notes: noteInput,
+          }
+        );
+  
+        // After adding note, re-fetch the list of duplicates
+        handleCheckDuplicates();
+      }
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      setSelectedDuplicate(null);
+    }
+  };
+  
+
+  const handleDiscardNote = () => {
+    setSelectedDuplicate(null);
   };
 
   const handleDelete2 = async (id) => {
@@ -87,7 +119,7 @@ const CheckForDuplicates = () => {
 
   return (
     <div>
-      <div className="w-full max-w-full p-6 bg-white  shadow-md">
+      <div className="w-full max-w-full p-6 bg-white shadow-md">
         <h1 className="text-2xl font-bold mb-5 text-gray-900">
           Check for Duplicate Entries
         </h1>
@@ -100,13 +132,14 @@ const CheckForDuplicates = () => {
           {loading ? "Checking..." : "Check for Duplicates"}
         </button>
       </div>
+
       <Fragment>
         {groupedDuplicates.length > 0 && (
           <div className="mt-6">
             <h3 className="text-lg font-semibold mb-2">Duplicate Entries:</h3>
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
               <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                   <tr>
                     <th scope="col" className="px-6 py-3">
                       News Report ID
@@ -201,6 +234,9 @@ const CheckForDuplicates = () => {
                     <th scope="col" className="px-6 py-3">
                       Delete
                     </th>
+                    <th scope="col" className="px-6 py-3">
+                      Add Note
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -209,9 +245,11 @@ const CheckForDuplicates = () => {
                       {groupedEntries.map((entry) => (
                         <tr
                           key={entry.news_report_id}
-                          className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                          className={`${
+                            entry.notes ? "bg-green-100" : "bg-red-100"
+                          } border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-opacity-90  dark:hover:bg-gray-600`}
                         >
-                          <td className="px-6 py-4">{entry.news_report_id}</td>
+                         <td className="px-6 py-4">{entry.news_report_id}</td>
                           <td className="px-6 py-4">{entry.news_report_url}</td>
                           <td className="px-6 py-4">
                             {entry.news_report_headline}
@@ -294,9 +332,15 @@ const CheckForDuplicates = () => {
                               Delete
                             </button>
                           </td>
-
-                          
-                          {/* Add Edit and Delete buttons here */}
+                          <td className="px-6 py-4">
+                            <button
+                              className="bg-blue-500 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded transition duration-300"
+                              onClick={() => handleAddNote(entry)}
+                            >
+                              Add Note
+                            </button>
+                          </td>
+                          {/* ... (unchanged) */}
                         </tr>
                       ))}
                     </Fragment>
@@ -306,7 +350,46 @@ const CheckForDuplicates = () => {
             </div>
           </div>
         )}
+         {selectedDuplicate && (
+        <div
+          id="noteModal"
+          className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center"
+        >
+          <div className="bg-white p-6 rounded shadow-md">
+            <h2 className="text-lg text-black font-semibold mb-4">
+              Add Note to Duplicate
+            </h2>
+            <textarea
+              className="w-64 h-32 border p-2 mb-2 text-black"
+              placeholder="Add note to duplicate..."
+              value={noteInput}
+              onChange={handleNoteInputChange}
+              maxLength={255}
+            />
+            <div className="text-sm text-gray-500 mb-2">
+              Character Count: {characterCount}/255
+            </div>
+            <div className="flex justify-end">
+              <button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded mr-2"
+                onClick={handleSaveNote}
+                disabled={characterCount > 255}
+              >
+                Save
+              </button>
+              <button
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded"
+                onClick={handleDiscardNote}
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </Fragment>
+
+     
     </div>
   );
 };

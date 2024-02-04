@@ -756,6 +756,7 @@ app.get("/checkForDuplicates", async (req, res) => {
       a.article_id,
         a.news_report_id,
         a.news_report_url,
+        a.notes,
         a.news_report_headline,
         a.date_of_publication,
         a.author,
@@ -825,6 +826,24 @@ app.put("/ignoreDuplicate/:id", async (req, res) => {
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//this endpoint adds notes to duplicate entries:
+app.put("/api/addNote/:articleId", async (req, res) => {
+  try {
+    const { articleId } = req.params;
+    const { notes } = req.body;
+
+    const query = "UPDATE articles SET notes = $1 WHERE article_id = $2";
+    const values = [notes, articleId];
+
+    await pool.query(query, values);
+
+    res.status(200).json({ success: true, message: "Note added successfully" });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
 

@@ -107,7 +107,7 @@ const ImportExport = () => {
           console.error("Failed to add data to the database");
           console.log("PROBLEM WITH", rowData);
           // Handle error appropriately
-          failedIds.push(row["news_report_id"]);
+          failedIds.push(row["author"]);
           // Handle error appropriately
         }
       }

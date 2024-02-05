@@ -45,6 +45,7 @@ app.get("/exportxlsx", async (req, res) => {
         p.suspect_charged,
         p.conviction,
         p.sentence,
+        a.notes
         
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id
@@ -153,7 +154,7 @@ app.get("/exportcsv", async (req, res) => {
         p.suspect_arrested,
         p.suspect_charged,
         p.conviction,
-        p.sentence,
+        p.sentence
        
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id

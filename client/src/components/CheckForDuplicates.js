@@ -1,7 +1,6 @@
-
-
 import React, { Fragment, useState } from "react";
 import axios from "axios";
+import MergeEntriesModal from "./MergeEntriesModal";
 
 const CheckForDuplicates = () => {
   const [loading, setLoading] = useState(false);
@@ -9,11 +8,15 @@ const CheckForDuplicates = () => {
   const [selectedDuplicate, setSelectedDuplicate] = useState(null);
   const [noteInput, setNoteInput] = useState("");
   const [characterCount, setCharacterCount] = useState(0);
+  const [selectedEntries, setSelectedEntries] = useState([]);
+  const [isMergeModalOpen, setMergeModalOpen] = useState(false);
 
   const handleCheckDuplicates = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/checkForDuplicates");
+      const response = await axios.get(
+        "http://localhost:5000/checkForDuplicates"
+      );
 
       // Group duplicates based on headline, author, and date_of_publication
       const groupedDuplicates = groupDuplicates(response.data.duplicateData);
@@ -56,7 +59,6 @@ const CheckForDuplicates = () => {
     }
   };
 
- 
   const handleAddNote = (duplicate) => {
     setSelectedDuplicate(duplicate);
     setNoteInput("");
@@ -78,7 +80,7 @@ const CheckForDuplicates = () => {
             notes: noteInput,
           }
         );
-  
+
         // After adding note, re-fetch the list of duplicates
         handleCheckDuplicates();
       }
@@ -88,7 +90,6 @@ const CheckForDuplicates = () => {
       setSelectedDuplicate(null);
     }
   };
-  
 
   const handleDiscardNote = () => {
     setSelectedDuplicate(null);
@@ -116,7 +117,57 @@ const CheckForDuplicates = () => {
     }
   };
 
+ 
+  
+  const handleIsolateAndMerge = (duplicate) => {
+    // Find all entries that match the key of the clicked entry (including the clicked entry)
+    const duplicatesForKey = groupedDuplicates.find(
+      (group) =>
+        group.length > 1 &&
+        group.some((entry) => entry.article_id === duplicate.article_id)
+    );
+  
+    // Toggle the selected state for all duplicates for that key
+    if (duplicatesForKey) {
+      const isSelected = selectedEntries.some((entry) =>
+        duplicatesForKey.includes(entry)
+      );
+  
+      if (isSelected) {
+        setSelectedEntries(
+          selectedEntries.filter(
+            (entry) => !duplicatesForKey.includes(entry)
+          )
+        );
+      } else {
+        setSelectedEntries([...selectedEntries, ...duplicatesForKey]);
+      }
+    }
+  
+    console.log("SELECTED DUPLICATES ARE: ", selectedEntries);
+  };
+    
+  const handleMergeClick = () => {
+    // Open the modal and pass the selected entries
+    setMergeModalOpen(true);
+  };
 
+  const handleMergeModalClose = () => {
+    // Close the modal
+    setMergeModalOpen(false);
+    // Clear the selected entries
+    setSelectedEntries([]);
+  };
+
+  const handleMergeComplete = () => {
+    // After merge is complete, you can perform any necessary actions
+    // For example, refetch the list of duplicates
+    handleCheckDuplicates();
+    // Close the modal
+    handleMergeModalClose();
+  };
+  
+  
   return (
     <div>
       <div className="w-full max-w-full p-6 bg-white shadow-md">
@@ -139,7 +190,7 @@ const CheckForDuplicates = () => {
             <h3 className="text-lg font-semibold mb-2">Duplicate Entries:</h3>
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
               <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                   <tr>
                     <th scope="col" className="px-6 py-3">
                       News Report ID
@@ -237,6 +288,9 @@ const CheckForDuplicates = () => {
                     <th scope="col" className="px-6 py-3">
                       Add Note
                     </th>
+                    <th scope="col" className="px-6 py-3">
+                      Isolate and Merge
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -249,7 +303,7 @@ const CheckForDuplicates = () => {
                             entry.notes ? "bg-green-100" : "bg-red-100"
                           } border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-opacity-90  dark:hover:bg-gray-600`}
                         >
-                         <td className="px-6 py-4">{entry.news_report_id}</td>
+                          <td className="px-6 py-4">{entry.news_report_id}</td>
                           <td className="px-6 py-4">{entry.news_report_url}</td>
                           <td className="px-6 py-4">
                             {entry.news_report_headline}
@@ -340,6 +394,16 @@ const CheckForDuplicates = () => {
                               Add Note
                             </button>
                           </td>
+                          <td className="px-6 py-4">
+                            <button
+                              className="bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded transition duration-300"
+                              onClick={() =>{ handleIsolateAndMerge(entry);
+                                 handleMergeClick()}}
+                            >
+                              Isolate and Merge
+                            </button>
+                          </td>
+
                           {/* ... (unchanged) */}
                         </tr>
                       ))}
@@ -350,46 +414,53 @@ const CheckForDuplicates = () => {
             </div>
           </div>
         )}
-         {selectedDuplicate && (
-        <div
-          id="noteModal"
-          className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center"
-        >
-          <div className="bg-white p-6 rounded shadow-md">
-            <h2 className="text-lg text-black font-semibold mb-4">
-              Add Note to Duplicate
-            </h2>
-            <textarea
-              className="w-64 h-32 border p-2 mb-2 text-black"
-              placeholder="Add note to duplicate..."
-              value={noteInput}
-              onChange={handleNoteInputChange}
-              maxLength={255}
-            />
-            <div className="text-sm text-gray-500 mb-2">
-              Character Count: {characterCount}/255
-            </div>
-            <div className="flex justify-end">
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded mr-2"
-                onClick={handleSaveNote}
-                disabled={characterCount > 255}
-              >
-                Save
-              </button>
-              <button
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded"
-                onClick={handleDiscardNote}
-              >
-                Discard
-              </button>
+        {isMergeModalOpen && (
+          <MergeEntriesModal
+            isOpen={isMergeModalOpen}
+            onClose={handleMergeModalClose}
+            selectedEntries={selectedEntries}
+            onMergeComplete={handleMergeComplete}
+          />
+        )}
+        {selectedDuplicate && (
+          <div
+            id="noteModal"
+            className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center"
+          >
+            <div className="bg-white p-6 rounded shadow-md">
+              <h2 className="text-lg text-black font-semibold mb-4">
+                Add Note to Duplicate
+              </h2>
+              <textarea
+                className="w-64 h-32 border p-2 mb-2 text-black"
+                placeholder="Add note to duplicate..."
+                value={noteInput}
+                onChange={handleNoteInputChange}
+                maxLength={255}
+              />
+              <div className="text-sm text-gray-500 mb-2">
+                Character Count: {characterCount}/255
+              </div>
+              <div className="flex justify-end">
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded mr-2"
+                  onClick={handleSaveNote}
+                  disabled={characterCount > 255}
+                >
+                  Save
+                </button>
+                <button
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded"
+                  onClick={handleDiscardNote}
+                >
+                  Discard
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+         
       </Fragment>
-
-     
     </div>
   );
 };

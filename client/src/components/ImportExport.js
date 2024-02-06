@@ -3,11 +3,15 @@ import { utils, read } from "xlsx";
 import ExportData from "./ExportData";
 import { Navigate, useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
+import DeleteDatabase from "./DeleteDatabase";
+
 const ImportExport = () => {
   const [excelData, setExcelData] = useState([]);
   const [excelError, setExcelError] = useState("");
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false); // Track completion
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // State to manage delete modal visibility
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false); // Track success message visibility
   const navigate = useNavigate(); // Initialize useNavigate hook
   const file_type = [
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -51,7 +55,6 @@ const ImportExport = () => {
     return `${year}/${month}/${day}`;
   };
 
- 
 
   const handleAddToDatabase = async () => {
     try {
@@ -129,8 +132,14 @@ const ImportExport = () => {
     }
   };
 
+  const handleDeleteSuccess = () => {
+    // Set showSuccessMessage to true when the database deletion is successful
+    setShowSuccessMessage(true);
+  };
   return (
     <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <DeleteDatabase isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} onSuccess={handleDeleteSuccess}/>
+        {showSuccessMessage && <p className="text-green-600">Successfully deleted database!</p>}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">
@@ -144,8 +153,16 @@ const ImportExport = () => {
         </div >
         {loading && <p className="text-gray-600">Loading...</p>}
         {completed && <p className="text-green-600">Complete! Redirecting...</p>}
+        
         <ExportData />
-
+        <div className="mb-4 mt-6">
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Delete Database
+          </button>
+        </div>
         <div className="mb-4 mt-6">
         <button
             onClick={handleAddToDatabase}

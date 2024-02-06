@@ -129,23 +129,20 @@ const CheckForDuplicates = () => {
   
     // Toggle the selected state for all duplicates for that key
     if (duplicatesForKey) {
-      const isSelected = selectedEntries.some((entry) =>
-        duplicatesForKey.includes(entry)
+      const isSelected = duplicatesForKey.every((entry) =>
+        selectedEntries.some((selectedEntry) => selectedEntry.article_id === entry.article_id)
       );
   
       if (isSelected) {
-        setSelectedEntries(
-          selectedEntries.filter(
-            (entry) => !duplicatesForKey.includes(entry)
-          )
-        );
+        setSelectedEntries(selectedEntries.filter(
+          (selectedEntry) => !duplicatesForKey.some((entry) => entry.article_id === selectedEntry.article_id)
+        ));
       } else {
         setSelectedEntries([...selectedEntries, ...duplicatesForKey]);
       }
     }
-  
-    console.log("SELECTED DUPLICATES ARE: ", selectedEntries);
   };
+  
     
   const handleMergeClick = () => {
     // Open the modal and pass the selected entries

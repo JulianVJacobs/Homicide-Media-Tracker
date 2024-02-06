@@ -29,7 +29,7 @@ const NavBarComp = () => {
               to="/InputHomicide"
               className="hover:bg-gray-700 py-2 px-3 text-xl rounded transition duration-300"
             >
-              Add Homicides
+              Add Homicides 
             </Link>
             <Link
               to="/ListHomicides"

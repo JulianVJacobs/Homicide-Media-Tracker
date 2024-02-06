@@ -1109,6 +1109,21 @@ await pool.query(
 });
 
 
+//this entry deletes all data from database
+app.post('/deleteDatabase', async (req, res) => {
+  try {
+    // Run TRUNCATE query to delete all data from the specified tables
+    await pool.query('TRUNCATE articles, victim, perpetrator CASCADE');
+    
+    // Send a success response
+    res.status(200).json({ message: 'Database cleared successfully' });
+  } catch (error) {
+    // Send an error response if there's any issue with the database operation
+    console.error('Error deleting database:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });

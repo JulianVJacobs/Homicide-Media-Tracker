@@ -848,6 +848,267 @@ app.put("/api/addNote/:articleId", async (req, res) => {
   }
 });
 
+
+//this endpoint is used for merging entries
+app.post("/MergeEntries", async (req, res) => {
+  const { masterId, subId } = req.body;
+
+  try {
+    // Retrieve master entry information
+    const masterEntry = await pool.query(
+      `
+      SELECT
+        a.article_id,
+        a.news_report_id,
+        a.news_report_url,
+        a.news_report_headline,
+        a.date_of_publication,
+        a.author,
+        a.wire_service,
+        a.language,
+        a.type_of_source,
+        a.news_report_platform,
+        v.victim_name,
+        v.date_of_death,
+        v.place_of_death_province,
+        v.place_of_death_town,
+        v.type_of_location,
+        v.sexual_assault,
+        v.gender_of_victim,
+        v.race_of_victim,
+        v.age_of_victim,
+        v.age_range_of_victim,
+        v.mode_of_death_specific,
+        v.mode_of_death_general,
+        v.type_of_murder,
+        p.perpetrator_name,
+        p.perpetrator_relationship_to_victim,
+        p.suspect_identified,
+        p.suspect_arrested,
+        p.suspect_charged,
+        p.conviction,
+        p.sentence
+      FROM articles a
+      LEFT JOIN victim v ON a.article_id = v.article_id
+      LEFT JOIN perpetrator p ON a.article_id = p.article_id
+      WHERE a.news_report_id = $1
+      `,
+      [masterId]
+    );
+
+    // Retrieve sub entry information
+    const subEntry = await pool.query(
+      `
+      SELECT
+        a.article_id,
+        a.news_report_id,
+        a.news_report_url,
+        a.news_report_headline,
+        a.date_of_publication,
+        a.author,
+        a.wire_service,
+        a.language,
+        a.type_of_source,
+        a.news_report_platform,
+        v.victim_name,
+        v.date_of_death,
+        v.place_of_death_province,
+        v.place_of_death_town,
+        v.type_of_location,
+        v.sexual_assault,
+        v.gender_of_victim,
+        v.race_of_victim,
+        v.age_of_victim,
+        v.age_range_of_victim,
+        v.mode_of_death_specific,
+        v.mode_of_death_general,
+        v.type_of_murder,
+        p.perpetrator_name,
+        p.perpetrator_relationship_to_victim,
+        p.suspect_identified,
+        p.suspect_arrested,
+        p.suspect_charged,
+        p.conviction,
+        p.sentence
+      FROM articles a
+      LEFT JOIN victim v ON a.article_id = v.article_id
+      LEFT JOIN perpetrator p ON a.article_id = p.article_id
+      WHERE a.news_report_id = $1
+      `,
+      [subId]
+    );
+
+    // If either master or sub entry does not exist, return an error
+    if (masterEntry.rows.length === 0 || subEntry.rows.length === 0) {
+      return res.status(404).json({ error: "Master or sub entry not found" });
+    }
+
+    const masterData = masterEntry.rows[0];
+    const subData = subEntry.rows[0];
+
+    // Merge master entry with data from sub entry for any empty, null, or "unknown" fields
+    // Merge master entry with data from sub entry for any empty, null, or "unknown" fields
+for (const key in masterData) {
+  if (
+    masterData[key] === null ||
+    masterData[key] === "" ||
+    masterData[key] === undefined || // Check for undefined as well
+    masterData[key] === '' || // Check for empty strings as well
+    masterData[key] === "unknown"
+  ) {
+    console.log(`Merging ${key}: ${subData[key]} into ${masterData[key]}`);
+    masterData[key] = subData[key];
+  }
+}
+
+   
+    // Update victim information in the master entry
+    await pool.query(
+      `
+      UPDATE victim
+      SET
+        victim_name = $1,
+        date_of_death = $2,
+        place_of_death_province = $3,
+        place_of_death_town = $4,
+        type_of_location = $5,
+        sexual_assault = $6,
+        gender_of_victim = $7,
+        race_of_victim = $8,
+        age_of_victim = $9,
+        age_range_of_victim = $10,
+        mode_of_death_specific = $11,
+        mode_of_death_general = $12,
+        type_of_murder = $13
+      WHERE article_id = $14
+      `,
+      [
+        masterData.victim_name,
+        masterData.date_of_death,
+        masterData.place_of_death_province,
+        masterData.place_of_death_town,
+        masterData.type_of_location,
+        masterData.sexual_assault,
+        masterData.gender_of_victim,
+        masterData.race_of_victim,
+        masterData.age_of_victim,
+        masterData.age_range_of_victim,
+        masterData.mode_of_death_specific,
+        masterData.mode_of_death_general,
+        masterData.type_of_murder,
+        masterData.article_id,
+      ]
+    );
+
+    console.log("Values passed to the query:", [
+      masterData.news_report_url,
+      masterData.news_report_headline,
+      masterData.date_of_publication,
+      masterData.author,
+      masterData.wire_service,
+      masterData.language,
+      masterData.type_of_source,
+      masterData.news_report_platform,
+      masterId,
+    ]);
+
+    // Update perpetrator information in the master entry (similar to victim update)
+
+    // Update the master entry with merged data
+    await pool.query(
+      `
+      UPDATE articles
+      SET
+        news_report_url = $1,
+        news_report_headline = $2,
+        date_of_publication = $3,
+        author = $4,
+        wire_service = $5,
+        language = $6,
+        type_of_source = $7,
+        news_report_platform = $8
+      WHERE news_report_id = $9
+      `,
+      [
+        masterData.news_report_url,
+        masterData.news_report_headline,
+        masterData.date_of_publication,
+        masterData.author,
+        masterData.wire_service,
+        masterData.language,
+        masterData.type_of_source,
+        masterData.news_report_platform,
+        masterId,
+      ]
+    );
+
+    // Update perpetrator information in the master entry
+await pool.query(
+  `
+  UPDATE perpetrator
+  SET
+    perpetrator_name = $1,
+    perpetrator_relationship_to_victim = $2,
+    suspect_identified = $3,
+    suspect_arrested = $4,
+    suspect_charged = $5,
+    conviction = $6,
+    sentence = $7
+  WHERE article_id = $8
+  `,
+  [
+    masterData.perpetrator_name,
+    masterData.perpetrator_relationship_to_victim,
+    masterData.suspect_identified,
+    masterData.suspect_arrested,
+    masterData.suspect_charged,
+    masterData.conviction,
+    masterData.sentence,
+    masterData.article_id,
+  ]
+);
+
+
+    // Delete the sub entry
+    try {
+      // Begin transaction
+      await pool.query("BEGIN");
+    
+      // Delete associated records in the articlevictim table
+      await pool.query("DELETE FROM articlevictim WHERE article_id IN (SELECT article_id FROM articles WHERE news_report_id = $1)", [subId]);
+    
+      // Delete associated records in the articleperpetrator table
+      await pool.query("DELETE FROM articleperpetrator WHERE article_id IN (SELECT article_id FROM articles WHERE news_report_id = $1)", [subId]);
+    
+      // Delete associated records in the victim table
+      await pool.query("DELETE FROM victim WHERE article_id IN (SELECT article_id FROM articles WHERE news_report_id = $1)", [subId]);
+    
+      // Delete associated records in the perpetrator table
+      await pool.query("DELETE FROM perpetrator WHERE article_id IN (SELECT article_id FROM articles WHERE news_report_id = $1)", [subId]);
+    
+      // Delete the sub article from the articles table
+      await pool.query("DELETE FROM articles WHERE news_report_id = $1", [subId]);
+    
+      // Commit the transaction
+      await pool.query("COMMIT");
+    
+      // Respond with success message
+      res.json({ message: "Entries merged successfully" });
+    } catch (error) {
+      // Rollback the transaction in case of error
+      await pool.query("ROLLBACK");
+      console.error(error.message);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+    
+    
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
 app.listen(5000, () => {
   console.log("server has started on port 5000");
 });

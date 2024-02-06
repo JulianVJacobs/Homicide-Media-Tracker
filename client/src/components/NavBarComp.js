@@ -11,11 +11,12 @@ import CheckForDuplicates from "./CheckForDuplicates";
 import "../output.css"; 
 
 const NavBarComp = () => {
+  
   return (
     <BrowserRouter>
       <div className="bg-gray-800 text-white">
         <div className="max-w-screen-xl flex items-center justify-between mx-auto p-3">
-          <Link to="/Home" className="text-3xl font-bold">
+          <Link to="/Home" className="text-3xl font-bold mr-auto ">
             Homicide Media Tracker
           </Link>
           <div className="hidden md:flex md:space-x-8">

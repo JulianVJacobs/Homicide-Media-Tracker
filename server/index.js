@@ -486,6 +486,7 @@ app.get("/homicides", async (req, res) => {
         a.language,
         a.type_of_source,
         a.news_report_platform,
+        a.notes,
         v.victim_name,
         v.date_of_death,
         v.place_of_death_province,
@@ -868,6 +869,7 @@ app.post("/MergeEntries", async (req, res) => {
         a.language,
         a.type_of_source,
         a.news_report_platform,
+        a.notes,
         v.victim_name,
         v.date_of_death,
         v.place_of_death_province,
@@ -910,6 +912,7 @@ app.post("/MergeEntries", async (req, res) => {
         a.language,
         a.type_of_source,
         a.news_report_platform,
+        a.notes,
         v.victim_name,
         v.date_of_death,
         v.place_of_death_province,
@@ -997,6 +1000,7 @@ for (const key in masterData) {
         masterData.mode_of_death_general,
         masterData.type_of_murder,
         masterData.article_id,
+        
       ]
     );
 
@@ -1010,6 +1014,7 @@ for (const key in masterData) {
       masterData.type_of_source,
       masterData.news_report_platform,
       masterId,
+      masterData.notes,
     ]);
 
     // Update perpetrator information in the master entry (similar to victim update)
@@ -1026,8 +1031,9 @@ for (const key in masterData) {
         wire_service = $5,
         language = $6,
         type_of_source = $7,
-        news_report_platform = $8
-      WHERE news_report_id = $9
+        news_report_platform = $8,
+        notes=$9
+      WHERE news_report_id = $10
       `,
       [
         masterData.news_report_url,
@@ -1038,6 +1044,7 @@ for (const key in masterData) {
         masterData.language,
         masterData.type_of_source,
         masterData.news_report_platform,
+        masterData.notes,
         masterId,
       ]
     );

@@ -16,7 +16,7 @@ const NavBarComp = () => {
       <div className="bg-gray-800 text-white">
         <div className="max-w-screen-xl flex items-center justify-between mx-auto p-3">
           <Link to="/Home" className="text-3xl font-bold">
-            Homicide Tracker
+            Homicide Media Tracker
           </Link>
           <div className="hidden md:flex md:space-x-8">
             <Link

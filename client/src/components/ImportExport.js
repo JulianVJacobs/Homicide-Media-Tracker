@@ -11,7 +11,7 @@ const ImportExport = () => {
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false); // Track completion
   const [showDeleteModal, setShowDeleteModal] = useState(false); // State to manage delete modal visibility
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false); // Track success message visibility
+  
   const navigate = useNavigate(); // Initialize useNavigate hook
   const file_type = [
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -132,14 +132,10 @@ const ImportExport = () => {
     }
   };
 
-  const handleDeleteSuccess = () => {
-    // Set showSuccessMessage to true when the database deletion is successful
-    setShowSuccessMessage(true);
-  };
+ 
   return (
     <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <DeleteDatabase isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} onSuccess={handleDeleteSuccess}/>
-        {showSuccessMessage && <p className="text-green-600">Successfully deleted database!</p>}
+        <DeleteDatabase isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} />
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="mb-4">
           <label className="block text-gray-700 text-sm font-bold mb-2">

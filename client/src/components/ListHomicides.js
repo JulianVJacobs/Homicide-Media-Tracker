@@ -7,6 +7,7 @@ import CheckForDuplicates from "./CheckForDuplicates";
 const ListHomicides = () => {
   const [homicides, setHomicides] = useState([]);
   const [showDuplicatesMessage, setShowDuplicatesMessage] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(false);
 const navigate = useNavigate();
   // const [sortOrder, setSortOrder] = useState("asc");
   // const [sortColumn, setSortColumn] = useState("date_of_publication");
@@ -16,6 +17,7 @@ const navigate = useNavigate();
       const jsonData = await response.json();
       console.log("Homicides data:", jsonData); // Log the data
       setHomicides(jsonData);
+      setIsEmpty(jsonData.length === 0);
     } catch (err) {
       console.error(err.message);
     }
@@ -82,6 +84,12 @@ const navigate = useNavigate();
           page to fix them.
         </div>
       )}
+       {isEmpty && (
+        <div className="bg-yellow-500 text-white p-4 text-center">
+          The database is empty. Add data via manual or bulk input.
+        </div>
+      )}
+      {!isEmpty && (
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
         <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -174,6 +182,9 @@ const navigate = useNavigate();
                 Type of Murder
               </th>
               <th scope="col" className="px-6 py-3">
+                Notes
+              </th>
+              <th scope="col" className="px-6 py-3">
                 Edit
               </th>
               <th scope="col" className="px-6 py-3">
@@ -230,6 +241,7 @@ const navigate = useNavigate();
                 <td className="px-6 py-4">{homicide.conviction}</td>
                 <td className="px-6 py-4">{homicide.sentence}</td>
                 <td className="px-6 py-4">{homicide.type_of_murder}</td>
+                <td className="px-6 py-4">{homicide.notes}</td>
                 <td className="px-6 py-4 text-right">
                   <EditHomicides todo={homicide} />
                 </td>
@@ -252,6 +264,7 @@ const navigate = useNavigate();
           </tbody>
         </table>
       </div>
+      )}
     </Fragment>
   );
 };

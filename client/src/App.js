@@ -6,10 +6,10 @@ import icon from "../src/icon.png";
 
 function App() {
   return (
-    <Fragment >
+    <Fragment  >
       <NavBarComp />
     
-      {/* <div className="w-full h-full bg-cover " style={{ backgroundImage: `url(${icon})` }}/>  */}
+   <div className="bg-gradient-to-b from-gray-200 to-gray-600 min-h-screen"/>
      
     </Fragment>
   );

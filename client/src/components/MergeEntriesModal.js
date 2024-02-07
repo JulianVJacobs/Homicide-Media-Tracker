@@ -43,23 +43,20 @@ const MergeEntriesModal = ({
         subId: selectedSubEntries.map((entry) => entry.news_report_id)[0], // Assuming only one subId is selected
       });
 
-      // Handle the response or trigger any additional actions
       console.log(response.data);
 
-     
-
-      // Close the modal and signal that the merge is complete
-      onClose();
-      onMergeComplete();
-
+      // Set merge status to success and close the modal after a delay
+      setMergeStatus("success");
       setTimeout(() => {
-        setMergeStatus('success');
-      }, 1000); // Adjust the delay time as needed
+        onMergeComplete();
+        onClose();
+      }, 2000); // Adjust the delay time as needed
     } catch (error) {
       console.error(error.message);
       setError("An error occurred during the merge process.");
     }
   };
+
 
   return (
     <div className={`modal ${isOpen ? "block" : "hidden"}`}>
@@ -68,38 +65,48 @@ const MergeEntriesModal = ({
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Isolate and Merge Entries</h2>
         </div>
+       
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Select Master Entry:
           </label>
           <select
-            className="w-full border p-2 text-black"
-            value={masterEntry ? masterEntry.news_report_id : ""}
-            onChange={(e) => {
-              const selectedId = e.target.value;
-              console.log("Selected ID:", selectedId);
-              console.log("Selected entries:", selectedEntries);
-              const selectedEntry = selectedEntries.find(
-                (entry) => entry.news_report_id === selectedId
-              );
-              console.log("Selected entry:", selectedEntry);
-              handleMasterEntryChange(selectedEntry);
-            }}
-          >
-            <option value="" disabled={!masterEntry}>
-              {masterEntry ? masterEntry.news_report_id : "Select Master Entry"}
-            </option>
-            {selectedEntries.map((entry) => (
-              <option key={entry.news_report_id} value={entry.news_report_id}>
-                {entry.news_report_id}
-              </option>
-            ))}
-          </select>
+  className="w-full border p-2 text-black"
+  value={masterEntry ? masterEntry.news_report_id : ""}
+  onChange={(e) => {
+    const selectedId = e.target.value;
+    console.log("Selected ID:", selectedId);
+    console.log("Selected entries:", selectedEntries);
+    const selectedEntry = selectedEntries.find(
+      (entry) => entry.news_report_id === selectedId
+    );
+    console.log("Selected entry:", selectedEntry);
+    handleMasterEntryChange(selectedEntry);
+  }}
+>
+  <option value="" disabled={!masterEntry}>
+    {masterEntry ? masterEntry.news_report_id : "Select Master Entry"}
+  </option>
+  {selectedEntries.map((entry, index) => {
+    const optionText =
+      index === 0
+        ? `${entry.news_report_id} (Current Article)`
+        : entry.news_report_id;
+    const optionColor = index === 0 ? 'blue' : 'black';
+    return (
+      <option key={entry.news_report_id} value={entry.news_report_id} style={{ color: optionColor }}>
+        {optionText}
+      </option>
+    );
+  })}
+</select>
+
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Select Sub Entry:
           </label>
+          <h1 className="block text-xs font-medium text-purple-500 mb-1">Note that the order of sub ID's correspond to the listing order of the Entries</h1>
           <select
   className="w-full border p-2 text-black"
   multiple

@@ -254,57 +254,87 @@ app.post("/homicidesBulk", async (req, res) => {
 
     const articleId = articleResult.rows[0].article_id;
 
-    // Insert into Victims table
-    const victimResult = await pool.query(
-      "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province, place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general,  type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING victim_id",
-      [
-        articleId,
-        victim_name,
-        date_of_death,
-        place_of_death_province,
-        place_of_death_town,
-        type_of_location,
-        sexual_assault,
-        gender_of_victim,
-        race_of_victim,
-        age_of_victim,
-        age_range_of_victim,
-        mode_of_death_specific,
-        mode_of_death_general,
-        type_of_murder,
-      ]
-    );
+    // Handle multiple victims
+    if (victim_name) {
+      const victimNames = victim_name ? victim_name.split(",").map((name) => name.trim()) : [];
+      const datesOfDeath = date_of_death ? date_of_death.split(",") : [];
+      const provinces = place_of_death_province ? place_of_death_province.split(",") : [];
+      const towns = place_of_death_town ? place_of_death_town.split(",") : [];
+      const locations = type_of_location ? type_of_location.split(",") : [];
+      const assaults = sexual_assault ? sexual_assault.split(",") : [];
+      const genders = gender_of_victim ? gender_of_victim.split(",") : [];
+      const races = race_of_victim ? race_of_victim.split(",") : [];
+      const ages = age_of_victim ? age_of_victim.split(",") : [];
+      const ageRanges = age_range_of_victim ? age_range_of_victim.split(",") : [];
+      const modesOfDeathSpecific = mode_of_death_specific ? mode_of_death_specific.split(",") : [];
+      const modesOfDeathGeneral = mode_of_death_general ? mode_of_death_general.split(",") : [];
+      const typesOfMurder = type_of_murder ? type_of_murder.split(",") : [];
 
-    const victimId = victimResult.rows[0].victim_id;
+      for (let i = 0; i < victimNames.length; i++) {
+        const victimResult = await pool.query(
+          "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province, place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general, type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING victim_id",
+          [
+            articleId,
+            victimNames[i],
+            datesOfDeath[i],
+            provinces[i],
+            towns[i],
+            locations[i],
+            assaults[i],
+            genders[i],
+            races[i],
+            ages[i],
+            ageRanges[i],
+            modesOfDeathSpecific[i],
+            modesOfDeathGeneral[i],
+            typesOfMurder[i],
+          ]
+        );
 
-    // Insert into ArticleVictim linking table
-    await pool.query(
-      "INSERT INTO ArticleVictim (article_id, victim_id) VALUES ($1, $2)",
-      [articleId, victimId]
-    );
+        const victimId = victimResult.rows[0].victim_id;
 
-    // Insert into Perpetrators table
-    const perpetratorResult = await pool.query(
-      "INSERT INTO perpetrator (article_id, perpetrator_name, perpetrator_relationship_to_victim, suspect_identified, suspect_arrested, suspect_charged, conviction, sentence) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING perpetrator_id",
-      [
-        articleId,
-        perpetrator_name,
-        perpetrator_relationship_to_victim,
-        suspect_identified,
-        suspect_arrested,
-        suspect_charged,
-        conviction,
-        sentence,
-      ]
-    );
+        // Insert into ArticleVictim linking table
+        await pool.query(
+          "INSERT INTO ArticleVictim (article_id, victim_id) VALUES ($1, $2)",
+          [articleId, victimId]
+        );
+      }
+    }
 
-    const perpetratorId = perpetratorResult.rows[0].perpetrator_id;
+    // Handle multiple perpetrators
+    if (perpetrator_name) {
+      const perpetratorNames = perpetrator_name ? perpetrator_name.split(",").map((name) => name.trim()) : [];
+      const relationships = perpetrator_relationship_to_victim ? perpetrator_relationship_to_victim.split(",") : [];
+      const identified = suspect_identified ? suspect_identified.split(",") : [];
+      const arrested = suspect_arrested ? suspect_arrested.split(",") : [];
+      const charged = suspect_charged ? suspect_charged.split(",") : [];
+      const convictions = conviction ? conviction.split(",") : [];
+      const sentences = sentence ? sentence.split(",") : [];
 
-    // Insert into ArticlePerpetrator linking table
-    await pool.query(
-      "INSERT INTO ArticlePerpetrator (article_id, perpetrator_id) VALUES ($1, $2)",
-      [articleId, perpetratorId]
-    );
+      for (let i = 0; i < perpetratorNames.length; i++) {
+        const perpetratorResult = await pool.query(
+          "INSERT INTO perpetrator (article_id, perpetrator_name, perpetrator_relationship_to_victim, suspect_identified, suspect_arrested, suspect_charged, conviction, sentence) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING perpetrator_id",
+          [
+            articleId,
+            perpetratorNames[i],
+            relationships[i],
+            identified[i],
+            arrested[i],
+            charged[i],
+            convictions[i],
+            sentences[i],
+          ]
+        );
+
+        const perpetratorId = perpetratorResult.rows[0].perpetrator_id;
+
+        // Insert into ArticlePerpetrator linking table
+        await pool.query(
+          "INSERT INTO ArticlePerpetrator (article_id, perpetrator_id) VALUES ($1, $2)",
+          [articleId, perpetratorId]
+        );
+      }
+    }
 
     res.json("Homicide entry was added!");
   } catch (err) {
@@ -313,7 +343,9 @@ app.post("/homicidesBulk", async (req, res) => {
   }
 });
 
-// post request for adding a homicide entry
+
+
+
 app.post("/homicides", async (req, res) => {
   try {
     const {

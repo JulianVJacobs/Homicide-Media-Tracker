@@ -611,8 +611,11 @@ WHERE
         OR LOWER(split_part(v.victim_name, ' ', 2)) LIKE LOWER($4::text)
         OR LOWER(v.victim_name) LIKE LOWER($4::text)
     ))
-    AND ($5::text IS NULL OR p.perpetrator_name ILIKE $5::text)
-
+    AND ($5::text IS NULL OR (
+        LOWER(split_part(p.perpetrator_name, ' ', 1)) LIKE LOWER($5::text)
+        OR LOWER(split_part(p.perpetrator_name, ' ', 2)) LIKE LOWER($5::text)
+        OR LOWER(p.perpetrator_name) LIKE LOWER($5::text)
+    ))
     `;
 
     const result = await pool.query(query, [
@@ -629,6 +632,7 @@ WHERE
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 //This get request retrieves data based off news report id
 app.get("/homicides/:news_report_id", async (req, res) => {

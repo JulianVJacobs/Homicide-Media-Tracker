@@ -264,7 +264,8 @@ app.post("/homicidesBulk", async (req, res) => {
       const assaults = sexual_assault ? sexual_assault.split(",") : [];
       const genders = gender_of_victim ? gender_of_victim.split(",") : [];
       const races = race_of_victim ? race_of_victim.split(",") : [];
-      const ages = age_of_victim ? age_of_victim.split(",") : [];
+      const ages = age_of_victim ? age_of_victim.toString().split(",") : [];
+
       const ageRanges = age_range_of_victim ? age_range_of_victim.split(",") : [];
       const modesOfDeathSpecific = mode_of_death_specific ? mode_of_death_specific.split(",") : [];
       const modesOfDeathGeneral = mode_of_death_general ? mode_of_death_general.split(",") : [];
@@ -342,9 +343,6 @@ app.post("/homicidesBulk", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
-
-
 
 app.post("/homicides", async (req, res) => {
   try {
@@ -786,54 +784,68 @@ app.delete("/homicides/:id", async (req, res) => {
 app.get("/checkForDuplicates", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT
-      a.article_id,
-        a.news_report_id,
-        a.news_report_url,
-        a.notes,
-        a.news_report_headline,
-        a.date_of_publication,
-        a.author,
-        a.wire_service,
-        a.language,
-        a.type_of_source,
-        a.news_report_platform,
-        v.victim_name,
-        v.date_of_death,
-        v.place_of_death_province,
-        v.place_of_death_town,
-        v.type_of_location,
-        v.sexual_assault,
-        v.gender_of_victim,
-        v.race_of_victim,
-        v.age_of_victim,
-        v.age_range_of_victim,
-        v.mode_of_death_specific,
-        v.mode_of_death_general,
-        v.type_of_murder,
-        p.perpetrator_name,
-        p.perpetrator_relationship_to_victim,
-        p.suspect_identified,
-        p.suspect_arrested,
-        p.suspect_charged,
-        p.conviction,
-        p.sentence
-      FROM articles a
-      LEFT JOIN victim v ON a.article_id = v.article_id
-      LEFT JOIN perpetrator p ON a.article_id = p.article_id
-      WHERE a.news_report_id IN (
-        SELECT news_report_id
-        FROM (
-          SELECT
+    SELECT
+    a.article_id,
+    a.news_report_id,
+    a.news_report_url,
+    a.notes,
+    a.news_report_headline,
+    a.date_of_publication,
+    a.author,
+    a.wire_service,
+    a.language,
+    a.type_of_source,
+    a.news_report_platform,
+    v.victim_name,
+    v.date_of_death,
+    v.place_of_death_province,
+    v.place_of_death_town,
+    v.type_of_location,
+    v.sexual_assault,
+    v.gender_of_victim,
+    v.race_of_victim,
+    v.age_of_victim,
+    v.age_range_of_victim,
+    v.mode_of_death_specific,
+    v.mode_of_death_general,
+    v.type_of_murder,
+    p.perpetrator_name,
+    p.perpetrator_relationship_to_victim,
+    p.suspect_identified,
+    p.suspect_arrested,
+    p.suspect_charged,
+    p.conviction,
+    p.sentence
+FROM articles a
+LEFT JOIN victim v ON a.article_id = v.article_id
+LEFT JOIN perpetrator p ON a.article_id = p.article_id
+WHERE a.news_report_id IN (
+    SELECT news_report_id
+    FROM (
+        SELECT
             a.news_report_id,
             COUNT(*) OVER (PARTITION BY a.date_of_publication, a.author, a.news_report_headline) AS duplicate_count
-          FROM articles a
-          LEFT JOIN victim v ON a.article_id = v.article_id
-          LEFT JOIN perpetrator p ON a.article_id = p.article_id
-          WHERE a.duplicate_ignored IS NULL OR a.duplicate_ignored = 'No'
-        ) subquery
-        WHERE duplicate_count > 1
-      )
+        FROM articles a
+        LEFT JOIN victim v ON a.article_id = v.article_id
+        LEFT JOIN perpetrator p ON a.article_id = p.article_id
+        WHERE a.duplicate_ignored IS NULL OR a.duplicate_ignored = 'No'
+    ) subquery
+    WHERE duplicate_count > 1
+)
+AND a.article_id NOT IN (
+    SELECT article_id
+    FROM (
+        SELECT
+            a.article_id,
+            COUNT(*) OVER (PARTITION BY a.news_report_id) AS same_news_report_id_count
+        FROM articles a
+        LEFT JOIN victim v ON a.article_id = v.article_id
+        LEFT JOIN perpetrator p ON a.article_id = p.article_id
+        WHERE a.duplicate_ignored IS NULL OR a.duplicate_ignored = 'No'
+    ) subquery
+    WHERE same_news_report_id_count > 1
+);
+
     `);
 
     const duplicateData = result.rows;

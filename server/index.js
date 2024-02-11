@@ -62,10 +62,26 @@ app.get("/exportxlsx", async (req, res) => {
     worksheet.addRow(headers);
 
     // Add data rows to the worksheet
+    const formatDate = (dateString) => {
+      if (!dateString) return ""; // Handle null or undefined values
+    
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-GB"); // Format the date as dd/mm/yyyy
+    };
+    
+    // Inside the code where you add data rows to the worksheet
     jsonData.forEach((row) => {
-      const values = headers.map((header) => row[header]);
+      const values = headers.map((header) => {
+        // Check if the header represents a date field
+        if (header === "date_of_publication" || header === "date_of_death") {
+          return formatDate(row[header]);
+        } else {
+          return row[header];
+        }
+      });
       worksheet.addRow(values);
     });
+    
 
     // Save the workbook to a buffer
     const buffer = await workbook.xlsx.writeBuffer();

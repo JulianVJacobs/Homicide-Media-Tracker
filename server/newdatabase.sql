@@ -1,3 +1,9 @@
+ -- Create the database
+CREATE DATABASE Homicide_main;
+
+-- Connect to the newly created database
+\c Homicide_main;
+ 
  -- Create Articles Table
 CREATE TABLE Articles (
     article_id SERIAL PRIMARY KEY,

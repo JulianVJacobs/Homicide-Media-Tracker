@@ -108,9 +108,9 @@ const ImportExport = () => {
 
         if (!response.ok) {
           console.error("Failed to add data to the database");
-          console.log("PROBLEM WITH", rowData);
+          console.log("PROBLEM WITH ENTRY", rowData);
           // Handle error appropriately
-          failedIds.push(row["author"]);
+          failedIds.push(row["author of problematic entry"]);
           // Handle error appropriately
         }
       }

@@ -14,12 +14,12 @@ const ListHomicides = () => {
     "News Report URL",
     "News Report Headline",
     "Date of Publication",
-  "Author",
-  "Wire Service",
-  "Language",
-  "Type of Source",
-  "News Report Platform",
- 
+    "Author",
+    "Wire Service",
+    "Language",
+    "Type of Source",
+    "News Report Platform",
+
     // Add other default fields here
   ]);
   const navigate = useNavigate();
@@ -29,40 +29,41 @@ const ListHomicides = () => {
     "News Report URL",
     "News Report Headline",
     "Date of Publication",
-  "Author",
-  "Wire Service",
-  "Language",
-  "Type of Source",
-  "News Report Platform",
-  "Victim Name",
-  "Date of Death",
-  "Place of Death Province",
-  "Place of Death Town",
-  "Type of Location",
-  "Sexual Assault",
-  "Gender of Victim",
-  "Race of Victim",
-  "Age of Victim",
-  "Age Range of Victim",
-  "Mode of Death Specific",
-  "Mode of Death General",
-  "Perpetrator Name",
-  "Perpetrator Relationship to Victim",
-  "Suspect Identified",
-  "Suspect Arrested",
-  "Suspect Charged",
-  "Conviction",
-  "Sentence",
-  "Type of Murder",
-  "Notes",
-   ];
-
+    "Author",
+    "Wire Service",
+    "Language",
+    "Type of Source",
+    "News Report Platform",
+    "Victim Name",
+    "Date of Death",
+    "Place of Death Province",
+    "Place of Death Town",
+    "Type of Location",
+    "Sexual Assault",
+    "Gender of Victim",
+    "Race of Victim",
+    "Age of Victim",
+    "Age Range of Victim",
+    "Mode of Death Specific",
+    "Mode of Death General",
+    "Perpetrator Name",
+    "Perpetrator Relationship to Victim",
+    "Suspect Identified",
+    "Suspect Arrested",
+    "Suspect Charged",
+    "Conviction",
+    "Sentence",
+    "Type of Murder",
+    "Notes",
+  ];
 
   const handleFieldSelection = (field, isSelected) => {
     if (isSelected) {
       setSelectedFields([...selectedFields, field]);
     } else {
-      setSelectedFields(selectedFields.filter((selected) => selected !== field));
+      setSelectedFields(
+        selectedFields.filter((selected) => selected !== field)
+      );
     }
   };
 
@@ -142,7 +143,10 @@ const ListHomicides = () => {
       {showDuplicatesMessage && (
         <div className="bg-red-500 text-white p-4 text-center">
           Duplicate entries found! Please go to the{" "}
-          <span className="underline cursor-pointer" onClick={handleNavigateToDuplicates}>
+          <span
+            className="underline cursor-pointer"
+            onClick={handleNavigateToDuplicates}
+          >
             Check for Duplicates
           </span>{" "}
           page to fix them.
@@ -185,9 +189,19 @@ const ListHomicides = () => {
                   >
                     {selectedFields.map((field) => (
                       <td key={field} className="px-6 py-4">
-                        {homicide[field.toLowerCase().replace(/\s/g, "_")]}
+                        {field === "Date of Publication" &&
+                        homicide.date_of_publication
+                          ? new Date(
+                              homicide.date_of_publication
+                            ).toLocaleDateString("en-GB")
+                          : field === "Date of Death" && homicide.date_of_death
+                          ? new Date(homicide.date_of_death).toLocaleDateString(
+                              "en-GB"
+                            )
+                          : homicide[field.toLowerCase().replace(/\s/g, "_")]}
                       </td>
                     ))}
+
                     <td className="px-6 py-4 text-right">
                       <EditHomicides todo={homicide} />
                     </td>
@@ -209,6 +223,5 @@ const ListHomicides = () => {
     </Fragment>
   );
 };
-
 
 export default ListHomicides;

@@ -30,6 +30,7 @@ CREATE TABLE Victim (
     place_of_death_province VARCHAR(100),
     place_of_death_town VARCHAR(255),
     type_of_location VARCHAR(255),
+    police_station VARCHAR(255),
     sexual_assault VARCHAR(255),
     gender_of_victim VARCHAR(255),
     race_of_victim VARCHAR(255),

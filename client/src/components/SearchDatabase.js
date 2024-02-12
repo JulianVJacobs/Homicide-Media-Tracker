@@ -39,6 +39,7 @@ const SearchDatabase = () => {
         "Place of Death Province": result.place_of_death_province,
         "Place of Death Town": result.place_of_death_town,
         "Type of Location": result.type_of_location,
+        "Police Station" : result.police_station,
         "Sexual Assault": result.sexual_assault,
         "Gender of Victim": result.gender_of_victim,
         "Race of Victim": result.race_of_victim,
@@ -226,6 +227,9 @@ const SearchDatabase = () => {
                 Type of Location
               </th>
               <th scope="col" className="px-6 py-3">
+                Police Station
+              </th>
+              <th scope="col" className="px-6 py-3">
                 Sexual Assault
               </th>
               <th scope="col" className="px-6 py-3">
@@ -301,6 +305,7 @@ const SearchDatabase = () => {
                 </td>
                 <td className="px-6 py-4">{result.place_of_death_town}</td>
                 <td className="px-6 py-4">{result.type_of_location}</td>
+                <td className="px-6 py-4">{result.police_station}</td>
                 <td className="px-6 py-4">{result.sexual_assault}</td>
                 <td className="px-6 py-4">{result.gender_of_victim}</td>
                 <td className="px-6 py-4">{result.race_of_victim}</td>

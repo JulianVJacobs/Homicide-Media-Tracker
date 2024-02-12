@@ -39,6 +39,7 @@ const ListHomicides = () => {
     "Place of Death Province",
     "Place of Death Town",
     "Type of Location",
+    "Police Station",
     "Sexual Assault",
     "Gender of Victim",
     "Race of Victim",

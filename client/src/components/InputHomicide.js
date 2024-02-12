@@ -61,6 +61,10 @@ const InputHomicide = () => {
         (victimObject) => victimObject.victims.locationType
       );
       const SubmitLocationType = victimLocationType[0];
+      const policeStation = victimData.map(
+        (victimObject) => victimObject.victims.policeStation
+      );
+      const SubmitPoliceStation = policeStation[0];
       const victimSexualAssault = victimData.map(
         (victimObject) => victimObject.victims.sexualAssault
       );
@@ -140,6 +144,7 @@ const InputHomicide = () => {
         date_of_death:SubmitDate,
         place_of_death_province:SubmitProvince,
         place_of_death_town:SubmitTown,
+        police_station:SubmitPoliceStation,
         type_of_location:SubmitLocationType,
         sexual_assault:SubmitSexualAssault,
         gender_of_victim:SubmitGender,

@@ -30,6 +30,7 @@ app.get("/exportxlsx", async (req, res) => {
         v.place_of_death_province,
         v.place_of_death_town,
         v.type_of_location,
+        v.police_station,
         v.sexual_assault,
         v.gender_of_victim,
         v.race_of_victim,
@@ -156,6 +157,7 @@ app.get("/exportcsv", async (req, res) => {
         v.place_of_death_province,
         v.place_of_death_town,
         v.type_of_location,
+        v.police_station,
         v.sexual_assault,
         v.gender_of_victim,
         v.race_of_victim,
@@ -241,6 +243,7 @@ app.post("/homicidesBulk", async (req, res) => {
       mode_of_death_specific,
       mode_of_death_general,
       type_of_murder,
+      police_station,
       perpetrator_name,
       perpetrator_relationship_to_victim,
       suspect_identified,
@@ -281,7 +284,7 @@ app.post("/homicidesBulk", async (req, res) => {
       const genders = gender_of_victim ? gender_of_victim.split(",") : [];
       const races = race_of_victim ? race_of_victim.split(",") : [];
       const ages = age_of_victim ? age_of_victim.toString().split(",") : [];
-
+      const policeStation = police_station ? police_station.split(","):[];
       const ageRanges = age_range_of_victim ? age_range_of_victim.split(",") : [];
       const modesOfDeathSpecific = mode_of_death_specific ? mode_of_death_specific.split(",") : [];
       const modesOfDeathGeneral = mode_of_death_general ? mode_of_death_general.split(",") : [];
@@ -289,7 +292,7 @@ app.post("/homicidesBulk", async (req, res) => {
 
       for (let i = 0; i < victimNames.length; i++) {
         const victimResult = await pool.query(
-          "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province, place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general, type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING victim_id",
+          "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province, place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general, type_of_murder, police_station) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING victim_id",
           [
             articleId,
             victimNames[i],
@@ -305,6 +308,7 @@ app.post("/homicidesBulk", async (req, res) => {
             modesOfDeathSpecific[i],
             modesOfDeathGeneral[i],
             typesOfMurder[i],
+            policeStation[i],
           ]
         );
 
@@ -385,6 +389,7 @@ app.post("/homicides", async (req, res) => {
       mode_of_death_specific,
       mode_of_death_general,
       type_of_murder,
+      police_station,
       perpetrator_name,
       perpetrator_relationship_to_victim,
       suspect_identified,
@@ -422,6 +427,7 @@ app.post("/homicides", async (req, res) => {
       : [];
     const town = place_of_death_town ? place_of_death_town.split(",") : [];
     const locationType = type_of_location ? type_of_location.split(",") : [];
+    const policeStation = police_station ? police_station.split(","):[];
     const sexualAssault = sexual_assault ? sexual_assault.split(",") : [];
     const genderOfVictim = gender_of_victim ? gender_of_victim.split(",") : [];
     const race = race_of_victim ? race_of_victim.split(",") : [];
@@ -458,7 +464,7 @@ app.post("/homicides", async (req, res) => {
 
     for (let i = 0; i < victimNames.length; i++) {
       const victimResult = await pool.query(
-        "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province,place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general, type_of_murder) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING victim_id",
+        "INSERT INTO victim (article_id, victim_name, date_of_death, place_of_death_province,place_of_death_town, type_of_location, sexual_assault, gender_of_victim, race_of_victim, age_of_victim, age_range_of_victim, mode_of_death_specific, mode_of_death_general, type_of_murder, police_station) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING victim_id",
         [
           articleId,
           victimNames[i],
@@ -474,6 +480,7 @@ app.post("/homicides", async (req, res) => {
           modeOfDeathSpecific[i],
           modeOfDeathGeneral[i],
           TypeOfMurder[i],
+          policeStation[i],
         ]
       );
 
@@ -537,6 +544,7 @@ app.get("/homicides", async (req, res) => {
         v.date_of_death,
         v.place_of_death_province,
         v.place_of_death_town,
+        v.police_station,
         v.type_of_location,
         v.sexual_assault,
         v.gender_of_victim,
@@ -594,6 +602,7 @@ app.get("/search", async (req, res) => {
     v.date_of_death,
     v.place_of_death_province,
     v.place_of_death_town,
+    v.police_station,
     v.type_of_location,
     v.sexual_assault,
     v.gender_of_victim,
@@ -672,6 +681,7 @@ app.get("/homicides/:news_report_id", async (req, res) => {
         v.date_of_death,
         v.place_of_death_province,
         v.place_of_death_town,
+        v.police_station,
         v.type_of_location,
         v.sexual_assault,
         v.gender_of_victim,
@@ -938,6 +948,7 @@ app.post("/MergeEntries", async (req, res) => {
         v.date_of_death,
         v.place_of_death_province,
         v.place_of_death_town,
+        v.police_station,
         v.type_of_location,
         v.sexual_assault,
         v.gender_of_victim,
@@ -981,6 +992,7 @@ app.post("/MergeEntries", async (req, res) => {
         v.date_of_death,
         v.place_of_death_province,
         v.place_of_death_town,
+        v.police_station,
         v.type_of_location,
         v.sexual_assault,
         v.gender_of_victim,
@@ -1046,8 +1058,9 @@ for (const key in masterData) {
         age_range_of_victim = $10,
         mode_of_death_specific = $11,
         mode_of_death_general = $12,
-        type_of_murder = $13
-      WHERE article_id = $14
+        type_of_murder = $13,
+        police_station = $14,
+      WHERE article_id = $15
       `,
       [
         masterData.victim_name,
@@ -1063,6 +1076,7 @@ for (const key in masterData) {
         masterData.mode_of_death_specific,
         masterData.mode_of_death_general,
         masterData.type_of_murder,
+        masterData.police_station,
         masterData.article_id,
         
       ]

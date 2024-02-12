@@ -18,6 +18,7 @@ const VictimForm = ({ onSubmit }) => {
     modeOfDeathSpecific: "",
     modeOfDeathGeneral: "",
     typeOfMurder: "",
+   policeStation: "",
   });
 
   const [hasVictims, setHasVictims] = useState(false);
@@ -107,6 +108,7 @@ const VictimForm = ({ onSubmit }) => {
       modeOfDeathSpecific: "",
       modeOfDeathGeneral: "",
       typeOfMurder: "",
+      policeStation: "",
     });
     setCustomTown(""); // Clear custom town input
   };
@@ -252,7 +254,19 @@ const handleVictimSubmit = () => {
         />
       )}
 
-      {/* ... other form fields for the current victim */}
+<label htmlFor="policeStation">Police Station (if known):</label>
+      <input
+        type="text"
+        id="policeStation"
+        className="form-control"
+        value={currentVictim.policeStation}
+        onChange={(e) =>
+          setCurrentVictim((prevVictim) => ({
+            ...prevVictim,
+            policeStation: e.target.value,
+          }))
+        }
+      />
       <label htmlFor="locationType">Type of Location:</label>
       <select
         id="locationType"
@@ -499,6 +513,7 @@ const handleVictimSubmit = () => {
             <th>Province</th>
             <th>Town</th>
             <th>Location Type</th>
+            <th>Police Station</th>
             <th>sexual Assault</th>
             <th>Gender</th>
             <th>Race</th>
@@ -515,6 +530,7 @@ const handleVictimSubmit = () => {
             <td>{victim.province}</td>
             <td>{victim.town}</td>
             <td>{victim.locationType}</td>
+            <td>{victim.policeStation}</td>
             <td>{victim.sexualAssault}</td>
             <td>{victim.genderOfVictim}</td>
             <td>{victim.race}</td>

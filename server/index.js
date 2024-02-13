@@ -1059,7 +1059,7 @@ for (const key in masterData) {
         mode_of_death_specific = $11,
         mode_of_death_general = $12,
         type_of_murder = $13,
-        police_station = $14,
+        police_station = $14
       WHERE article_id = $15
       `,
       [

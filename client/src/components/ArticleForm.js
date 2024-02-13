@@ -95,9 +95,15 @@ const ArticleForm = ({ onSubmit }) => {
         onChange={(e) => setWireService(e.target.value)}
       >
         <option value="">Select Wire Service</option>
+        <option value="SABINET">SABINET</option>
+        <option value="SAPA">SAPA</option>
+        <option value="NewsWire">NewsWire</option>
+        <option value="EINPresswire">EIN Presswire</option>
+        <option value="News24Wire">News24Wire</option>
         <option value="AP">AP</option>
         <option value="Reuters">Reuters</option>
-        <option value="NULL">null</option>
+        <option value="Null">null</option>
+        
       </select>
 
       <label htmlFor="language">Language:</label>

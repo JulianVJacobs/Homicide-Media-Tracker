@@ -1,10 +1,13 @@
- -- Create the database
-CREATE DATABASE Homicide_main;
+CREATE USER postgres SUPERUSER;
+
+
+-- Create the database
+CREATE DATABASE homicide_main WITH OWNER postgres;
 
 -- Connect to the newly created database
-\c Homicide_main;
- 
- -- Create Articles Table
+\c homicide_main;
+
+-- Create Articles Table
 CREATE TABLE Articles (
     article_id SERIAL PRIMARY KEY,
     news_report_id UUID,
@@ -18,13 +21,12 @@ CREATE TABLE Articles (
     type_of_source VARCHAR(255),
     duplicate_ignored BOOLEAN,
     notes VARCHAR(255)
-
 );
 
 -- Create Victim Table
 CREATE TABLE Victim (
     victim_id SERIAL PRIMARY KEY,
-    article_id INT REFERENCES Articles(article_id),
+    article_id INT REFERENCES Articles(article_id) ON DELETE CASCADE,
     victim_name VARCHAR(255),
     date_of_death DATE,
     place_of_death_province VARCHAR(100),
@@ -39,13 +41,12 @@ CREATE TABLE Victim (
     mode_of_death_specific VARCHAR(100),
     mode_of_death_general VARCHAR(100),
     type_of_murder VARCHAR(255)
-    
 );
 
 -- Create Perpetrator Table
 CREATE TABLE Perpetrator (
     perpetrator_id SERIAL PRIMARY KEY,
-    article_id INT REFERENCES Articles(article_id),
+    article_id INT REFERENCES Articles(article_id) ON DELETE CASCADE,
     perpetrator_name VARCHAR(255),
     perpetrator_relationship_to_victim VARCHAR(255),
     suspect_identified VARCHAR(255),
@@ -53,19 +54,18 @@ CREATE TABLE Perpetrator (
     suspect_charged VARCHAR(255),
     conviction VARCHAR(255),
     sentence VARCHAR(255)
-    
 );
 
 -- Create ArticleVictim Linking Table
 CREATE TABLE ArticleVictim (
-    article_id INT REFERENCES Articles(article_id),
-    victim_id INT REFERENCES Victim(victim_id),
+    article_id INT REFERENCES Articles(article_id) ON DELETE CASCADE,
+    victim_id INT REFERENCES Victim(victim_id) ON DELETE CASCADE,
     PRIMARY KEY (article_id, victim_id)
 );
 
 -- Create ArticlePerpetrator Linking Table
 CREATE TABLE ArticlePerpetrator (
-    article_id INT REFERENCES Articles(article_id),
-    perpetrator_id INT REFERENCES Perpetrator(perpetrator_id),
+    article_id INT REFERENCES Articles(article_id) ON DELETE CASCADE,
+    perpetrator_id INT REFERENCES Perpetrator(perpetrator_id) ON DELETE CASCADE,
     PRIMARY KEY (article_id, perpetrator_id)
 );

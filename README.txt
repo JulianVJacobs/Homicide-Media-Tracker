@@ -11,3 +11,5 @@ If the App does not open, go to your browser/safari and type in the url: http://
 4) Please note, the default password to delete the database is 1234
 
 5) As of the writing of this document, the edit function is not yet working!
+
+6) On the manual Homicide capture page, please ensure you submit article data, victim and perpetrator data before submitting the form for the data to capture

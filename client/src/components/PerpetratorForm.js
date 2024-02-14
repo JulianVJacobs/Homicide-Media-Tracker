@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 
-// ... (import statements)
-
+// Component for entering perpetrator information
 const PerpetratorForm = ({ onSubmit }) => {
-    const [currentPerpetrator, setCurrentPerpetrator] = useState({
+  // State variables for managing perpetrator data
+  const [currentPerpetrator, setCurrentPerpetrator] = useState({
+      // Initial state for perpetrator data fields
         perpetratorName: "",
         relationshipToVictim: "",
         suspectIdentified: "",
@@ -14,12 +15,14 @@ const PerpetratorForm = ({ onSubmit }) => {
           // <-- Ensure it's an empty array initially
       });
       
+      const [perpetratorData, setPerpetratorData] = useState([]); // State for the list of entered perpetrators
+      const [hasPerpetrators, setHasPerpetrators] = useState(false); // State for tracking if perpetrators are entered
   
-    const [perpetratorData, setPerpetratorData] = useState([]);
-    const [hasPerpetrators, setHasPerpetrators] = useState(false); // Step 1
-    const handleAddPerpetrator = () => {
-      setPerpetratorData((prevData) => [...prevData, { ...currentPerpetrator }]);
-      setCurrentPerpetrator({
+      // Event handler for adding a perpetrator
+      const handleAddPerpetrator = () => {
+          setPerpetratorData((prevData) => [...prevData, { ...currentPerpetrator }]);
+          setCurrentPerpetrator({
+              // Reset currentPerpetrator state after adding a perpetrator
         perpetratorName: "",
         relationshipToVictim: "",
         suspectIdentified: "",
@@ -32,14 +35,15 @@ const PerpetratorForm = ({ onSubmit }) => {
       setHasPerpetrators(true);
     };
   
+ // Function to clear all entered perpetrators
+ const handleClearAllPerpetrators = () => {
+  setPerpetratorData([]); // Clear all perpetrator data
+  setHasPerpetrators(false); // Update hasPerpetrators when perpetrators are cleared
+};
 
-    const handleClearAllPerpetrators = () => {
-      setPerpetratorData([]); // Clear all victim data
-      setHasPerpetrators(false); // Update hasPerpetrators when victims are cleared
-    };
-  
-    const handlePerpetratorSubmit = () => {
-        // Group values by field and join them together
+ // Event handler for submitting all perpetrator data
+ const handlePerpetratorSubmit = () => {
+  // Group values by field and join them together
         const formattedPerpetrators = Object.keys(currentPerpetrator).reduce(
           (acc, key) => {
             

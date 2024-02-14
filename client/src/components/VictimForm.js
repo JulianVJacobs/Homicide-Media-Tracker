@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import townsByProvince from "./townsByProvince";
 import Select from "react-select";
 
-
+// Component for entering victim information
 const VictimForm = ({ onSubmit }) => {
+  // State variables for managing victim data
   const [currentVictim, setCurrentVictim] = useState({
+    // Initial state for victim data fields
     victimName: "",
     dateOfDeath: "",
     province: "",
@@ -18,20 +20,20 @@ const VictimForm = ({ onSubmit }) => {
     modeOfDeathSpecific: "",
     modeOfDeathGeneral: "",
     typeOfMurder: "",
-   policeStation: "",
+    policeStation: "",
   });
 
-  const [hasVictims, setHasVictims] = useState(false);
-  const [towns, setTowns] = useState([]);
-  const [customTown, setCustomTown] = useState(""); // Added state for custom town
+  const [hasVictims, setHasVictims] = useState(false); // State for tracking if victims are entered
+  const [towns, setTowns] = useState([]); // State for towns based on selected province
+  const [customTown, setCustomTown] = useState(""); // State for custom town
 
- 
-
+  // Function to clear all entered victims
   const handleClearAllVictims = () => {
     setVictimData([]); // Clear all victim data
     setHasVictims(false); // Update hasVictims when victims are cleared
     setTowns([]);
   };
+
   // Event handler for province change
   const handleProvinceChange = (e) => {
     const selectedProvince = e.target.value;
@@ -44,46 +46,50 @@ const VictimForm = ({ onSubmit }) => {
 
   // State for the list of entered victims
   const [victimData, setVictimData] = useState([]);
+
   const murderOptions = [
-    { value: "Adult male homicide", label: "Adult male homicide" },
-    { value: "Adult female homicide", label: "Adult female homicide" },
-    { value: "Eldercide", label: "Eldercide" },
-    { value: "Child murder", label: "Child murder" },
-    { value: "Multiple killing", label: "Multiple killing" },
-    { value: "Political killing", label: "Political killing" },
-    { value: "Gang-related killing", label: "Gang-related killing" },
-    { value: "Family killing", label: "Family killing" },
-    { value: "Witch killing", label: "Witch killing" },
-    { value: "LGBTQ killing", label: "LGBTQ killing" },
-    { value: "Sex worker killing", label: "Sex worker killing" },
-    { value: "Farm killing", label: "Farm killing" },
-    { value: "Serial killing", label: "Serial killing" },
-    { value: "Spree killing", label: "Spree killing" },
-    { value: "Intimate partner killing", label: "Intimate partner killing" },
-    { value: "Rural killing", label: "Rural killing" },
-    { value: "Ritual killing", label: "Ritual killing" },
-    { value: "Assassination", label: "Assassination" },
-    { value: "Culpable homicide", label: "Culpable homicide" },
-    { value: "Matricide", label: "Matricide" },
-    { value: "Patricide", label: "Patricide" },
-    { value: "Natural causes", label: "Natural causes" },
-    {
-      value: "Self-inflicted (including suicide)",
-      label: "Self-inflicted (including suicide)",
-    },
-    { value: "Killing in police custody", label: "Killing in police custody" },
-    { value: "Missing presumed dead", label: "Missing presumed dead" },
-    { value: "Hired killers", label: "Hired killers" },
-    { value: "Concealment of birth", label: "Concealment of birth" },
-    { value: "Terrorism or war", label: "Terrorism or war" },
-    { value: "Other (add category)", label: "Other (add category)" },
+    // Options for the type of murder
+    
+      { value: "Adult male homicide", label: "Adult male homicide" },
+      { value: "Adult female homicide", label: "Adult female homicide" },
+      { value: "Eldercide", label: "Eldercide" },
+      { value: "Child murder", label: "Child murder" },
+      { value: "Multiple killing", label: "Multiple killing" },
+      { value: "Political killing", label: "Political killing" },
+      { value: "Gang-related killing", label: "Gang-related killing" },
+      { value: "Family killing", label: "Family killing" },
+      { value: "Witch killing", label: "Witch killing" },
+      { value: "LGBTQ killing", label: "LGBTQ killing" },
+      { value: "Sex worker killing", label: "Sex worker killing" },
+      { value: "Farm killing", label: "Farm killing" },
+      { value: "Serial killing", label: "Serial killing" },
+      { value: "Spree killing", label: "Spree killing" },
+      { value: "Intimate partner killing", label: "Intimate partner killing" },
+      { value: "Rural killing", label: "Rural killing" },
+      { value: "Ritual killing", label: "Ritual killing" },
+      { value: "Assassination", label: "Assassination" },
+      { value: "Culpable homicide", label: "Culpable homicide" },
+      { value: "Matricide", label: "Matricide" },
+      { value: "Patricide", label: "Patricide" },
+      { value: "Natural causes", label: "Natural causes" },
+      {
+        value: "Self-inflicted (including suicide)",
+        label: "Self-inflicted (including suicide)",
+      },
+      { value: "Killing in police custody", label: "Killing in police custody" },
+      { value: "Missing presumed dead", label: "Missing presumed dead" },
+      { value: "Hired killers", label: "Hired killers" },
+      { value: "Concealment of birth", label: "Concealment of birth" },
+      { value: "Terrorism or war", label: "Terrorism or war" },
+      { value: "Other (add category)", label: "Other (add category)" },
+    
   ];
 
   // Event handler for adding a victim
   const handleAddVictim = () => {
     const townToUse =
       currentVictim.town === "Other" ? customTown : currentVictim.town;
-  
+
     // Add the current victim to victimData array directly
     setVictimData((prevData) => [
       ...prevData,
@@ -92,9 +98,10 @@ const VictimForm = ({ onSubmit }) => {
         town: townToUse,
       },
     ]);
-  
-    setHasVictims(true);
+
+    setHasVictims(true); // Set hasVictims to true after adding a victim
     setCurrentVictim({
+      // Reset currentVictim state after adding a victim
       victimName: "",
       dateOfDeath: "",
       province: "",
@@ -112,36 +119,32 @@ const VictimForm = ({ onSubmit }) => {
     });
     setCustomTown(""); // Clear custom town input
   };
-  
-  
+
   // Event handler for submitting all victim data
-  // Event handler for submitting all victim data
-// Event handler for submitting all victim data
-const handleVictimSubmit = () => {
-  console.log("Victim data", victimData);
+  const handleVictimSubmit = () => {
+    console.log("Victim data", victimData);
 
-  if (victimData.length > 0) {
-    const formattedVictims = Object.keys(currentVictim).reduce(
-      (acc, key) => {
-        acc[key] = victimData.map((victim) => victim[key]).join(", ");
-        return acc;
-      },
-      {}
-    );
+    if (victimData.length > 0) {
+      const formattedVictims = Object.keys(currentVictim).reduce(
+        (acc, key) => {
+          acc[key] = victimData.map((victim) => victim[key]).join(", ");
+          return acc;
+        },
+        {}
+      );
 
-    onSubmit({
-      victims: formattedVictims, // Wrap in an array to match the expected structure
-      // ... (other fields)
-    });
+      onSubmit({
+        victims: formattedVictims, // Wrap in an array to match the expected structure
+        // ... (other fields)
+      });
 
-    console.log("formatted victims: ", formattedVictims);
-  } else {
-    console.error("No victim data to submit.");
-  }
-};
+      console.log("formatted victims: ", formattedVictims);
+    } else {
+      console.error("No victim data to submit.");
+    }
+  };
 
-
-  
+  // Custom styles for React Select component
   const customStyles = {
     control: (provided) => ({
       ...provided,
@@ -156,7 +159,7 @@ const handleVictimSubmit = () => {
       },
     }),
   };
-
+  
   return (
     <div className="col-md-20 text-gray-800">
       <label htmlFor="victimName">Victim Name:</label>

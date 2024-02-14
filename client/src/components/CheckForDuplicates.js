@@ -2,7 +2,9 @@ import React, { Fragment, useState } from "react";
 import axios from "axios";
 import MergeEntriesModal from "./MergeEntriesModal";
 
+// Component to check for duplicate entries
 const CheckForDuplicates = () => {
+  // State variables to manage component state
   const [loading, setLoading] = useState(false);
   const [groupedDuplicates, setGroupedDuplicates] = useState([]);
   const [selectedDuplicate, setSelectedDuplicate] = useState(null);
@@ -11,6 +13,7 @@ const CheckForDuplicates = () => {
   const [selectedEntries, setSelectedEntries] = useState([]);
   const [isMergeModalOpen, setMergeModalOpen] = useState(false);
 
+  // Function to handle checking for duplicates
   const handleCheckDuplicates = async () => {
     try {
       setLoading(true);
@@ -28,6 +31,7 @@ const CheckForDuplicates = () => {
     }
   };
 
+  // Function to group duplicate entries based on specific criteria
   const groupDuplicates = (duplicateData) => {
     const groupedDuplicates = {};
 
@@ -44,6 +48,7 @@ const CheckForDuplicates = () => {
     return Object.values(groupedDuplicates);
   };
 
+  // Function to handle ignoring a duplicate entry
   const handleIgnoreDuplicate = async (id) => {
     const userConfirmed = window.confirm(
       "Are you sure you want to ignore this duplicate? This action cannot be undone."
@@ -59,18 +64,21 @@ const CheckForDuplicates = () => {
     }
   };
 
+  // Function to add a note to a duplicate entry
   const handleAddNote = (duplicate) => {
     setSelectedDuplicate(duplicate);
     setNoteInput("");
     setCharacterCount(0);
   };
 
+  // Function to handle input change in the note input field
   const handleNoteInputChange = (e) => {
     const inputText = e.target.value;
     setNoteInput(inputText);
     setCharacterCount(inputText.length);
   };
 
+  // Function to save the note added to a duplicate entry
   const handleSaveNote = async () => {
     try {
       if (selectedDuplicate) {
@@ -91,10 +99,12 @@ const CheckForDuplicates = () => {
     }
   };
 
+  // Function to discard the note added to a duplicate entry
   const handleDiscardNote = () => {
     setSelectedDuplicate(null);
   };
 
+  // Function to handle deletion of a duplicate entry
   const handleDelete2 = async (id) => {
     try {
       if (!id) {
@@ -117,8 +127,7 @@ const CheckForDuplicates = () => {
     }
   };
 
- 
-  
+  // Function to isolate and merge duplicate entries
   const handleIsolateAndMerge = (duplicate) => {
     // Find all entries that match the key of the clicked entry (including the clicked entry)
     const duplicatesForKey = groupedDuplicates.find(
@@ -143,12 +152,13 @@ const CheckForDuplicates = () => {
     }
   };
   
-    
+  // Function to handle opening the merge modal
   const handleMergeClick = () => {
     // Open the modal and pass the selected entries
     setMergeModalOpen(true);
   };
 
+  // Function to handle closing the merge modal
   const handleMergeModalClose = () => {
     // Close the modal
     setMergeModalOpen(false);
@@ -156,6 +166,7 @@ const CheckForDuplicates = () => {
     setSelectedEntries([]);
   };
 
+  // Function to handle merge completion
   const handleMergeComplete = () => {
     // After merge is complete, you can perform any necessary actions
     // For example, refetch the list of duplicates

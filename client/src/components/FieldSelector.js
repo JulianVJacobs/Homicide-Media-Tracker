@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 
+// Component for selecting fields
 const FieldSelector = ({ fields, onSelectField, onToggleAllFields }) => {
+  // State to track selected fields and modal visibility
   const [selectedFields, setSelectedFields] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Function to handle individual field selection
   const handleFieldSelection = (event) => {
     const { value } = event.target;
     if (selectedFields.includes(value)) {
@@ -15,6 +18,12 @@ const FieldSelector = ({ fields, onSelectField, onToggleAllFields }) => {
     }
   };
 
+  // Function to toggle visibility of the modal
+  const toggleModal = () => {
+    setModalOpen(!modalOpen);
+  };
+
+  // Function to handle toggling all fields selection
   const handleToggleAllFields = () => {
     if (selectedFields.length === fields.length) {
       setSelectedFields([]);
@@ -25,15 +34,13 @@ const FieldSelector = ({ fields, onSelectField, onToggleAllFields }) => {
     }
   };
 
+  // Function to handle deselecting all fields
   const handleDeselectAllFields = () => {
     setSelectedFields([]);
     onToggleAllFields(false);
   };
 
-  const toggleModal = () => {
-    setModalOpen(!modalOpen);
-  };
-
+  // Render the component with field selection options and modal
   return (
     <div className="mb-4">
       <button

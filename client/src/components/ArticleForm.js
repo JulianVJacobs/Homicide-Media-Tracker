@@ -1,12 +1,13 @@
 
 
-
+//This component represents the article form found on the input homicides page. it inlcudes capturing of the data 
 import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from 'uuid';
 
 
+// Component representing the form for adding an article
 const ArticleForm = ({ onSubmit }) => {
-  //const [newsReportId, setNewsReportId] = useState("");
+    // Log updated article data whenever it changes
   const [newsReportUrl, setNewsReportUrl] = useState("");
   const [newsReportHeadline, setNewsReportHeadline] = useState("");
   const [dateOfPublication, setDateOfPublication] = useState("");
@@ -31,10 +32,11 @@ const ArticleForm = ({ onSubmit }) => {
   }, 
     [ onSubmit]
   );
-
+ // Function to handle form submission
   const handleSubmit = () => {
+       // Construct article data object
     const articleData = {
-      newsReportId: uuidv4(),
+      newsReportId: uuidv4(), //Generate a unique id for each article 
       newsReportUrl,
       newsReportHeadline,
       dateOfPublication,
@@ -45,7 +47,7 @@ const ArticleForm = ({ onSubmit }) => {
       newsSource,
     };
 
-    // Call the parent onSubmit function to update the state in InputHomicidePage
+    // Call the parent onSubmit function to update the state in InputHomicidePage --which is the parent component 
     onSubmit(articleData);
   };
 

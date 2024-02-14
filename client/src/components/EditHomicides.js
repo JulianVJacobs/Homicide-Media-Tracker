@@ -1,3 +1,4 @@
+//this component is non functional yet!
 import React, { Fragment, useState } from "react";
 import "./InputHomicide.css";
 import VictimForm from "./VictimForm";

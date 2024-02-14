@@ -9,7 +9,7 @@ import SearchDatabase from "./SearchDatabase";
 import CheckArchive from "./CheckArchive";
 import CheckForDuplicates from "./CheckForDuplicates";
 import "../output.css"; 
-
+//this is the navbar component, as you can see, the data analysis component has been commented out until it works properly 
 const NavBarComp = () => {
   
   return (

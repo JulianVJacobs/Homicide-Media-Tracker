@@ -7,21 +7,23 @@ const MergeEntriesModal = ({
   selectedEntries,
   onMergeComplete,
 }) => {
-  const [masterEntry, setMasterEntry] = useState(null);
-  const [selectedSubEntries, setSelectedSubEntries] = useState([]);
-  const [error, setError] = useState(null);
-  const [mergeStatus, setMergeStatus] = useState(null);
+  // State variables for managing merge process and UI
+  const [masterEntry, setMasterEntry] = useState(null); // State for the master entry
+  const [selectedSubEntries, setSelectedSubEntries] = useState([]); // State for selected sub entries
+  const [error, setError] = useState(null); // State for error message
+  const [mergeStatus, setMergeStatus] = useState(null); // State for merge status
 
   useEffect(() => {
     // Update sub-entries when master entry changes
     setSelectedSubEntries([]);
   }, [masterEntry, selectedEntries]);
 
+  // Function to handle change in master entry selection
   const handleMasterEntryChange = (entry) => {
-    //console.log("Selected entry:", entry);
     setMasterEntry(entry);
   };
 
+  // Function to handle change in sub entry selection
   const handleSubEntryChange = (entry) => {
     // Toggle the selected state for the clicked sub-entry
     const isSelected = selectedSubEntries.includes(entry);
@@ -35,6 +37,7 @@ const MergeEntriesModal = ({
     }
   };
 
+  // Function to handle merge process
   const handleMerge = async () => {
     try {
       // Make a request to your backend to perform the merge

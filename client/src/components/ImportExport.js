@@ -1,23 +1,26 @@
 import React, { useState } from "react";
 import { utils, read } from "xlsx";
-import ExportData from "./ExportData";
-import { Navigate, useNavigate } from "react-router-dom";
-import { v4 as uuidv4 } from 'uuid';
-import DeleteDatabase from "./DeleteDatabase";
+import ExportData from "./ExportData"; // Import ExportData component
+import { Navigate, useNavigate } from "react-router-dom"; // Import Navigate and useNavigate hooks
+import { v4 as uuidv4 } from 'uuid'; // Import uuidv4 for generating unique ids
+import DeleteDatabase from "./DeleteDatabase"; // Import DeleteDatabase component
 
+// Component for importing and exporting data
 const ImportExport = () => {
-  const [excelData, setExcelData] = useState([]);
-  const [excelError, setExcelError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [completed, setCompleted] = useState(false); // Track completion
+  // State variables for managing data import/export
+  const [excelData, setExcelData] = useState([]); // State for Excel data
+  const [excelError, setExcelError] = useState(""); // State for Excel import error
+  const [loading, setLoading] = useState(false); // State for loading status
+  const [completed, setCompleted] = useState(false); // State for import completion
   const [showDeleteModal, setShowDeleteModal] = useState(false); // State to manage delete modal visibility
-  
-  const navigate = useNavigate(); // Initialize useNavigate hook
+
+  const navigate = useNavigate(); // Initialize useNavigate hook for programmatic navigation
   const file_type = [
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/vnd.ms-excel",
-  ];
+  ]; // Supported file types for import
 
+  // Function to convert Excel date to JS date
   const excelDateToJSDate = (excelDate) => {
     const baseDate = new Date("1900-01-01");
     const daysToSubtract = excelDate <= 60 ? 1 : 2;
@@ -26,9 +29,9 @@ const ImportExport = () => {
     return new Date(dateMilliseconds);
   };
 
+  // Function to handle file change during import
   const handleChange = (e) => {
     const selected_file = e.target.files[0];
-
     if (selected_file) {
       if (selected_file && file_type.includes(selected_file.type)) {
         setLoading(true);
@@ -50,12 +53,14 @@ const ImportExport = () => {
       }
     }
   };
+
+  // Function to format date from Excel
   const formatDate = (dateString) => {
     const [day, month, year] = dateString.split("/");
     return `${year}/${month}/${day}`;
   };
 
-
+  // Function to add data to the database
   const handleAddToDatabase = async () => {
     try {
       setLoading(true);

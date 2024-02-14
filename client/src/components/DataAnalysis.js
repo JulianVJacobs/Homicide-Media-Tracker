@@ -1,17 +1,23 @@
+//this component is not currently listed on the site, if you want to use it, please add its route in the navbar
+
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import Chart from "chart.js/auto";
 
+// Component for data analysis of age distribution
 function DataAnalysis() {
+  // References to chart canvases and chart instances
   const barChartRef = useRef(null);
   const pieChartRef = useRef(null);
   const barChartInstance = useRef(null);
   const pieChartInstance = useRef(null);
 
+  // State for age distribution data
   const [ageDistributionData, setAgeDistributionData] = useState({
     labels: [],
     values: [],
   });
 
+  // Fetch age distribution data from server on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -34,8 +40,9 @@ function DataAnalysis() {
     fetchData();
   }, []);
 
+  // Update charts when age distribution data changes
   useEffect(() => {
-    // Destroy previous instances
+    // Destroy previous chart instances
     if (barChartInstance.current) {
       barChartInstance.current.destroy();
     }
@@ -44,6 +51,7 @@ function DataAnalysis() {
       pieChartInstance.current.destroy();
     }
 
+    // Create new chart instances
     // Bar Chart
     barChartInstance.current = new Chart(barChartRef.current, {
       type: "bar",
@@ -116,16 +124,19 @@ function DataAnalysis() {
     });
   }, [ageDistributionData]);
 
+  // Render age distribution charts
   return (
     <Fragment>
       <div className="font-bold text-xl mt-10 bg-gray-100">
         <h1 className="text-gray-700 flex mx-auto">DATA ANALYSIS: AGE DISTRIBUTION </h1>
       </div>
 
+      {/* Display bar chart */}
       <div className="mt-10 flex my-5">
         <canvas ref={barChartRef} width={300} height={400}></canvas> {/* Adjust width and height */}
       </div>
 
+      {/* Display pie chart */}
       <div className="flex my-5 mt-8">
         <canvas ref={pieChartRef} width={300} height={400}></canvas> {/* Adjust width and height */}
       </div>

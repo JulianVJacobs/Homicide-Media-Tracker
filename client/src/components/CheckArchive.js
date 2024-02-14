@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 
+
+// Component to check if a URL is archived using the Wayback Machine API
 const CheckArchive = () => {
+  // State variables to store the URL and the result of the archive check
   const [url, setUrl] = useState('');
   const [result, setResult] = useState('');
 
+
+    // Function to handle the archive check
   const handleCheckArchive = async (e) => {
     e.preventDefault(); // Prevent default form submission behavior
 
@@ -16,13 +21,17 @@ const CheckArchive = () => {
       body: JSON.stringify({ url }),
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      setResult(data.isArchived ? 'Webpage archived!' : 'Cannot find archive');
-    } else {
-      setResult('Error checking archive status');
-    }
-  };
+       // Check if the response is OK
+       if (response.ok) {
+        // Parse the response data
+        const data = await response.json();
+        // Update the result based on the archival status
+        setResult(data.isArchived ? 'Webpage archived!' : 'Cannot find archive');
+      } else {
+        // If there's an error in the response, update the result accordingly
+        setResult('Error checking archive status');
+      }
+    };
 
   return (
     <div className='bg-gray-300'>

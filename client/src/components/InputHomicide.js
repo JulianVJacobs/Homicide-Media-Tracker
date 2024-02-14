@@ -1,31 +1,36 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import ArticleForm from "./ArticleForm";
-import VictimForm from "./VictimForm";
-import PerpetratorForm from "./PerpetratorForm";
-import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for programmatic navigation
+import ArticleForm from "./ArticleForm"; // Import ArticleForm component
+import VictimForm from "./VictimForm"; // Import VictimForm component
+import PerpetratorForm from "./PerpetratorForm"; // Import PerpetratorForm component
+import "react-toastify/dist/ReactToastify.css"; // Import CSS for toast notifications
 
+// Component for inputting homicide data
 const InputHomicide = () => {
-  const [articleData, setArticleData] = useState({});
-  const [victimData, setVictimData] = useState([]);
-  const [perpetratorData, setPerpetratorData] = useState([]);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  // State variables for managing form data and submission status
+  const [articleData, setArticleData] = useState({}); // State for article data
+  const [victimData, setVictimData] = useState([]); // State for victim data
+  const [perpetratorData, setPerpetratorData] = useState([]); // State for perpetrator data
+  const [successMessage, setSuccessMessage] = useState(""); // State for success message
+  const [loading, setLoading] = useState(false); // State for loading status
 
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Initialize useNavigate hook for navigation
 
+  // Function to handle submission of article form
   const onSubmitArticleForm = (data) => {
     setArticleData(data);
   };
 
+  // Function to handle submission of victim form
   const onSubmitVictimForm = (data) => {
     setVictimData((prevData) => [...prevData, data]);
   };
 
+  // Function to handle submission of perpetrator form
   const onSubmitPerpetratorForm = (data) => {
     setPerpetratorData((prevData) => [...prevData, data]);
   };
-
+  // Function to handle overall form submission
   const onSubmitForm = async () => {
     try {
       setLoading(true);

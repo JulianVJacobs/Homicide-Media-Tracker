@@ -1,15 +1,18 @@
 import React, { Fragment, useEffect, useState } from "react";
-import EditHomicides from "./EditHomicides";
-import "../output.css";
-import { Link, useNavigate } from "react-router-dom";
-import CheckForDuplicates from "./CheckForDuplicates";
-import FieldSelector from "./FieldSelector";
+import EditHomicides from "./EditHomicides"; // Import component for editing homicides
+import "../output.css"; // Import CSS file
+import { Link, useNavigate } from "react-router-dom"; // Import Link and useNavigate for navigation
+import CheckForDuplicates from "./CheckForDuplicates"; // Import component for checking duplicates
+import FieldSelector from "./FieldSelector"; // Import component for selecting fields
 
+// Component for listing homicides
 const ListHomicides = () => {
-  const [homicides, setHomicides] = useState([]);
-  const [showDuplicatesMessage, setShowDuplicatesMessage] = useState(false);
-  const [isEmpty, setIsEmpty] = useState(false);
+  // State variables for managing homicides data and UI state
+  const [homicides, setHomicides] = useState([]); // State for homicides data
+  const [showDuplicatesMessage, setShowDuplicatesMessage] = useState(false); // State for displaying duplicate message
+  const [isEmpty, setIsEmpty] = useState(false); // State for checking if database is empty
   const [selectedFields, setSelectedFields] = useState([
+    // State for selected fields to display
     "News Report ID",
     "News Report URL",
     "News Report Headline",
@@ -57,87 +60,91 @@ const ListHomicides = () => {
     "Type of Murder",
     "Notes",
   ];
+ // Function to handle field selection
+ const handleFieldSelection = (field, isSelected) => {
+  if (isSelected) {
+    setSelectedFields([...selectedFields, field]);
+  } else {
+    setSelectedFields(
+      selectedFields.filter((selected) => selected !== field)
+    );
+  }
+};
 
-  const handleFieldSelection = (field, isSelected) => {
-    if (isSelected) {
-      setSelectedFields([...selectedFields, field]);
-    } else {
-      setSelectedFields(
-        selectedFields.filter((selected) => selected !== field)
-      );
+// Function to handle toggling all fields
+const handleToggleAllFields = (selectAll) => {
+  if (selectAll) {
+    setSelectedFields(allFields);
+  } else {
+    setSelectedFields([]);
+  }
+};
+
+// Function to fetch homicides data from the backend
+const getHomicides = async () => {
+  try {
+    const response = await fetch("http://localhost:5000/homicides");
+    const jsonData = await response.json();
+    console.log("Homicides data:", jsonData); // Log the data
+    setHomicides(jsonData);
+    setIsEmpty(jsonData.length === 0);
+  } catch (err) {
+    console.error(err.message);
+  }
+};
+
+// Function to handle deletion of a homicide entry
+const handleDelete = async (id) => {
+  try {
+    if (!id) {
+      console.error("Invalid id for deletion");
+      return;
     }
-  };
 
-  // Function to handle toggling all fields
-  const handleToggleAllFields = (selectAll) => {
-    if (selectAll) {
-      setSelectedFields(allFields);
-    } else {
-      setSelectedFields([]);
-    }
-  };
-  // const [sortOrder, setSortOrder] = useState("asc");
-  // const [sortColumn, setSortColumn] = useState("date_of_publication");
-  const getHomicides = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/homicides");
-      const jsonData = await response.json();
-      console.log("Homicides data:", jsonData); // Log the data
-      setHomicides(jsonData);
-      setIsEmpty(jsonData.length === 0);
-    } catch (err) {
-      console.error(err.message);
-    }
-  };
+    const response = await fetch(`http://localhost:5000/homicides/${id}`, {
+      method: "DELETE",
+    });
 
-  const handleDelete = async (id) => {
-    try {
-      if (!id) {
-        console.error("Invalid id for deletion");
-        return;
-      }
+    const responseData = await response.json();
 
-      const response = await fetch(`http://localhost:5000/homicides/${id}`, {
-        method: "DELETE",
-      });
+    // Optionally, you can display a message or handle the UI as needed
 
-      const responseData = await response.json();
-
-      // Optionally, you can display a message or handle the UI as needed
-
-      // Refresh the list of homicides after deletion
-      getHomicides();
-    } catch (err) {
-      console.error(err.message);
-    }
-  };
-
-  // ...
-
-  useEffect(() => {
-    // Trigger the check for duplicates when the component is mounted
-    const checkForDuplicatesOnMount = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/checkForDuplicates"
-        );
-        const duplicateData = await response.json();
-
-        if (duplicateData && duplicateData.duplicateData.length > 0) {
-          setShowDuplicatesMessage(true);
-        }
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
-
-    checkForDuplicatesOnMount();
+    // Refresh the list of homicides after deletion
     getHomicides();
-  }, []);
+  } catch (err) {
+    console.error(err.message);
+  }
+};
 
-  const handleNavigateToDuplicates = () => {
-    navigate("/CheckForDuplicates");
+// useEffect to fetch data and check for duplicates on component mount
+useEffect(() => {
+  // Function to check for duplicates when the component is mounted
+  const checkForDuplicatesOnMount = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/checkForDuplicates"
+      );
+      const duplicateData = await response.json();
+
+      if (duplicateData && duplicateData.duplicateData.length > 0) {
+        setShowDuplicatesMessage(true);
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
   };
+
+  // Call functions to fetch data and check for duplicates on mount
+  checkForDuplicatesOnMount();
+  getHomicides();
+}, []);
+
+// Function to navigate to duplicates page
+const handleNavigateToDuplicates = () => {
+  navigate("/CheckForDuplicates");
+};
+
+// Render the component with conditional rendering based on state
 
   return (
     <Fragment>

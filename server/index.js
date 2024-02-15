@@ -1025,21 +1025,77 @@ app.post("/MergeEntries", async (req, res) => {
     const masterData = masterEntry.rows[0];
     const subData = subEntry.rows[0];
 
+    let discardedData = [];
     // Merge master entry with data from sub entry for any empty, null, or "unknown" fields
-    // Merge master entry with data from sub entry for any empty, null, or "unknown" fields
+    
+
+   if (masterData.notes && masterData.notes.trim() !== "") {
+    masterData.notes = ""; // Clear the notes contents
+  }
 for (const key in masterData) {
   if (
-    masterData[key] === null ||
-    masterData[key] === "" ||
-    masterData[key] === undefined || // Check for undefined as well
-    masterData[key] === '' || // Check for empty strings as well
-    masterData[key] === "unknown"
+    (masterData[key] === null ||
+      masterData[key] === "" ||
+      masterData[key] === undefined ||
+      masterData[key] === '' ||
+      masterData[key] === "unknown") &&
+    subData[key] !== masterData[key] // Check if sub data is different from master data
   ) {
     console.log(`Merging ${key}: ${subData[key]} into ${masterData[key]}`);
     masterData[key] = subData[key];
+  } else {
+    // Record discarded data as notes if sub data is different and unique
+    if (subData[key] !== masterData[key] && !discardedData.includes(`${key}: ${masterData[key]}`)) {
+      discardedData.push(`${key}: ${masterData[key]}`);
+    }
   }
 }
 
+// Merge victim data
+for (const key in masterData.victim) {
+  if (
+    (masterData.victim[key] === null ||
+      masterData.victim[key] === "" ||
+      masterData.victim[key] === undefined ||
+      masterData.victim[key] === '' ||
+      masterData.victim[key] === "unknown") &&
+    subData.victim[key] !== masterData.victim[key] // Check if sub data is different from master data
+  ) {
+    console.log(`Merging Victim ${key}: ${subData.victim[key]} into ${masterData.victim[key]}`);
+    masterData.victim[key] = subData.victim[key];
+  } else {
+    // Record discarded data as notes if sub data is different and unique
+    if (subData.victim[key] !== masterData.victim[key] && !discardedData.includes(`Victim ${key}: ${masterData.victim[key]}`)) {
+      discardedData.push(`Victim ${key}: ${masterData.victim[key]}`);
+    }
+  }
+}
+
+// Merge perpetrator data
+for (const key in masterData.perpetrator) {
+  if (
+    (masterData.perpetrator[key] === null ||
+      masterData.perpetrator[key] === "" ||
+      masterData.perpetrator[key] === undefined ||
+      masterData.perpetrator[key] === '' ||
+      masterData.perpetrator[key] === "unknown") &&
+    subData.perpetrator[key] !== masterData.perpetrator[key] // Check if sub data is different from master data
+  ) {
+    console.log(`Merging Perpetrator ${key}: ${subData.perpetrator[key]} into ${masterData.perpetrator[key]}`);
+    masterData.perpetrator[key] = subData.perpetrator[key];
+  } else {
+    // Record discarded data as notes if sub data is different and unique
+    if (subData.perpetrator[key] !== masterData.perpetrator[key] && !discardedData.includes(`Perpetrator ${key}: ${masterData.perpetrator[key]}`)) {
+      discardedData.push(`Perpetrator ${key}: ${masterData.perpetrator[key]}`);
+    }
+  }
+}
+
+    // Add discarded data as notes to the master entry
+    if (discardedData.length > 0) {
+      const note = `Merge Data discarded: ${discardedData.join("* ")}`;
+      masterData.notes = masterData.notes ? masterData.notes + "; " + note : note;
+    }
    
     // Update victim information in the master entry
     await pool.query(

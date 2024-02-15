@@ -439,6 +439,7 @@ const CheckForDuplicates = () => {
               <h2 className="text-lg text-black font-semibold mb-4">
                 Add Note to Duplicate
               </h2>
+              <div className="text-xs text-red-400 font-semibold mb-4">WARNING: adding a note will erase previous note!</div>
               <textarea
                 className="w-64 h-32 border p-2 mb-2 text-black"
                 placeholder="Add note to duplicate..."

@@ -1,18 +1,15 @@
 import React, { Fragment, useEffect, useState } from "react";
-import EditHomicides from "./EditHomicides"; // Import component for editing homicides
-import "../output.css"; // Import CSS file
-import { Link, useNavigate } from "react-router-dom"; // Import Link and useNavigate for navigation
-import CheckForDuplicates from "./CheckForDuplicates"; // Import component for checking duplicates
-import FieldSelector from "./FieldSelector"; // Import component for selecting fields
+import EditHomicides from "./EditHomicides";
+import CheckMergedSubs from "./CheckMergedSubs";
+import FieldSelector from "./FieldSelector";
+import { useNavigate } from "react-router-dom";
 
-// Component for listing homicides
 const ListHomicides = () => {
-  // State variables for managing homicides data and UI state
-  const [homicides, setHomicides] = useState([]); // State for homicides data
-  const [showDuplicatesMessage, setShowDuplicatesMessage] = useState(false); // State for displaying duplicate message
-  const [isEmpty, setIsEmpty] = useState(false); // State for checking if database is empty
+  const [homicides, setHomicides] = useState([]);
+  const [showDuplicatesMessage, setShowDuplicatesMessage] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(false);
   const [selectedFields, setSelectedFields] = useState([
-    // State for selected fields to display
+    // Selected fields initially include common fields
     "News Report ID",
     "News Report URL",
     "News Report Headline",
@@ -22,7 +19,6 @@ const ListHomicides = () => {
     "Language",
     "Type of Source",
     "News Report Platform",
-
     // Add other default fields here
   ]);
   const navigate = useNavigate();
@@ -35,6 +31,7 @@ const ListHomicides = () => {
     "Author",
     "Wire Service",
     "Language",
+    "Merge ids",
     "Type of Source",
     "News Report Platform",
     "Victim Name",
@@ -59,102 +56,92 @@ const ListHomicides = () => {
     "Sentence",
     "Type of Murder",
     "Notes",
+    "Check Merged Entries",
   ];
- // Function to handle field selection
- const handleFieldSelection = (field, isSelected) => {
-  if (isSelected) {
-    setSelectedFields([...selectedFields, field]);
-  } else {
-    setSelectedFields(
-      selectedFields.filter((selected) => selected !== field)
-    );
-  }
-};
 
-// Function to handle toggling all fields
-const handleToggleAllFields = (selectAll) => {
-  if (selectAll) {
-    setSelectedFields(allFields);
-  } else {
-    setSelectedFields([]);
-  }
-};
-
-// Function to fetch homicides data from the backend
-const getHomicides = async () => {
-  try {
-    const response = await fetch("http://localhost:5000/homicides");
-    const jsonData = await response.json();
-    console.log("Homicides data:", jsonData); // Log the data
-    setHomicides(jsonData);
-    setIsEmpty(jsonData.length === 0);
-  } catch (err) {
-    console.error(err.message);
-  }
-};
-
-// Function to handle deletion of a homicide entry
-const handleDelete = async (id) => {
-  try {
-    if (!id) {
-      console.error("Invalid id for deletion");
-      return;
-    }
-
-    const response = await fetch(`http://localhost:5000/homicides/${id}`, {
-      method: "DELETE",
-    });
-
-    const responseData = await response.json();
-
-    // Optionally, you can display a message or handle the UI as needed
-
-    // Refresh the list of homicides after deletion
-    getHomicides();
-  } catch (err) {
-    console.error(err.message);
-  }
-};
-
-// useEffect to fetch data and check for duplicates on component mount
-useEffect(() => {
-  // Function to check for duplicates when the component is mounted
-  const checkForDuplicatesOnMount = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:5000/checkForDuplicates"
-      );
-      const duplicateData = await response.json();
-
-      if (duplicateData && duplicateData.duplicateData.length > 0) {
-        setShowDuplicatesMessage(true);
-      }
-    } catch (error) {
-      console.error(error.message);
+  // Function to handle field selection
+  const handleFieldSelection = (field, isSelected) => {
+    if (isSelected) {
+      setSelectedFields([...selectedFields, field]);
+    } else {
+      setSelectedFields(selectedFields.filter((selected) => selected !== field));
     }
   };
 
-  // Call functions to fetch data and check for duplicates on mount
-  checkForDuplicatesOnMount();
-  getHomicides();
-}, []);
+  // Function to handle toggling all fields
+  const handleToggleAllFields = (selectAll) => {
+    if (selectAll) {
+      setSelectedFields(allFields);
+    } else {
+      setSelectedFields([]);
+    }
+  };
 
-// Function to navigate to duplicates page
-const handleNavigateToDuplicates = () => {
-  navigate("/CheckForDuplicates");
-};
+  // Function to fetch homicides data from the backend
+  const getHomicides = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/homicides");
+      const jsonData = await response.json();
+      setHomicides(jsonData);
+      setIsEmpty(jsonData.length === 0);
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
 
-// Render the component with conditional rendering based on state
+  const handleDelete = async (id) => {
+    try {
+      if (!id) {
+        console.error("Invalid id for deletion");
+        return;
+      }
+  
+      const response = await fetch(`http://localhost:5000/homicides/${id}`, {
+        method: "DELETE",
+      });
+  
+      if (response.ok) {
+        // Optionally, you can display a success message or handle the UI as needed
+        // Refresh the list of homicides after deletion
+        getHomicides();
+      } else {
+        console.error("Failed to delete homicide entry");
+      }
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
+  
+
+  // useEffect to fetch data and check for duplicates on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/checkForDuplicates");
+        const duplicateData = await response.json();
+        if (duplicateData && duplicateData.duplicateData.length > 0) {
+          setShowDuplicatesMessage(true);
+        }
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+
+    fetchData();
+    getHomicides();
+  }, []);
+
+  // Function to navigate to duplicates page
+  const handleNavigateToDuplicates = () => {
+    navigate("/CheckForDuplicates");
+  };
 
   return (
     <Fragment>
       {showDuplicatesMessage && (
         <div className="bg-red-500 text-white p-4 text-center">
           Duplicate entries found! Please go to the{" "}
-          <span
-            className="underline cursor-pointer"
-            onClick={handleNavigateToDuplicates}
-          >
+          <span className="underline cursor-pointer" onClick={handleNavigateToDuplicates}>
             Check for Duplicates
           </span>{" "}
           page to fix them.
@@ -187,29 +174,32 @@ const handleNavigateToDuplicates = () => {
                   <th scope="col" className="px-6 py-3">
                     Delete
                   </th>
+                  {selectedFields.includes("Check Merged Entries") && (
+                    <th scope="col" className="px-6 py-3">
+                      Check Merged Entries
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {homicides.map((homicide) => (
                   <tr
                     key={homicide.article_id}
-                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    className={`border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 ${
+                      homicide.merge_ids ? "bg-purple-50" : "bg-white"
+                    }`}
                   >
                     {selectedFields.map((field) => (
                       <td key={field} className="px-6 py-4">
-                        {field === "Date of Publication" &&
-                        homicide.date_of_publication
-                          ? new Date(
-                              homicide.date_of_publication
-                            ).toLocaleDateString("en-GB")
+                        {field === "Date of Publication" && homicide.date_of_publication
+                          ? new Date(homicide.date_of_publication).toLocaleDateString("en-GB")
                           : field === "Date of Death" && homicide.date_of_death
-                          ? new Date(homicide.date_of_death).toLocaleDateString(
-                              "en-GB"
-                            )
+                          ? new Date(homicide.date_of_death).toLocaleDateString("en-GB")
+                          : field === "Merge ids"
+                          ? homicide.merge_ids
                           : homicide[field.toLowerCase().replace(/\s/g, "_")]}
                       </td>
                     ))}
-
                     <td className="px-6 py-4 text-right">
                       <EditHomicides todo={homicide} />
                     </td>
@@ -221,6 +211,11 @@ const handleNavigateToDuplicates = () => {
                         Delete
                       </button>
                     </td>
+                    {selectedFields.includes("Check Merged Entries") && (
+                      <td>
+                        {homicide.merge_ids && <CheckMergedSubs newsReportId={homicide.article_id} />}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -230,6 +225,7 @@ const handleNavigateToDuplicates = () => {
       )}
     </Fragment>
   );
+
 };
 
 export default ListHomicides;

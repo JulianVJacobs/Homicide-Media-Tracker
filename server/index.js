@@ -540,6 +540,7 @@ app.get("/homicides", async (req, res) => {
         a.type_of_source,
         a.news_report_platform,
         a.notes,
+        a.merge_ids,
         v.victim_name,
         v.date_of_death,
         v.place_of_death_province,
@@ -565,9 +566,11 @@ app.get("/homicides", async (req, res) => {
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id
       LEFT JOIN perpetrator p ON a.article_id = p.article_id
+      WHERE a.hide_entry IS NULL
     `);
 
     res.json(allHomicides.rows);
+    console.log("DATA BEING SENT TO FRONT:", allHomicides.rows)
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -944,6 +947,7 @@ app.post("/MergeEntries", async (req, res) => {
         a.type_of_source,
         a.news_report_platform,
         a.notes,
+        a.merge_ids,
         v.victim_name,
         v.date_of_death,
         v.place_of_death_province,
@@ -1024,136 +1028,40 @@ app.post("/MergeEntries", async (req, res) => {
 
     const masterData = masterEntry.rows[0];
     const subData = subEntry.rows[0];
-
-    let discardedData = [];
-    // Merge master entry with data from sub entry for any empty, null, or "unknown" fields
-    
-
-   if (masterData.notes && masterData.notes.trim() !== "") {
-    masterData.notes = ""; // Clear the notes contents
-  }
-for (const key in masterData) {
-  if (
-    (masterData[key] === null ||
-      masterData[key] === "" ||
-      masterData[key] === undefined ||
-      masterData[key] === '' ||
-      masterData[key] === "unknown") &&
-    subData[key] !== masterData[key] // Check if sub data is different from master data
-  ) {
-    console.log(`Merging ${key}: ${subData[key]} into ${masterData[key]}`);
-    masterData[key] = subData[key];
-  } else {
-    // Record discarded data as notes if sub data is different and unique
-    if (subData[key] !== masterData[key] && !discardedData.includes(`${key}: ${masterData[key]}`)) {
-      discardedData.push(`${key}: ${masterData[key]}`);
+    const merge_ids = [];
+    // Merge sub entry data into master entry
+    for (const key in subData) {
+      if (
+        subData[key] !== null &&
+        subData[key] !== "" &&
+        subData[key] !== undefined &&
+        subData[key] !== "unknown" &&
+        (masterData[key] === null || masterData[key] === "" || masterData[key] === "unknown")
+      ) {
+        console.log(`Merging ${key}: ${subData[key]} into ${masterData[key]}`);
+        masterData[key] = subData[key];
+      }
     }
-  }
-}
 
-// Merge victim data
-for (const key in masterData.victim) {
-  if (
-    (masterData.victim[key] === null ||
-      masterData.victim[key] === "" ||
-      masterData.victim[key] === undefined ||
-      masterData.victim[key] === '' ||
-      masterData.victim[key] === "unknown") &&
-    subData.victim[key] !== masterData.victim[key] // Check if sub data is different from master data
-  ) {
-    console.log(`Merging Victim ${key}: ${subData.victim[key]} into ${masterData.victim[key]}`);
-    masterData.victim[key] = subData.victim[key];
-  } else {
-    // Record discarded data as notes if sub data is different and unique
-    if (subData.victim[key] !== masterData.victim[key] && !discardedData.includes(`Victim ${key}: ${masterData.victim[key]}`)) {
-      discardedData.push(`Victim ${key}: ${masterData.victim[key]}`);
+    // Add sub entry article_id to master entry merge_ids
+    if (masterData.merge_ids === null) {
+      masterData.merge_ids = subData.news_report_id; // Set merge_ids directly to the news_report_id
+    } else {
+      masterData.merge_ids += ", " + subData.news_report_id; // Append news_report_id to existing merge_ids
     }
-  }
-}
 
-// Merge perpetrator data
-for (const key in masterData.perpetrator) {
-  if (
-    (masterData.perpetrator[key] === null ||
-      masterData.perpetrator[key] === "" ||
-      masterData.perpetrator[key] === undefined ||
-      masterData.perpetrator[key] === '' ||
-      masterData.perpetrator[key] === "unknown") &&
-    subData.perpetrator[key] !== masterData.perpetrator[key] // Check if sub data is different from master data
-  ) {
-    console.log(`Merging Perpetrator ${key}: ${subData.perpetrator[key]} into ${masterData.perpetrator[key]}`);
-    masterData.perpetrator[key] = subData.perpetrator[key];
-  } else {
-    // Record discarded data as notes if sub data is different and unique
-    if (subData.perpetrator[key] !== masterData.perpetrator[key] && !discardedData.includes(`Perpetrator ${key}: ${masterData.perpetrator[key]}`)) {
-      discardedData.push(`Perpetrator ${key}: ${masterData.perpetrator[key]}`);
-    }
-  }
-}
-
-    // Add discarded data as notes to the master entry
-    if (discardedData.length > 0) {
-      const note = `Merge Data discarded: ${discardedData.join("* ")}`;
-      masterData.notes = masterData.notes ? masterData.notes + "; " + note : note;
-    }
-   
-    // Update victim information in the master entry
+    // Set sub entry hide_entry and ignore duplicate to true
     await pool.query(
       `
-      UPDATE victim
-      SET
-        victim_name = $1,
-        date_of_death = $2,
-        place_of_death_province = $3,
-        place_of_death_town = $4,
-        type_of_location = $5,
-        sexual_assault = $6,
-        gender_of_victim = $7,
-        race_of_victim = $8,
-        age_of_victim = $9,
-        age_range_of_victim = $10,
-        mode_of_death_specific = $11,
-        mode_of_death_general = $12,
-        type_of_murder = $13,
-        police_station = $14
-      WHERE article_id = $15
+      UPDATE articles
+      SET hide_entry = true,
+      duplicate_ignored = true
+      WHERE news_report_id = $1
       `,
-      [
-        masterData.victim_name,
-        masterData.date_of_death,
-        masterData.place_of_death_province,
-        masterData.place_of_death_town,
-        masterData.type_of_location,
-        masterData.sexual_assault,
-        masterData.gender_of_victim,
-        masterData.race_of_victim,
-        masterData.age_of_victim,
-        masterData.age_range_of_victim,
-        masterData.mode_of_death_specific,
-        masterData.mode_of_death_general,
-        masterData.type_of_murder,
-        masterData.police_station,
-        masterData.article_id,
-        
-      ]
+      [subId]
     );
 
-    console.log("Values passed to the query:", [
-      masterData.news_report_url,
-      masterData.news_report_headline,
-      masterData.date_of_publication,
-      masterData.author,
-      masterData.wire_service,
-      masterData.language,
-      masterData.type_of_source,
-      masterData.news_report_platform,
-      masterId,
-      masterData.notes,
-    ]);
-
-    // Update perpetrator information in the master entry (similar to victim update)
-
-    // Update the master entry with merged data
+    // Update the master entry with merged data and updated merge_ids
     await pool.query(
       `
       UPDATE articles
@@ -1166,8 +1074,9 @@ for (const key in masterData.perpetrator) {
         language = $6,
         type_of_source = $7,
         news_report_platform = $8,
-        notes=$9
-      WHERE news_report_id = $10
+        notes = $9,
+        merge_ids = $10
+      WHERE news_report_id = $11
       `,
       [
         masterData.news_report_url,
@@ -1179,70 +1088,13 @@ for (const key in masterData.perpetrator) {
         masterData.type_of_source,
         masterData.news_report_platform,
         masterData.notes,
+        masterData.merge_ids,
         masterId,
       ]
     );
 
-    // Update perpetrator information in the master entry
-await pool.query(
-  `
-  UPDATE perpetrator
-  SET
-    perpetrator_name = $1,
-    perpetrator_relationship_to_victim = $2,
-    suspect_identified = $3,
-    suspect_arrested = $4,
-    suspect_charged = $5,
-    conviction = $6,
-    sentence = $7
-  WHERE article_id = $8
-  `,
-  [
-    masterData.perpetrator_name,
-    masterData.perpetrator_relationship_to_victim,
-    masterData.suspect_identified,
-    masterData.suspect_arrested,
-    masterData.suspect_charged,
-    masterData.conviction,
-    masterData.sentence,
-    masterData.article_id,
-  ]
-);
-
-
-    // Delete the sub entry
-    try {
-      // Begin transaction
-      await pool.query("BEGIN");
-    
-      // Delete associated records in the articlevictim table
-      await pool.query("DELETE FROM articlevictim WHERE article_id IN (SELECT article_id FROM articles WHERE news_report_id = $1)", [subId]);
-    
-      // Delete associated records in the articleperpetrator table
-      await pool.query("DELETE FROM articleperpetrator WHERE article_id IN (SELECT article_id FROM articles WHERE news_report_id = $1)", [subId]);
-    
-      // Delete associated records in the victim table
-      await pool.query("DELETE FROM victim WHERE article_id IN (SELECT article_id FROM articles WHERE news_report_id = $1)", [subId]);
-    
-      // Delete associated records in the perpetrator table
-      await pool.query("DELETE FROM perpetrator WHERE article_id IN (SELECT article_id FROM articles WHERE news_report_id = $1)", [subId]);
-    
-      // Delete the sub article from the articles table
-      await pool.query("DELETE FROM articles WHERE news_report_id = $1", [subId]);
-    
-      // Commit the transaction
-      await pool.query("COMMIT");
-    
-      // Respond with success message
-      res.json({ message: "Entries merged successfully" });
-    } catch (error) {
-      // Rollback the transaction in case of error
-      await pool.query("ROLLBACK");
-      console.error(error.message);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-    
-    
+    // Respond with success message
+    res.json({ message: "Entries merged successfully" });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: "Internal Server Error" });

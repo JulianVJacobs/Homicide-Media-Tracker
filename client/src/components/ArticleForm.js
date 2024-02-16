@@ -99,6 +99,9 @@ const ArticleForm = ({ onSubmit }) => {
         <option value="">Select Wire Service</option>
         <option value="SABINET">SABINET</option>
         <option value="SAPA">SAPA</option>
+        <option value="AFP">AFP</option>
+        <option value="ANA">ANA</option>
+        <option value="Caxton News Service">Caxton News Service</option>
         <option value="NewsWire">NewsWire</option>
         <option value="EINPresswire">EIN Presswire</option>
         <option value="News24Wire">News24Wire</option>

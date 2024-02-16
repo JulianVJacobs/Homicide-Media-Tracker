@@ -20,7 +20,9 @@ CREATE TABLE Articles (
     language VARCHAR(255),
     type_of_source VARCHAR(255),
     duplicate_ignored BOOLEAN,
-    notes VARCHAR(1000)
+    notes VARCHAR(1000),
+    merge_ids VARCHAR(255),
+    hide_entry BOOLEAN
 );
 
 -- Create Victim Table

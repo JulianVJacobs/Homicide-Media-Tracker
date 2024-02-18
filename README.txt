@@ -36,18 +36,23 @@ Before running the application, ensure you have the following installed:
 - Node.js: Download and install Node.js from the web.
 - Nodemon: Install Nodemon using npm:
     ```
-    npm install -g nodemon
+    npm install  nodemon
     ```
 - Concurrently: Install Concurrently using npm:
     ```
-    npm install -g concurrently
+    npm install  concurrently
     ```
 - React-Scripts: Install React-Scripts using npm:
     ```
-    npm install -g react-scripts
+    npm install  react-scripts
     ```
 - Bootstrap, Axios, XLSX, React-Router-DOM, React-DOM, React-Select, React-Toastify: Install these dependencies using npm:
     ```
     npm install bootstrap axios xlsx react-router-dom react-dom react-select react-toastify
     ```
 
+
+##TROUBLESHOOTING
+-database errors: 
+-Make sure to copy code from newdatabase.sql section by section to ensure no errors, 
+-if database errors are found, delete database and start again with code: DROP DATABASE homicide_main WITH (FORCE)

@@ -662,13 +662,70 @@ WHERE
 });
 
 
-//This get request retrieves data based off news report id
-app.get("/homicides/:news_report_id", async (req, res) => {
-  const { news_report_id } = req.params;
+//This get request retrieves data based off news report id OLD!
+// app.get("/homicides/:news_report_id", async (req, res) => {
+//   const { news_report_id } = req.params;
 
+//   try {
+//     const homicideDetails = await pool.query(
+//       `
+//       SELECT
+//         a.article_id,
+//         a.news_report_id,
+//         a.news_report_url,
+//         a.news_report_headline,
+//         a.date_of_publication,
+//         a.author,
+//         a.wire_service,
+//         a.language,
+//         a.type_of_source,
+//         a.news_report_platform,
+//         v.victim_name,
+//         v.date_of_death,
+//         v.place_of_death_province,
+//         v.place_of_death_town,
+//         v.police_station,
+//         v.type_of_location,
+//         v.sexual_assault,
+//         v.gender_of_victim,
+//         v.race_of_victim,
+//         v.age_of_victim,
+//         v.age_range_of_victim,
+//         v.mode_of_death_specific,
+//         v.mode_of_death_general,
+//         v.type_of_murder,
+//         p.perpetrator_name,
+//         p.perpetrator_relationship_to_victim,
+//         p.suspect_identified,
+//         p.suspect_arrested,
+//         p.suspect_charged,
+//         p.conviction,
+//         p.sentence
+//       FROM articles a
+//       LEFT JOIN victim v ON a.article_id = v.article_id
+//       LEFT JOIN perpetrator p ON a.article_id = p.article_id
+//       WHERE a.news_report_id = $1
+//     `,
+//       [news_report_id]
+//     );
+
+//     res.json(homicideDetails.rows);
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
+
+// Endpoint to handle fetching entries based on merge_ids
+app.get('/homicides/:mergeIds', async (req, res) => {
   try {
-    const homicideDetails = await pool.query(
-      `
+    // Extract merge_ids from request parameters
+    
+    const mergeIds = req.params.mergeIds.split(',').map(id => id.trim());
+
+
+    // Build SQL query to select entries based on merge_ids
+    const query = `
       SELECT
         a.article_id,
         a.news_report_id,
@@ -680,6 +737,7 @@ app.get("/homicides/:news_report_id", async (req, res) => {
         a.language,
         a.type_of_source,
         a.news_report_platform,
+        a.notes,
         v.victim_name,
         v.date_of_death,
         v.place_of_death_province,
@@ -704,17 +762,21 @@ app.get("/homicides/:news_report_id", async (req, res) => {
       FROM articles a
       LEFT JOIN victim v ON a.article_id = v.article_id
       LEFT JOIN perpetrator p ON a.article_id = p.article_id
-      WHERE a.news_report_id = $1
-    `,
-      [news_report_id]
-    );
+      WHERE a.news_report_id IN (${mergeIds.map((_, index) => `$${index + 1}`).join(',')})
+    `;
 
-    res.json(homicideDetails.rows);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    // Execute query with merge_ids as parameters
+    const { rows } = await pool.query(query, mergeIds);
+
+    // Respond with the fetched entries
+    res.json(rows);
+    console.log("DATA BEING SENT TO FRONT FOR MERGE SUBS IS", rows)
+  } catch (error) {
+    console.error('Error fetching merged subs:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 app.put("/homicides/:article_id", async (req, res) => {
   const { article_id } = req.params;
@@ -1092,6 +1154,73 @@ app.post("/MergeEntries", async (req, res) => {
         masterId,
       ]
     );
+
+        // Update victim information in the master entry
+        await pool.query(
+          `
+          UPDATE victim
+          SET
+            victim_name = $1,
+            date_of_death = $2,
+            place_of_death_province = $3,
+            place_of_death_town = $4,
+            type_of_location = $5,
+            sexual_assault = $6,
+            gender_of_victim = $7,
+            race_of_victim = $8,
+            age_of_victim = $9,
+            age_range_of_victim = $10,
+            mode_of_death_specific = $11,
+            mode_of_death_general = $12,
+            type_of_murder = $13,
+            police_station = $14
+          WHERE article_id = $15
+          `,
+          [
+            masterData.victim_name,
+            masterData.date_of_death,
+            masterData.place_of_death_province,
+            masterData.place_of_death_town,
+            masterData.type_of_location,
+            masterData.sexual_assault,
+            masterData.gender_of_victim,
+            masterData.race_of_victim,
+            masterData.age_of_victim,
+            masterData.age_range_of_victim,
+            masterData.mode_of_death_specific,
+            masterData.mode_of_death_general,
+            masterData.type_of_murder,
+            masterData.police_station,
+            masterData.article_id,
+            
+          ]
+        );
+
+           // Update perpetrator information in the master entry
+await pool.query(
+  `
+  UPDATE perpetrator
+  SET
+    perpetrator_name = $1,
+    perpetrator_relationship_to_victim = $2,
+    suspect_identified = $3,
+    suspect_arrested = $4,
+    suspect_charged = $5,
+    conviction = $6,
+    sentence = $7
+  WHERE article_id = $8
+  `,
+  [
+    masterData.perpetrator_name,
+    masterData.perpetrator_relationship_to_victim,
+    masterData.suspect_identified,
+    masterData.suspect_arrested,
+    masterData.suspect_charged,
+    masterData.conviction,
+    masterData.sentence,
+    masterData.article_id,
+  ]
+);
 
     // Respond with success message
     res.json({ message: "Entries merged successfully" });

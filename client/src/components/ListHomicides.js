@@ -4,10 +4,11 @@ import CheckMergedSubs from "./CheckMergedSubs";
 import FieldSelector from "./FieldSelector";
 import { useNavigate } from "react-router-dom";
 
-const ListHomicides = () => {
+const  ListHomicides = () => {
   const [homicides, setHomicides] = useState([]);
   const [showDuplicatesMessage, setShowDuplicatesMessage] = useState(false);
   const [isEmpty, setIsEmpty] = useState(false);
+  
   const [selectedFields, setSelectedFields] = useState([
     // Selected fields initially include common fields
     "News Report ID",
@@ -31,7 +32,7 @@ const ListHomicides = () => {
     "Author",
     "Wire Service",
     "Language",
-    "Merge ids",
+    //"Merge ids",
     "Type of Source",
     "News Report Platform",
     "Victim Name",
@@ -164,9 +165,11 @@ const ListHomicides = () => {
               <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                   {selectedFields.map((field) => (
-                    <th key={field} scope="col" className="px-6 py-3">
-                      {field}
-                    </th>
+                    field !== "Check Merged Entries" && ( // Exclude Check Merged Entries from the header
+                      <th key={field} scope="col" className="px-6 py-3">
+                        {field}
+                      </th>
+                    )
                   ))}
                   <th scope="col" className="px-6 py-3">
                     Edit
@@ -174,11 +177,6 @@ const ListHomicides = () => {
                   <th scope="col" className="px-6 py-3">
                     Delete
                   </th>
-                  {selectedFields.includes("Check Merged Entries") && (
-                    <th scope="col" className="px-6 py-3">
-                      Check Merged Entries
-                    </th>
-                  )}
                 </tr>
               </thead>
               <tbody>
@@ -190,15 +188,18 @@ const ListHomicides = () => {
                     }`}
                   >
                     {selectedFields.map((field) => (
-                      <td key={field} className="px-6 py-4">
-                        {field === "Date of Publication" && homicide.date_of_publication
-                          ? new Date(homicide.date_of_publication).toLocaleDateString("en-GB")
-                          : field === "Date of Death" && homicide.date_of_death
-                          ? new Date(homicide.date_of_death).toLocaleDateString("en-GB")
-                          : field === "Merge ids"
-                          ? homicide.merge_ids
-                          : homicide[field.toLowerCase().replace(/\s/g, "_")]}
-                      </td>
+                      field !== "Check Merged Entries" && ( // Exclude Check Merged Entries from the cells
+                        <td key={field} className="px-6 py-4">
+                          {field === "Date of Publication" && homicide.date_of_publication
+                            ? new Date(homicide.date_of_publication).toLocaleDateString("en-GB")
+                            : field === "Date of Death" && homicide.date_of_death
+                            ? new Date(homicide.date_of_death).toLocaleDateString("en-GB")
+                            : field === "Merge ids"
+                            ? homicide.merge_ids
+                            : homicide[field.toLowerCase().replace(/\s/g, "_")]
+                          }
+                        </td>
+                      )
                     ))}
                     <td className="px-6 py-4 text-right">
                       <EditHomicides todo={homicide} />
@@ -211,9 +212,11 @@ const ListHomicides = () => {
                         Delete
                       </button>
                     </td>
-                    {selectedFields.includes("Check Merged Entries") && (
-                      <td>
-                        {homicide.merge_ids && <CheckMergedSubs newsReportId={homicide.article_id} />}
+                    {selectedFields.includes("Check Merged Entries") && ( // Render Check Merged Entries button
+                      <td className="px-6 py-4">
+                        {homicide.merge_ids && (
+                          <CheckMergedSubs mergeIds={homicide.merge_ids} />
+                        )}
                       </td>
                     )}
                   </tr>
@@ -225,7 +228,6 @@ const ListHomicides = () => {
       )}
     </Fragment>
   );
-
 };
 
 export default ListHomicides;

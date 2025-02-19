@@ -1,6 +1,8 @@
 # Homicide Media Tracker
 
-Welcome to the Homicide Media Tracker! This application helps in tracking homicide data efficiently.
+Welcome to the Homicide Media Tracker! This application helps in tracking homicide data efficiently. Read more about this project:
+- [Leveraging the potential of media data for the study of violent crime: Homicide Media Tracker Part 1](https://researchmethodscommunity.sagepub.com/blog/tools-and-technology/homicide-media-tracker-p1)
+- [A new tool for collecting and analyzing homicide data: Homicide Media Tracker Part 2](https://researchmethodscommunity.sagepub.com/blog/tools-and-technology/homicide-media-tracker-p2)
 
 ## Setup Instructions
 
@@ -56,3 +58,32 @@ Before running the application, ensure you have the following installed:
 -database errors: 
 -Make sure to copy code from newdatabase.sql section by section to ensure no errors, 
 -if database errors are found, delete database and start again with code: DROP DATABASE homicide_main WITH (FORCE)
+
+## Questions
+- in terms of the external server, will it be accessible by only one person or many people
+- if it's accessible to many people, will they all have the ability to add/remove
+    - if yes, there will need to be some server administration
+- how well does the detect duplicates work?
+- perhaps a way to have multiple people access is to have individuals manage personal databases and then publish their individual databases to a network
+- can homicides exist without articles related to them (i.e. every homicide has at least one article)
+    - i recommend this should possible because if you allow for the inclusion of homicide cases without supplementary articles, you could use that data to identify which cases are under-reported
+- suspect identified and suspect name
+    - how should suspects be named if they are unidentified
+    - does it make more sense to only request a name when the suspect has been identified
+    - should an alias name be an option
+- sentence: what kind of information would be added here and should there be data validation to ensure the data entered makes sense
+    - if we want to control the sentence entry more, which rules would make it globally applicable (what elements does a sentence always have)
+- would it make sense to change "perpetrator details" to "suspect details" (semantics)
+- how should case IDs generated
+- the current set up right now is article/medium focused
+    - it might make more sense to make it homicide focused with the articles/media as supplementary
+- are the police database IDs that could be added to the homicide metadata (like case numbers)
+
+## Features
+- [ ] package as a desktop application
+- [ ] allow for a local database (libsql/sqlite)
+- [ ] connect to external server
+    - [ ] deploy local database to external server
+    - [ ] local database and external server database sync
+    - [ ] server administration?
+- [ ] use URL, author and article title to generate article id

@@ -1,0 +1,9 @@
+# vscode
+wits-research-office-development.code-workspace
+
+# environment variables (except templates)
+.env*
+!.env.template
+
+# dependencies
+node_modules

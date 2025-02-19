@@ -5,11 +5,11 @@
 const Pool = require("pg").Pool;
 
 const pool = new Pool({
-  user: "postgres",
-  password: "postgres",//"postgres" is the default password, IF YOU ALREADY HAVE POSTGRESQL SET UP ON YOUR MACHINE, REPLACE WITH YOUR ACTUAL PASSWORD
-  host: "localhost",
-  port: 5432,
-  database: "homicide_main",
+  user: process.env.POSTGRES_USER || "postgres",
+  password: process.env.POSTGRES_PASSWORD || "postgres",
+  host: process.env.POSTGRES_HOST || "localhost",
+  port: process.env.POSTGRES_PORT || 5432,
+  database: process.env.POSTGRES_DB,
   ssl: false, 
 });
 

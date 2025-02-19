@@ -1,0 +1,17 @@
+services:
+  client:
+    extends:
+      file: docker-compose.${ENVIRONMENT:-prod}.yml
+      service: client
+
+  server:
+    extends:
+      file: docker-compose.${ENVIRONMENT:-prod}.yml
+      service: server
+
+volumes:
+  service:
+
+networks:
+  homicide-media-tracker_net:
+    driver: bridge

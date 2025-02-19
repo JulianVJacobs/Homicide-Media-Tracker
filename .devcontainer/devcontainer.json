@@ -1,0 +1,25 @@
+{
+	"name": "client",
+	"dockerComposeFile": ["../docker-compose.yml","../docker-compose.dev.yml"],
+	"service": "client",
+	"shutdownAction": "none",
+	"workspaceFolder": "/workspace/client",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode-remote.remote-containers",
+				"ms-vscode.vscode-typescript-next",
+				"Shibu.nextjs-js-ts-code-snippets",
+				"Postman.postman-for-vscode",
+				"ms-kubernetes-tools.vscode-kubernetes-tools",
+				"bradlc.vscode-tailwindcss",
+				"VisualStudioExptTeam.vscodeintellicode",
+				"VisualStudioExptTeam.intellicode-api-usage-examples",
+				"mongodb.mongodb-vscode",
+				"ms-azuretools.vscode-docker",
+				"donjayamanne.githistory",
+				"christian-kohler.npm-intellisense"
+			]
+		}
+	}
+}

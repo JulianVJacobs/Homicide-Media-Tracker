@@ -1,7 +1,26 @@
 {
-  "name": "client",
-  "version": "0.1.0",
-  "private": true,
+  "name": "homicide-media-tracker--client",
+  "productName": "homicide-media-tracker--client",
+  "version": "1.0.0",
+  "description": "My Electron application description",
+  "main": "public/main.js",
+  "scripts": {
+    "start:react": "react-scripts start",
+    "build:react": "react-scripts build",
+    "test:react": "react-scripts test",
+    "eject:react": "react-scripts eject",
+    "start:electron": "electron-forge start",
+    "package:electron": "electron-forge package",
+    "make:electron": "electron-forge make",
+    "publish:electron": "electron-forge publish",
+    "start": "concurrently \"npm run start:react\" \"wait-on http://localhost:3000/ && npm run start:electron\""
+  },
+  "keywords": [],
+  "author": {
+    "name": "JulianVJacobs",
+    "email": "61211025+JulianVJacobs@users.noreply.github.com"
+  },
+  "license": "MIT",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -9,13 +28,14 @@
     "axios": "^1.6.7",
     "bootstrap": "^5.3.2",
     "chart.js": "^4.4.1",
+    "electron-squirrel-startup": "^1.0.1",
     "nth-check": "^2.1.1",
-    "react": "^18.2.0",
+    "react": "^18.3.1",
     "react-bootstrap": "^2.10.0",
     "react-chartjs-2": "^5.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^18.3.1",
     "react-router-dom": "^6.21.2",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "react-select": "^5.8.0",
     "react-toastify": "^10.0.3",
     "tailwindcss": "^3.4.1",
@@ -23,18 +43,18 @@
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "dev": "nodemon App.js"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+  "devDependencies": {
+    "@electron-forge/cli": "^7.7.0",
+    "@electron-forge/maker-deb": "^7.7.0",
+    "@electron-forge/maker-rpm": "^7.7.0",
+    "@electron-forge/maker-squirrel": "^7.7.0",
+    "@electron-forge/maker-zip": "^7.7.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.7.0",
+    "@electron-forge/plugin-fuses": "^7.7.0",
+    "@electron/fuses": "^1.8.0",
+    "concurrently": "^9.1.2",
+    "electron": "35.0.0",
+    "wait-on": "^8.0.2"
   },
   "browserslist": {
     "production": [
@@ -47,8 +67,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.3"
   }
 }

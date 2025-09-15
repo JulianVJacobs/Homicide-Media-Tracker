@@ -1,0 +1,122 @@
+{
+    "thread_relationships": {
+        "typescript-setup": {
+            "directly_related": [
+                "build-system",
+                "electron-integration"
+            ],
+            "often_related": [
+                "ui-components",
+                "api-routes"
+            ],
+            "occasionally_related": [
+                "database-schema"
+            ]
+        },
+        "build-system": {
+            "directly_related": [
+                "typescript-setup",
+                "electron-integration"
+            ],
+            "often_related": [
+                "api-routes",
+                "database-schema"
+            ],
+            "occasionally_related": [
+                "ui-components"
+            ]
+        },
+        "database-schema": {
+            "directly_related": [
+                "api-routes"
+            ],
+            "often_related": [
+                "build-system",
+                "ui-components"
+            ],
+            "occasionally_related": [
+                "typescript-setup",
+                "electron-integration"
+            ]
+        },
+        "ui-components": {
+            "directly_related": [
+                "api-routes"
+            ],
+            "often_related": [
+                "typescript-setup",
+                "database-schema"
+            ],
+            "occasionally_related": [
+                "build-system",
+                "electron-integration"
+            ]
+        },
+        "electron-integration": {
+            "directly_related": [
+                "typescript-setup",
+                "build-system"
+            ],
+            "often_related": [
+                "api-routes"
+            ],
+            "occasionally_related": [
+                "database-schema",
+                "ui-components"
+            ]
+        },
+        "api-routes": {
+            "directly_related": [
+                "database-schema",
+                "ui-components"
+            ],
+            "often_related": [
+                "typescript-setup",
+                "build-system",
+                "electron-integration"
+            ],
+            "occasionally_related": []
+        }
+    },
+    "context_expansion_rules": {
+        "expand_when": {
+            "error_resolution_failed": "include directly_related threads",
+            "cross_cutting_concerns": "include often_related threads",
+            "architecture_changes": "include all related threads",
+            "integration_issues": "include directly_related + often_related threads"
+        },
+        "contract_when": {
+            "simple_bug_fixes": "primary thread only",
+            "documentation_updates": "primary thread only",
+            "isolated_feature_work": "primary thread + directly_related"
+        }
+    },
+    "thread_interaction_patterns": {
+        "build_failures": [
+            "typescript-setup",
+            "build-system",
+            "electron-integration"
+        ],
+        "import_errors": [
+            "typescript-setup",
+            "ui-components",
+            "api-routes"
+        ],
+        "data_flow_issues": [
+            "database-schema",
+            "api-routes",
+            "ui-components"
+        ],
+        "packaging_problems": [
+            "build-system",
+            "electron-integration"
+        ],
+        "type_safety": [
+            "typescript-setup",
+            "api-routes",
+            "ui-components"
+        ]
+    },
+    "last_updated": "2025-09-05",
+    "updated_by": "session-70729130"
+}

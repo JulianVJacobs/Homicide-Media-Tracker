@@ -1,0 +1,80 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Copilot Context Machine Block",
+    "type": "object",
+    "required": [
+        "session_id",
+        "creation_date",
+        "status",
+        "active_threads"
+    ],
+    "properties": {
+        "session_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F-]{36}$"
+        },
+        "creation_date": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "last_message_date": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "extended_from": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "active",
+                "inactive",
+                "archived"
+            ]
+        },
+        "file_diff_baseline": {
+            "type": "string"
+        },
+        "active_threads": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "inactive_threads": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "requester": {
+            "type": "string"
+        },
+        "primary_thread": {
+            "type": "string",
+            "description": "Primary thread name or identifier for this session"
+        },
+        "related_threads": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Array of related thread names for quick lookup"
+        },
+        "thread_relationships": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            },
+            "description": "Optional map of thread -> relationship type (directly_related/often_related/occasionally_related)"
+        },
+        "schema_version": {
+            "type": "integer",
+            "minimum": 1
+        }
+    },
+    "additionalProperties": true
+}

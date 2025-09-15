@@ -1,0 +1,75 @@
+name: Context Management
+on:
+  push:
+    paths:
+      - '.github/contexts/**'
+      - '.github/copilot-instructions.md'
+  pull_request:
+    paths:
+      - '.github/contexts/**'
+      - '.github/copilot-instructions.md'
+
+jobs:
+  manage-contexts:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'JulianVJacobs' # Restrict to repository owner
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install OpenSSL
+        run: sudo apt-get update && sudo apt-get install -y openssl
+
+      - name: Validate encrypted contexts
+        run: |
+          echo "🔐 Validating encrypted context files..."
+
+          # Check that only encrypted versions are committed
+          unencrypted_contexts=$(find .github/contexts -name "*.md" -not -name "*.enc" | wc -l)
+          unencrypted_instructions=$(find .github -name "copilot-instructions.md" -not -name "*.enc" | wc -l)
+
+          if [ $unencrypted_contexts -gt 0 ] || [ $unencrypted_instructions -gt 0 ]; then
+            echo "❌ Found unencrypted context files in repository!"
+            echo "All agent context files must be encrypted before commit."
+            echo "Run: .github/scripts/encrypt-contexts.sh"
+            exit 1
+          fi
+
+          echo "✅ All context files properly encrypted"
+
+      - name: Test decryption (dry-run)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔓 Testing decryption capabilities..."
+
+          # Configure git with GitHub Actions credentials for key derivation
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
+
+          # Test decryption of a sample file (without committing)
+          encrypted_file=$(find .github -name "*.enc" | head -n 1)
+          if [ -n "$encrypted_file" ]; then
+            echo "Testing decryption of: $encrypted_file"
+            .github/scripts/encrypt-contexts.sh decrypt "$encrypted_file"
+            
+            # Clean up test
+            original_file="${encrypted_file%.enc}"
+            if [ -f "$original_file" ]; then
+              rm "$original_file"
+              echo "✅ Decryption test successful"
+            else
+              echo "❌ Decryption test failed"
+              exit 1
+            fi
+          else
+            echo "ℹ️  No encrypted files found to test"
+          fi

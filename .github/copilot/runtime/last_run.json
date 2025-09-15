@@ -1,0 +1,10 @@
+{
+  "generated_at": "2025-09-12T11:24:43.533381Z",
+  "generated_by": "generate-thread-index.py",
+  "threads_source": "committed_map",
+  "sessions_count": 0,
+  "threads_count": 6,
+  "files_written": [
+    ".github/copilot/runtime/index.json"
+  ]
+}

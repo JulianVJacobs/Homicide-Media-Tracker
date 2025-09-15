@@ -1,0 +1,227 @@
+{
+  "sessions": [],
+  "threads": {
+    "typescript-setup": {
+      "name": "typescript-setup",
+      "edges": [
+        {
+          "to": "build-system",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "electron-integration",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "ui-components",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "api-routes",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "database-schema",
+          "type": "occasionally_related",
+          "weight": 0.3
+        }
+      ],
+      "recommended_expansion": [
+        "build-system",
+        "electron-integration",
+        "ui-components",
+        "api-routes",
+        "database-schema"
+      ]
+    },
+    "build-system": {
+      "name": "build-system",
+      "edges": [
+        {
+          "to": "typescript-setup",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "electron-integration",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "api-routes",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "database-schema",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "ui-components",
+          "type": "occasionally_related",
+          "weight": 0.3
+        }
+      ],
+      "recommended_expansion": [
+        "typescript-setup",
+        "electron-integration",
+        "api-routes",
+        "database-schema",
+        "ui-components"
+      ]
+    },
+    "database-schema": {
+      "name": "database-schema",
+      "edges": [
+        {
+          "to": "api-routes",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "build-system",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "ui-components",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "typescript-setup",
+          "type": "occasionally_related",
+          "weight": 0.3
+        },
+        {
+          "to": "electron-integration",
+          "type": "occasionally_related",
+          "weight": 0.3
+        }
+      ],
+      "recommended_expansion": [
+        "api-routes",
+        "build-system",
+        "ui-components",
+        "typescript-setup",
+        "electron-integration"
+      ]
+    },
+    "ui-components": {
+      "name": "ui-components",
+      "edges": [
+        {
+          "to": "api-routes",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "typescript-setup",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "database-schema",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "build-system",
+          "type": "occasionally_related",
+          "weight": 0.3
+        },
+        {
+          "to": "electron-integration",
+          "type": "occasionally_related",
+          "weight": 0.3
+        }
+      ],
+      "recommended_expansion": [
+        "api-routes",
+        "typescript-setup",
+        "database-schema",
+        "build-system",
+        "electron-integration"
+      ]
+    },
+    "electron-integration": {
+      "name": "electron-integration",
+      "edges": [
+        {
+          "to": "typescript-setup",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "build-system",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "api-routes",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "database-schema",
+          "type": "occasionally_related",
+          "weight": 0.3
+        },
+        {
+          "to": "ui-components",
+          "type": "occasionally_related",
+          "weight": 0.3
+        }
+      ],
+      "recommended_expansion": [
+        "typescript-setup",
+        "build-system",
+        "api-routes",
+        "database-schema",
+        "ui-components"
+      ]
+    },
+    "api-routes": {
+      "name": "api-routes",
+      "edges": [
+        {
+          "to": "database-schema",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "ui-components",
+          "type": "directly_related",
+          "weight": 1
+        },
+        {
+          "to": "typescript-setup",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "build-system",
+          "type": "often_related",
+          "weight": 0.6
+        },
+        {
+          "to": "electron-integration",
+          "type": "often_related",
+          "weight": 0.6
+        }
+      ],
+      "recommended_expansion": [
+        "database-schema",
+        "ui-components",
+        "typescript-setup",
+        "build-system",
+        "electron-integration"
+      ]
+    }
+  }
+}

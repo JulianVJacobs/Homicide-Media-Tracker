@@ -1,0 +1,32 @@
+/* styles.css or your main CSS file */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+
+.dropdown-container {
+    position: relative;
+  }
+  
+  .dropdown {
+    display: inline-block;
+  }
+  
+  .dropdown-toggle {
+    cursor: pointer;
+    border: 1px solid #ccc;
+    padding: 5px;
+    background-color: #fff;
+  }
+  
+  .options-container {
+    border: 1px solid #ccc;
+    padding: 5px;
+    background-color: #fff;
+  }
+  
+  .custom-navbar {
+    background-color: #343a40; /* Set the background color to a dark color of your choice */
+    font-palette: #ec1616; /* Set the text color to white or a light color of your choice */
+  }
+  

@@ -1,25 +1,65 @@
 {
-	"name": "client",
-	"dockerComposeFile": ["../docker-compose.yml","../docker-compose.dev.yml"],
-	"service": "client",
-	"shutdownAction": "none",
-	"workspaceFolder": "/workspace/client",
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"ms-vscode-remote.remote-containers",
-				"ms-vscode.vscode-typescript-next",
-				"Shibu.nextjs-js-ts-code-snippets",
-				"Postman.postman-for-vscode",
-				"ms-kubernetes-tools.vscode-kubernetes-tools",
-				"bradlc.vscode-tailwindcss",
-				"VisualStudioExptTeam.vscodeintellicode",
-				"VisualStudioExptTeam.intellicode-api-usage-examples",
-				"mongodb.mongodb-vscode",
-				"ms-azuretools.vscode-docker",
-				"donjayamanne.githistory",
-				"christian-kohler.npm-intellisense"
-			]
-		}
-	}
+  "name": "Homicide Media Tracker",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "none",
+  "containerEnv": {
+    "POSTGRES_URL_NO_SSL": "${localEnv:POSTGRES_URL_NO_SSL}",
+    "POSTGRES_USER": "${localEnv:POSTGRES_USER}",
+    "POSTGRES_PASSWORD": "${localEnv:POSTGRES_PASSWORD}",
+    "POSTGRES_DB": "${localEnv:POSTGRES_DB}",
+    "POSTGRES_HOST": "${localEnv:POSTGRES_HOST}",
+    "POSTGRES_PORT_INT": "${localEnv:POSTGRES_PORT_INT}",
+    "ENV": "dev",
+    "WINEARCH": "win64",
+    "WINEPREFIX": "/home/vscode/.wine",
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"// ,
+    // "${localEnv:APPDATA}/Code/User/workspaceStorage/de86b799e0ce0bc1bdc766ecb43c6b83/chatSessions:/workspace/.copilot-chats:cached"
+  ],
+  "runArgs": [
+    "--volume",
+    "/etc/localtime:/etc/localtime:ro",
+    "--volume",
+    "/etc/timezone:/etc/timezone:ro"
+  ],
+  "forwardPorts": [
+    3000,
+    3001
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js Dev Server"
+    },
+    "3001": {
+      "label": "Electron Dev"
+    }
+  },
+  "postCreateCommand": "npm install --legacy-peer-deps",
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode.vscode-typescript-next",
+        "Shibu.nextjs-js-ts-code-snippets",
+        "Postman.postman-for-vscode",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "bradlc.vscode-tailwindcss",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "VisualStudioExptTeam.intellicode-api-usage-examples",
+        "mongodb.mongodb-vscode",
+        "ms-azuretools.vscode-docker",
+        "donjayamanne.githistory",
+        "christian-kohler.npm-intellisense",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
 }

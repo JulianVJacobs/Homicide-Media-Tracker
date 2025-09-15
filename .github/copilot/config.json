@@ -1,0 +1,672 @@
+{
+    "rules": [
+        {
+            "name": "context_priority",
+            "description": "Prioritize machine-readable context over human-readable context for better parsing.",
+            "type": "behavioral",
+            "default_behavior": "always_follow",
+            "exceptions": "If explicitly instructed to prioritize human-readable context.",
+            "priority": "high",
+            "examples": [
+                "When gathering context, prefer structured JSON over free-text descriptions."
+            ],
+            "tags": [
+                "context",
+                "priority",
+                "machine-readable"
+            ]
+        },
+        {
+            "name": "tool_usage",
+            "description": "Gather context first, then perform the task.",
+            "type": "operational",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "Use tools like semantic_search or grep_search to gather context before making changes."
+            ],
+            "tags": [
+                "tools",
+                "context",
+                "workflow"
+            ]
+        },
+        {
+            "name": "localisation_requirement",
+            "description": "Follow South African English spelling conventions in all code, comments, and documentation.",
+            "type": "formatting",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "medium",
+            "examples": [
+                "Use 'ise' endings instead of 'ize', and 'our' endings instead of 'or'."
+            ],
+            "tags": [
+                "localisation",
+                "spelling",
+                "formatting"
+            ]
+        },
+        {
+            "name": "maintain_agent_context",
+            "description": "Ensure the agent maintains context effectively throughout the session.",
+            "type": "behavioral",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "Agent should log context updates immediately after any temporary fixes are applied."
+            ],
+            "tags": [
+                "context",
+                "agent",
+                "maintenance"
+            ]
+        },
+        {
+            "name": "temporary_measures_tracking",
+            "description": "Track temporary measures and workarounds applied during the session.",
+            "type": "operational",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "Log details of any temporary measures implemented, including reversal instructions."
+            ],
+            "tags": [
+                "tracking",
+                "temporary",
+                "measures"
+            ]
+        },
+        {
+            "name": "recontextualisation",
+            "description": "Combat instruction drift in long conversations by refreshing context regularly.",
+            "type": "behavioral",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "medium",
+            "examples": [
+                "Agent should re-read configuration and check active threads after significant file modifications."
+            ],
+            "tags": [
+                "context",
+                "recontextualisation",
+                "instructions"
+            ]
+        },
+        {
+            "name": "ambiguity_resolution",
+            "description": "Prefer user clarification over assumptions for unresolvable ambiguity.",
+            "type": "behavioral",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "If unsure about a context, ask the user specific questions to clarify."
+            ],
+            "tags": [
+                "ambiguity",
+                "resolution",
+                "user_clarification"
+            ]
+        },
+        {
+            "name": "repetition",
+            "description": "Avoid repeating actions or responses after tool calls.",
+            "type": "behavioral",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "Do not repeat the same tool call multiple times unless explicitly instructed.",
+                "Avoid restating information already provided after a tool call."
+            ],
+            "tags": [
+                "behavior",
+                "repetition",
+                "efficiency"
+            ]
+        },
+        {
+            "name": "persistence",
+            "description": "Do not give up on tasks unless they are truly impossible.",
+            "type": "behavioral",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "Continue attempting to solve a problem until all options are exhausted.",
+                "Only declare a task impossible after thorough investigation."
+            ],
+            "tags": [
+                "behavior",
+                "persistence",
+                "problem-solving"
+            ]
+        },
+        {
+            "name": "file_editing",
+            "description": "Use appropriate edit tools, not codeblocks, for file modifications.",
+            "type": "operational",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "Always use the insert_edit_into_file tool for file edits."
+            ],
+            "tags": [
+                "file",
+                "editing",
+                "tools"
+            ]
+        },
+        {
+            "name": "terminal_commands",
+            "description": "Use run_in_terminal, not codeblocks, for terminal commands.",
+            "type": "operational",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "Always use the run_in_terminal tool for executing terminal commands."
+            ],
+            "tags": [
+                "terminal",
+                "commands",
+                "tools"
+            ]
+        },
+        {
+            "name": "file_reading",
+            "description": "Prefer large chunks over small sequential reads when reading files.",
+            "type": "operational",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "medium",
+            "examples": [
+                "Read large sections of a file at once to minimize tool calls."
+            ],
+            "tags": [
+                "file",
+                "reading",
+                "efficiency"
+            ]
+        },
+        {
+            "name": "assumptions",
+            "description": "Avoid assumptions; gather context first.",
+            "type": "behavioral",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "Use tools to gather context before making decisions."
+            ],
+            "tags": [
+                "context",
+                "assumptions",
+                "clarity"
+            ]
+        },
+        {
+            "name": "clarification",
+            "description": "Ask clarifying questions when context gathering is insufficient.",
+            "type": "behavioral",
+            "default_behavior": "always_follow",
+            "exceptions": "None",
+            "priority": "high",
+            "examples": [
+                "If unsure about a task, ask the user specific questions to clarify."
+            ],
+            "tags": [
+                "clarification",
+                "questions",
+                "context"
+            ]
+        }
+    ],
+    "workflows": {
+        "initialisation": {
+            "description": "Initialise the system by finding the session ID and setting up the environment.",
+            "triggers": [
+                "first_action",
+                "specifically_commanded_to_initialise"
+            ],
+            "actions": [
+                "state_current_time",
+                "find_sessionId",
+                {
+                    "conditional": {
+                        "if": "sessionId_provided",
+                        "then": [
+                            "extend_session"
+                        ],
+                        "else": [
+                            "create_new_session"
+                        ]
+                    }
+                }
+            ],
+            "related_rules": [
+                "context_priority",
+                "tool_usage"
+            ],
+            "examples": [
+                "Use this workflow to initialise the system at the start of a session.",
+                "Use this workflow to extend an existing session if a sessionId is provided."
+            ]
+        },
+        "focus": {
+            "description": "Adjust execution context and focus based on thread relationships.",
+            "triggers": [
+                "thread_relationship_analysis"
+            ],
+            "actions": [
+                "build_on_success",
+                "learn_from_failures",
+                "reuse_solutions",
+                "maintain_consistency",
+                "filter_irrelevant_work"
+            ],
+            "related_rules": [
+                "maintain_agent_context",
+                "ambiguity_resolution"
+            ],
+            "examples": [
+                "Use this workflow to adjust focus based on relevant thread relationships.",
+                "Use this workflow to disregard irrelevant threads and maintain focus."
+            ]
+        },
+        "contextualise": {
+            "description": "Orient within project context using thread relationships.",
+            "triggers": [
+                "after_chat_initialisation"
+            ],
+            "actions": [
+                "review_current_context",
+                "analyze_thread_relationships",
+                "cross_reference_previous_work",
+                "assess_relevance",
+                "establish_context_baseline"
+            ],
+            "related_rules": [
+                "context_priority",
+                "recontextualisation"
+            ],
+            "examples": [
+                "Use this workflow to understand the project context after chat initialisation.",
+                "Use this workflow to review thread relationships and establish a baseline."
+            ]
+        },
+        "update_context": {
+            "description": "Update context file after completing tasks and trigger thread relationship review.",
+            "triggers": [
+                "task_completion"
+            ],
+            "actions": [
+                "log_session_actions",
+                "update_current_state",
+                "trigger_thread_review"
+            ],
+            "related_rules": [
+                "temporary_measures_tracking",
+                "maintain_agent_context"
+            ],
+            "examples": [
+                "Use this workflow to log actions and update the context file after completing tasks.",
+                "Use this workflow to trigger a thread relationship review if necessary."
+            ]
+        },
+        "check_context_file": {
+            "description": "Check for a context file with a sessionId matching the current sessionId.",
+            "triggers": [
+                "initialisation_workflow"
+            ],
+            "actions": [
+                "get_current_sessionId",
+                "find_context_file"
+            ],
+            "related_rules": [
+                "context_priority",
+                "tool_usage"
+            ],
+            "examples": [
+                "Use this workflow to verify the existence of a context file for the current session.",
+                "Use this workflow to ensure the session context is properly initialised."
+            ]
+        },
+        "review_thread_relationships": {
+            "description": "Review and update thread relationships only when necessary.",
+            "triggers": [
+                "update_context"
+            ],
+            "actions": [
+                "search_existing_contexts",
+                "identify_active_threads",
+                "analyze_dependencies",
+                "update_relationships_if_necessary"
+            ],
+            "related_rules": [
+                "ambiguity_resolution",
+                "recontextualisation"
+            ],
+            "examples": [
+                "Use this workflow to review thread relationships after a context update.",
+                "Use this workflow to update thread relationships when dependencies change."
+            ]
+        }
+    },
+    "actions": [
+        {
+            "name": "get_date",
+            "description": "Retrieve the current date and time.",
+            "inputs": [],
+            "outputs": "A string representing the current date and time.",
+            "steps": [
+                {
+                    "step": "Run the 'date' command",
+                    "command": "date"
+                }
+            ],
+            "examples": [
+                "Use this action to fetch the current date for logging purposes."
+            ],
+            "tags": [
+                "date",
+                "utility"
+            ]
+        },
+        {
+            "name": "echo",
+            "description": "Output a string to the console.",
+            "inputs": [
+                {
+                    "name": "message",
+                    "type": "string",
+                    "description": "The message to be output to the console."
+                }
+            ],
+            "outputs": "The input string echoed to the console.",
+            "steps": [
+                {
+                    "step": "Run the 'echo' command",
+                    "command": "echo {message}"
+                }
+            ],
+            "examples": [
+                "Use this action to display a message in the terminal."
+            ],
+            "tags": [
+                "output",
+                "console",
+                "utility"
+            ]
+        },
+        {
+            "name": "search_logs",
+            "description": "Search logs for a specific pattern.",
+            "inputs": [
+                {
+                    "name": "pattern",
+                    "type": "string",
+                    "description": "The pattern to search for in the logs."
+                },
+                {
+                    "name": "directory",
+                    "type": "string",
+                    "description": "The directory containing the logs to search."
+                }
+            ],
+            "outputs": "The filenames of logs matching the specified pattern.",
+            "steps": [
+                {
+                    "step": "Search for the pattern in the specified directory",
+                    "command": "grep -l \"{pattern}\" {directory}/*.json"
+                }
+            ],
+            "examples": [
+                "Use this action to locate logs containing a specific pattern."
+            ],
+            "tags": [
+                "search",
+                "logs",
+                "pattern"
+            ]
+        },
+        {
+            "name": "filter_logs",
+            "description": "Filter log search results to return the first match.",
+            "inputs": [
+                {
+                    "name": "log_files",
+                    "type": "array",
+                    "description": "The list of log files to filter."
+                }
+            ],
+            "outputs": "The first log file matching the criteria.",
+            "steps": [
+                {
+                    "step": "Filter the log files to return the first match",
+                    "command": "head -1 {log_files}"
+                }
+            ],
+            "examples": [
+                "Use this action to extract the first matching log file from a list."
+            ],
+            "tags": [
+                "filter",
+                "logs",
+                "utility"
+            ]
+        },
+        {
+            "name": "analyze_thread_relationships",
+            "description": "Analyze thread relationships to determine dependencies and relevance.",
+            "inputs": [
+                {
+                    "name": "thread_tag",
+                    "type": "string",
+                    "description": "The tag of the thread to analyze."
+                }
+            ],
+            "outputs": "A summary of thread dependencies and relevance.",
+            "steps": [
+                {
+                    "step": "Search for thread tags in context files",
+                    "command": "grep \"{thread_tag}\" .github/copilot/contexts/*.md"
+                }
+            ],
+            "examples": [
+                "Use this action to identify dependencies between threads."
+            ],
+            "tags": [
+                "threads",
+                "analysis",
+                "dependencies"
+            ]
+        },
+        {
+            "name": "get_current_sessionId",
+            "description": "Retrieve the current session ID based on the active session context.",
+            "inputs": [],
+            "outputs": "The session ID of the current active session.",
+            "steps": [
+                {
+                    "step": "Search for the current session ID in the session metadata file",
+                    "command": "grep 'sessionId' .copilot-chats/session-metadata.json | head -1 | awk -F ': ' '{print $2}'"
+                }
+            ],
+            "examples": [
+                "Use this action to retrieve the session ID for the current session context."
+            ],
+            "tags": [
+                "session",
+                "utility"
+            ]
+        },
+        {
+            "name": "find_context_file",
+            "description": "Locate the context file for a given session ID.",
+            "inputs": [
+                {
+                    "name": "sessionId",
+                    "type": "string",
+                    "description": "The session ID to locate the context file for."
+                }
+            ],
+            "outputs": "The path to the context file matching the session ID.",
+            "steps": [
+                {
+                    "step": "Search for the context file in the contexts directory",
+                    "command": "find .github/copilot/contexts -name \"{sessionId}.md\""
+                }
+            ],
+            "examples": [
+                "Use this action to locate the context file for a specific session ID."
+            ],
+            "tags": [
+                "context",
+                "file",
+                "search"
+            ]
+        },
+        {
+            "name": "search_existing_contexts",
+            "description": "Search existing context files for a specific thread tag.",
+            "inputs": [
+                {
+                    "name": "thread_tag",
+                    "type": "string",
+                    "description": "The thread tag to search for in the context files."
+                }
+            ],
+            "outputs": "A list of context files containing the specified thread tag.",
+            "steps": [
+                {
+                    "step": "Search for the thread tag in all context files",
+                    "command": "grep -l \"{thread_tag}\" .github/copilot/contexts/*.md"
+                }
+            ],
+            "examples": [
+                "Use this action to find all context files related to a specific thread tag."
+            ],
+            "tags": [
+                "context",
+                "search",
+                "thread"
+            ]
+        },
+        {
+            "name": "identify_active_threads",
+            "description": "Identify active threads from the context files.",
+            "inputs": [],
+            "outputs": "A list of active threads identified from the context files.",
+            "steps": [
+                {
+                    "step": "Search for active thread markers in context files",
+                    "command": "grep -h 'active: true' .github/copilot/contexts/*.md | awk -F ':' '{print $1}'"
+                }
+            ],
+            "examples": [
+                "Use this action to identify all active threads from the context files."
+            ],
+            "tags": [
+                "threads",
+                "context",
+                "active"
+            ]
+        },
+        {
+            "name": "analyze_dependencies",
+            "description": "Analyze dependencies between threads to determine their relationships.",
+            "inputs": [
+                {
+                    "name": "thread_list",
+                    "type": "array",
+                    "description": "A list of threads to analyze for dependencies."
+                }
+            ],
+            "outputs": "A dependency graph showing relationships between threads.",
+            "steps": [
+                {
+                    "step": "Analyze thread relationships",
+                    "command": "python analyze_dependencies.py --threads {thread_list}"
+                }
+            ],
+            "examples": [
+                "Use this action to generate a dependency graph for a set of threads."
+            ],
+            "tags": [
+                "threads",
+                "dependencies",
+                "analysis"
+            ]
+        },
+        {
+            "name": "update_relationships_if_necessary",
+            "description": "Update thread relationships if dependencies or statuses have changed.",
+            "inputs": [
+                {
+                    "name": "dependency_graph",
+                    "type": "object",
+                    "description": "The dependency graph showing relationships between threads."
+                }
+            ],
+            "outputs": "A confirmation of whether relationships were updated.",
+            "steps": [
+                {
+                    "step": "Check for changes in the dependency graph",
+                    "command": "python check_relationship_changes.py --graph {dependency_graph}"
+                },
+                {
+                    "step": "Update relationships if necessary",
+                    "command": "python update_relationships.py --graph {dependency_graph}"
+                }
+            ],
+            "examples": [
+                "Use this action to update thread relationships when dependencies change."
+            ],
+            "tags": [
+                "threads",
+                "relationships",
+                "update"
+            ]
+        },
+        {
+            "name": "extend_session",
+            "description": "Extend an existing session by initialising it, updating YAML frontmatter, and adding a context summary.",
+            "inputs": [
+                {
+                    "name": "sessionId",
+                    "type": "string",
+                    "description": "The session ID to extend."
+                }
+            ],
+            "outputs": "Confirmation that the session has been extended and updated.",
+            "steps": [
+                {
+                    "step": "Initialise the session",
+                    "command": "python initialise_session.py --sessionId {sessionId}"
+                },
+                {
+                    "step": "Update YAML frontmatter with extension details",
+                    "command": "python update_yaml.py --sessionId {sessionId} --extend true"
+                },
+                {
+                    "step": "Add a detailed summary of the inherited context",
+                    "command": "python add_context_summary.py --sessionId {sessionId}"
+                }
+            ],
+            "examples": [
+                "Use this action to extend a session by providing its session ID."
+            ],
+            "tags": [
+                "session",
+                "extension",
+                "context"
+            ]
+        }
+    ]
+}

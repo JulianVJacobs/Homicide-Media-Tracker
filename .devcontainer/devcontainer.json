@@ -1,5 +1,8 @@
 {
   "name": "Homicide Media Tracker",
+  "appPort": [
+    3000
+  ],
   "build": {
     "dockerfile": "Dockerfile",
     "context": "."
@@ -19,7 +22,7 @@
     "DISPLAY": "${localEnv:DISPLAY}"
   },
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"// ,
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached" // ,
     // "${localEnv:APPDATA}/Code/User/workspaceStorage/de86b799e0ce0bc1bdc766ecb43c6b83/chatSessions:/workspace/.copilot-chats:cached"
   ],
   "runArgs": [

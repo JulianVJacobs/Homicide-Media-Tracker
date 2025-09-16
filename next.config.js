@@ -2,13 +2,13 @@
 const nextConfig = {
   // Use standalone output only in production for Electron compatibility
   // In development, run normally for better dev experience
-  ...(process.env.NODE_ENV === 'production' && { output: 'standalone' }),
-  
+  // ...(process.env.NODE_ENV === 'production' && { output: 'standalone' }),
+
   // Experimental features for better Electron integration
   experimental: {
-    serverComponentsExternalPackages: ['electron'], // Remove libsql packages for Option A
+    serverComponentsExternalPackages: ['electron'], 
   },
-  
+
   // Configure webpack for Electron compatibility
   webpack: (config, { isServer, dev }) => {
     // Don't bundle these packages - they'll be available in the Electron environment
@@ -26,12 +26,12 @@ const nextConfig = {
 
     return config;
   },
-  
+
   // Keep TypeScript and ESLint checking enabled for better development experience
   typescript: {
     ignoreBuildErrors: false,
   },
-  
+
   eslint: {
     ignoreDuringBuilds: false,
   },

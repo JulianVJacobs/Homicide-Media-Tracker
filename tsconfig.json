@@ -26,9 +26,6 @@
       "@/*": [
         "./*"
       ],
-      "@/components/*": [
-        "lib/database/components/*"
-      ],
       "@/lib/*": [
         "./lib/*"
       ],
@@ -47,7 +44,6 @@
     "node_modules",
     "release",
     "src/main",
-    "webpack.main.config.js",
     "out",
     "webpack.*.config.js"
   ]

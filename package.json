@@ -100,9 +100,6 @@
   "dependencies": {
     "@electron/notarize": "^2.3.2",
     "@libsql/client": "^0.5.6",
-    "@libsql/darwin-arm64": "^0.5.22",
-    "@libsql/darwin-x64": "^0.5.22",
-    "@libsql/win32-x64-msvc": "^0.5.22",
     "drizzle-orm": "^0.30.10",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
@@ -139,7 +136,7 @@
     "css-loader": "^6.8.1",
     "css-minimizer-webpack-plugin": "^5.0.1",
     "detect-port": "^1.5.1",
-    "drizzle-kit": "^0.31.4",
+    "drizzle-kit": "^0.20.18",
     "electron": "^38.0.0",
     "electron-builder": "^24.13.3",
     "electron-devtools-installer": "^3.2.0",

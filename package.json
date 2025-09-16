@@ -1,7 +1,7 @@
 {
   "name": "homicide-media-tracker",
-  "version": "0.9.0",
-  "description": "An application to track homicide media.",
+  "version": "1.0.0",
+  "description": "An application to track (homicide) media.",
   "keywords": [
     "electron",
     "boilerplate",
@@ -18,11 +18,11 @@
     "url": "git+https://github.com/JulianVJacobs/Homicide-Media-Tracker.git"
   },
   "license": "MIT",
-  "author": {
-    "name": "Max Brenner",
-    "url": "https://github.com/MaxB543/"
-  },
   "contributors": [
+    {
+      "name": "Max Brenner",
+      "url": "https://github.com/MaxB543/"
+    },
     {
       "name": "Julian Jacobs",
       "url": "https://github.com/JulianVJacobs"
@@ -139,7 +139,7 @@
     "css-loader": "^6.8.1",
     "css-minimizer-webpack-plugin": "^5.0.1",
     "detect-port": "^1.5.1",
-    "drizzle-kit": "^0.20.18",
+    "drizzle-kit": "^0.31.4",
     "electron": "^38.0.0",
     "electron-builder": "^24.13.3",
     "electron-devtools-installer": "^3.2.0",

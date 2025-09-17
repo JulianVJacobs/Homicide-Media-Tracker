@@ -8,8 +8,8 @@ import { ToastContainer } from 'react-toastify';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Homicide Media Tracker',
-  description: 'An application to track homicide media content',
+  title: 'News Report Tracker',
+  description: 'A utility tool to collect, track, and analyse news reports.',
 };
 
 export default function RootLayout({

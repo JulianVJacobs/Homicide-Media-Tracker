@@ -6,6 +6,10 @@ import { isElectron, getEnvironment } from '@/lib/platform';
 import DatabaseStatus from '@/lib/components/database-status';
 import SyncConfiguration from '@/lib/components/sync-configuration';
 
+interface SysInfoProps {
+  onBack: () => void;
+}
+
 interface HealthStatus {
   status: string;
   message: string;
@@ -14,7 +18,7 @@ interface HealthStatus {
   version: string;
 }
 
-export default function Info() {
+export default function SysInfo({ onBack }: SysInfoProps) {
   const [environment, setEnvironment] = useState<string>('');
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,7 +31,7 @@ export default function Info() {
   const checkHealthStatus = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/health');
       if (!response.ok) {
@@ -48,9 +52,9 @@ export default function Info() {
         <Col>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2>System Information</h2>
-            <Button 
-              variant="outline-secondary" 
-              href="/"
+            <Button
+              variant="outline-secondary"
+              onClick={onBack}
             >
               Back to Home
             </Button>
@@ -78,7 +82,7 @@ export default function Info() {
               )}
 
               {healthStatus && (
-                <Alert 
+                <Alert
                   variant={healthStatus.status === 'healthy' ? 'success' : 'warning'}
                   className="mb-3"
                 >
@@ -110,7 +114,7 @@ export default function Info() {
               <SyncConfiguration />
             </Col>
           </Row>
-          
+
           <Row className="mt-4">
             <Col md={6}>
               <Card>
@@ -163,7 +167,7 @@ export default function Info() {
                 </Card.Body>
               </Card>
             </Col>
-            
+
             <Col md={6}>
               <Card>
                 <Card.Header>
@@ -175,13 +179,13 @@ export default function Info() {
                     <code>npm start</code>
                   </pre>
                   <small className="text-muted">Starts Next.js dev server + Electron</small>
-                  
+
                   <h6 className="mt-3">Production Build:</h6>
                   <pre className="bg-light p-2 rounded">
                     <code>npm run build:electron<br />npm run package</code>
                   </pre>
                   <small className="text-muted">Builds standalone server + packages desktop app</small>
-                  
+
                   <h6 className="mt-3">Web Only:</h6>
                   <pre className="bg-light p-2 rounded">
                     <code>npm run build<br />npm run start:web</code>

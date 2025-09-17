@@ -1,12 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Container, Card, Button, Row, Col, Navbar, Nav } from 'react-bootstrap';
+import {
+  Container,
+  Card,
+  Button,
+  Row,
+  Col,
+  Navbar,
+  Nav,
+} from 'react-bootstrap';
 import InputHomicide from '@/lib/components/input-homicide';
 import ListHomicides from '@/lib/components/list-homicides';
+import SysInfo from '@/lib/components/system-information';
+
+type Views = 'home' | 'input' | 'list' | 'info';
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<'home' | 'input' | 'list'>('home');
+  const [currentView, setCurrentView] = useState<Views>('home');
 
   const renderContent = () => {
     if (currentView === 'home') {
@@ -14,13 +25,13 @@ export default function Home() {
         <div className="text-center py-5">
           <div className="mb-4">
             <h1 className="display-3 fw-bold text-primary mb-3">
-              HOMICIDE MEDIA TRACKER
+              NEWS REPORT TRACKER
             </h1>
             <p className="lead text-muted">
-              Research tool for tracking and analyzing homicide-related media coverage
+              Research tool for tracking and analysing news reports
             </p>
           </div>
-          
+
           <Row className="justify-content-center">
             <Col md={8}>
               <Card className="shadow-sm">
@@ -32,14 +43,14 @@ export default function Home() {
                       size="lg"
                       onClick={() => setCurrentView('input')}
                     >
-                      Input New Homicide Case
+                      Input New Event
                     </Button>
                     <Button
                       variant="outline-primary"
                       size="lg"
                       onClick={() => setCurrentView('list')}
                     >
-                      View Homicide Records
+                      View Events
                     </Button>
                   </div>
                 </Card.Body>
@@ -51,15 +62,15 @@ export default function Home() {
     }
 
     if (currentView === 'input') {
-      return (
-        <InputHomicide onBack={() => setCurrentView('home')} />
-      );
+      return <InputHomicide onBack={() => setCurrentView('home')} />;
     }
 
     if (currentView === 'list') {
-      return (
-        <ListHomicides onBack={() => setCurrentView('home')} />
-      );
+      return <ListHomicides onBack={() => setCurrentView('home')} />;
+    }
+
+    if (currentView === 'info') {
+      return <SysInfo onBack={() => setCurrentView('home')} />;
     }
   };
 
@@ -68,34 +79,36 @@ export default function Home() {
       <Navbar bg="dark" variant="dark" expand="lg" className="mb-0">
         <Container>
           <Navbar.Brand href="#" onClick={() => setCurrentView('home')}>
-            Homicide Media Tracker
+            News Report Tracker
           </Navbar.Brand>
           <Navbar.Toggle />
           <Navbar.Collapse>
             <Nav className="me-auto">
-              <Nav.Link 
-                href="#" 
+              <Nav.Link
+                href="#"
                 onClick={() => setCurrentView('home')}
                 className={currentView === 'home' ? 'active' : ''}
               >
                 Home
               </Nav.Link>
-              <Nav.Link 
-                href="#" 
+              <Nav.Link
+                href="#"
                 onClick={() => setCurrentView('input')}
                 className={currentView === 'input' ? 'active' : ''}
               >
-                Input Cases
+                Input Event
               </Nav.Link>
-              <Nav.Link 
-                href="#" 
+              <Nav.Link
+                href="#"
                 onClick={() => setCurrentView('list')}
                 className={currentView === 'list' ? 'active' : ''}
               >
-                View Records
+                View All Events
               </Nav.Link>
-              <Nav.Link 
-                href="/sys-info"
+              <Nav.Link
+                href="#"
+                onClick={() => setCurrentView('info')}
+                className={currentView === 'info' ? 'active' : ''}
               >
                 System Information
               </Nav.Link>
@@ -104,9 +117,7 @@ export default function Home() {
         </Container>
       </Navbar>
 
-      <Container className="py-4">
-        {renderContent()}
-      </Container>
+      <Container className="py-4">{renderContent()}</Container>
     </>
   );
 }

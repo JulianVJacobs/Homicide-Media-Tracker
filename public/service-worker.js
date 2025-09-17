@@ -1,6 +1,6 @@
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open('homicide-media-cache-v1').then(cache => {
+    caches.open('news-media-cache-v1').then(cache => {
       return cache.addAll([
         '/',
         '/favicon.ico',
@@ -23,7 +23,7 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
-        keys.filter(key => key !== 'homicide-media-cache-v1')
+        keys.filter(key => key !== 'news-media-cache-v1')
           .map(key => caches.delete(key))
       );
     })

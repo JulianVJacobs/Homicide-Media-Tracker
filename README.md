@@ -6,12 +6,33 @@ This single README combines development guidance from the project and an older b
 
 ## Purpose
 
+
+## Future Migration & Generalization Plan
+
+This project is planned to transition from being specific to homicide reports to a general event reporting model. The new schema will:
+
+- Support reports about any class of event (not just homicide)
+- Events will have participants, and participants can relate to other participants
+- A template/profile system will allow users to define participant types (e.g., "victim", "perpetrator") and add custom fields for each profile
+- Forms will be dynamically generated based on the selected profile and its fields
+- The current homicide-specific schema will be preserved as a "preloaded configuration" for backward compatibility
+
+Migration steps will include:
+- Designing new core entities: Event, Report, Participant, Relationship
+- Implementing the template/profile system and dynamic form logic
+- Migrating existing homicide data to the new schema
+- Ensuring backward compatibility and loading the preloaded configuration on setup
+
+This plan is documented here for future reference. Focus is currently on PWA offline support before starting this migration.
+
+---
+
 The Homicide Media Tracker is designed for research teams to:
-- Collect structured homicide data from media articles
-- Detect duplicates across sources
-- Support multi-user research workflows with optional remote sync
-- Operate offline using a local LibSQL/SQLite database and optionally sync to a remote server
-- Visualize and export data for analysis
+ - Collect structured homicide data from media articles
+ - Detect duplicates across sources
+ - Support multi-user research workflows with optional remote sync
+ - Operate offline using a local LibSQL/SQLite database and optionally sync to a remote server
+ - Visualize and export data for analysis
 
 ## Quick Start (development)
 

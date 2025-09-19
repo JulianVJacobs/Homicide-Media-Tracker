@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const format = url.searchParams.get('format') || 'json'; // json, csv, xlsx
     const includePersonalData = url.searchParams.get('includePersonalData') === 'true';
-    
+
     // Parse filters
     const filters: ExportFilters = {
       dateFrom: url.searchParams.get('dateFrom') || undefined,
@@ -35,14 +35,14 @@ export async function GET(request: NextRequest) {
       modeOfDeath: url.searchParams.get('modeOfDeath') || undefined,
       suspectStatus: url.searchParams.get('suspectStatus') || undefined,
     };
-    
+
     const db = databaseManager.getLocal();
-    
+
     // Build where conditions for each table
     const articleWhereConditions = [];
     const victimWhereConditions = [];
     const perpetratorWhereConditions = [];
-    
+
     // Apply date filters
     if (filters.dateFrom) {
       articleWhereConditions.push(gte(schema.articles.dateOfPublication, filters.dateFrom));
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     if (filters.dateTo) {
       articleWhereConditions.push(lte(schema.articles.dateOfPublication, filters.dateTo));
     }
-    
+
     // Apply victim filters
     if (filters.province) {
       victimWhereConditions.push(eq(schema.victims.placeOfDeathProvince, filters.province));
@@ -64,44 +64,44 @@ export async function GET(request: NextRequest) {
     if (filters.modeOfDeath) {
       victimWhereConditions.push(eq(schema.victims.modeOfDeathGeneral, filters.modeOfDeath));
     }
-    
+
     // Apply perpetrator filters
     if (filters.suspectStatus) {
       perpetratorWhereConditions.push(eq(schema.perpetrators.suspectIdentified, filters.suspectStatus));
     }
-    
+
     // Execute queries with proper conditions
     const articles = articleWhereConditions.length > 0
       ? await db.select().from(schema.articles).where(
-          articleWhereConditions.length === 1 
-            ? articleWhereConditions[0] 
+          articleWhereConditions.length === 1
+            ? articleWhereConditions[0]
             : and(...articleWhereConditions)
         )
       : await db.select().from(schema.articles);
-    
+
     const victims = victimWhereConditions.length > 0
       ? await db.select().from(schema.victims).where(
-          victimWhereConditions.length === 1 
-            ? victimWhereConditions[0] 
+          victimWhereConditions.length === 1
+            ? victimWhereConditions[0]
             : and(...victimWhereConditions)
         )
       : await db.select().from(schema.victims);
-    
+
     const perpetrators = perpetratorWhereConditions.length > 0
       ? await db.select().from(schema.perpetrators).where(
-          perpetratorWhereConditions.length === 1 
-            ? perpetratorWhereConditions[0] 
+          perpetratorWhereConditions.length === 1
+            ? perpetratorWhereConditions[0]
             : and(...perpetratorWhereConditions)
         )
       : await db.select().from(schema.perpetrators);
-    
+
     // Remove personal data if not authorized
     let processedData = {
       articles,
       victims,
       perpetrators,
     };
-    
+
     if (!includePersonalData) {
       processedData = {
         articles: articles.map(article => ({
@@ -122,12 +122,12 @@ export async function GET(request: NextRequest) {
         })),
       };
     }
-    
+
     // Combine data for analysis
     const combinedData = articles.map(article => {
-      const articleVictims = victims.filter(v => v.articleId === article.articleId);
-      const articlePerpetrators = perpetrators.filter(p => p.articleId === article.articleId);
-      
+      const articleVictims = victims.filter(v => v.articleId === article.id);
+      const articlePerpetrators = perpetrators.filter(p => p.articleId === article.id);
+
       return {
         article,
         victims: articleVictims,
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
         perpetratorCount: articlePerpetrators.length,
       };
     });
-    
+
     // Generate response based on format
     switch (format.toLowerCase()) {
       case 'csv':
@@ -161,7 +161,7 @@ export async function GET(request: NextRequest) {
           },
         });
     }
-    
+
   } catch (error) {
     console.error('Failed to export data:', error);
     return NextResponse.json(
@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
  */
 function generateCSVResponse(data: any[], includePersonalData: boolean) {
   const csvRows = [];
-  
+
   // Header row
   const headers = [
     'Article_ID',
@@ -196,25 +196,25 @@ function generateCSVResponse(data: any[], includePersonalData: boolean) {
     'Suspect_Arrested',
     'Conviction',
   ];
-  
+
   if (includePersonalData) {
     headers.splice(3, 0, 'URL', 'Author');
     headers.splice(9, 0, 'Victim_Name');
     headers.splice(14, 0, 'Perpetrator_Name');
   }
-  
+
   csvRows.push(headers.join(','));
-  
+
   // Data rows
   for (const record of data) {
     const { article, victims, perpetrators } = record;
-    
+
     // Create a row for each victim (or one row if no victims)
     const victimsToProcess = victims.length > 0 ? victims : [{}];
-    
+
     for (const victim of victimsToProcess) {
       const perpetrator = perpetrators[0] || {}; // Take first perpetrator if any
-      
+
       const row = [
         article.articleId,
         article.dateOfPublication || '',
@@ -230,20 +230,20 @@ function generateCSVResponse(data: any[], includePersonalData: boolean) {
         perpetrator.suspectArrested || '',
         perpetrator.conviction || '',
       ];
-      
+
       if (includePersonalData) {
         row.splice(3, 0, article.newsReportUrl || '');
         row.splice(4, 0, article.author || '');
         row.splice(10, 0, victim.victimName || '');
         row.splice(15, 0, perpetrator.perpetratorName || '');
       }
-      
+
       csvRows.push(row.join(','));
     }
   }
-  
+
   const csvContent = csvRows.join('\n');
-  
+
   return new NextResponse(csvContent, {
     headers: {
       'Content-Type': 'text/csv',
@@ -264,9 +264,9 @@ export async function POST(request: NextRequest) {
       fields = [],
       groupBy = null,
     } = await request.json();
-    
+
     const db = databaseManager.getLocal();
-    
+
     // This would implement more complex filtering and custom field selection
     // For now, redirect to GET with basic filters
     const searchParams = new URLSearchParams({
@@ -274,13 +274,13 @@ export async function POST(request: NextRequest) {
       includePersonalData: includePersonalData.toString(),
       ...filters,
     });
-    
+
     // Create a new request object for the GET handler
     const newUrl = new URL(`${request.url}?${searchParams.toString()}`);
     const newRequest = new NextRequest(newUrl, { method: 'GET' });
-    
+
     return await GET(newRequest);
-    
+
   } catch (error) {
     console.error('Failed to export data:', error);
     return NextResponse.json(

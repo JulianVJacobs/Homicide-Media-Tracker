@@ -13,7 +13,8 @@ const configuration = {
   mode: 'production',
   target: 'electron-main',
   entry: path.join(srcMainPath, 'main.ts'),
-  
+  devtool: 'source-map',
+
   output: {
     path: distPath,
     filename: 'main.js',

@@ -1,5 +1,5 @@
 {
-  "name": "News Media Tracker",
+  "name": "News Report Tracker",
   "short_name": "NewsTracker",
   "description": "A utility tool to collect, track, and analyse news media.",
   "start_url": ".",
@@ -7,6 +7,15 @@
   "background_color": "#111827",
   "theme_color": "#111827",
   "orientation": "any",
+  "scope": ".",
+  "lang": "en",
+  "prefer_related_applications": false,
+  "categories": [
+    "news",
+    "productivity",
+    "utilities",
+    "research"
+  ],
   "icons": [
     {
       "src": "/icons/windows11/SmallTile.scale-100.png",

@@ -1,13 +1,26 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Container, Card, Button, Alert, Row, Col, ProgressBar } from 'react-bootstrap';
+import {
+  Container,
+  Card,
+  Button,
+  Alert,
+  Row,
+  Col,
+  ProgressBar,
+} from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { v4 as uuidv4 } from 'uuid';
 import ArticleForm from './article-form';
 import VictimForm from './victim-form';
 import PerpetratorForm from './perpetrator-form';
-import { ArticleData, VictimData, PerpetratorData, HomicideCase } from '@/lib/types/homicide';
+import {
+  ArticleData,
+  VictimData,
+  PerpetratorData,
+  HomicideCase,
+} from '@/lib/types/homicide';
 
 interface InputHomicideProps {
   onBack: () => void;
@@ -17,6 +30,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
   const [articleData, setArticleData] = useState<ArticleData | null>(null);
   const [victims, setVictims] = useState<VictimData[]>([]);
   const [perpetrators, setPerpetrators] = useState<PerpetratorData[]>([]);
+  // Defensive: never set to undefined/null
   const [typeOfMurder, setTypeOfMurder] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -38,7 +52,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
   };
 
   const handleSubmitVictimForm = (data: VictimData) => {
-    setVictims(prev => [...prev, data]);
+    setVictims((prev = []) => [...prev, data]);
     toast.success('Victim added successfully');
   };
 
@@ -48,7 +62,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
   };
 
   const handleSubmitPerpetratorForm = (data: PerpetratorData) => {
-    setPerpetrators(prev => [...prev, data]);
+    setPerpetrators((prev = []) => [...prev, data]);
     toast.success('Perpetrator added successfully');
   };
 
@@ -84,39 +98,97 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
     try {
       setLoading(true);
 
-      const homicideCase: HomicideCase = {
-        id: uuidv4(),
-        articleData,
-        victims,
-        perpetrators,
-        typeOfMurder,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Submit to API
-      const response = await fetch('/api/homicides', {
+      const articleRes = await fetch('/api/articles', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(homicideCase),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(articleData),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to save homicide case');
+      let articleId;
+      if (articleRes.status === 409) {
+        // Duplicate detected, use returned articleId
+        const conflictResult = await articleRes.json();
+        articleId =
+          conflictResult?.articleId || conflictResult?.data?.articleId;
+        if (!articleId)
+          throw new Error('Duplicate article, but no articleId returned');
+        toast.info('Article already exists. Using existing article.');
+      } else if (articleRes.ok) {
+        const articleResult = await articleRes.json();
+        articleId = articleResult?.data?.articleId || articleResult?.articleId;
+        if (!articleId) throw new Error('No article ID returned');
+      } else {
+        throw new Error('Failed to save article');
       }
 
-      const result = await response.json();
-      
+      // 2. Add victims and get their IDs
+      const victimIds: string[] = [];
+      for (const victim of victims) {
+        const victimRes = await fetch('/api/victims', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...victim, articleId }),
+        });
+        if (!victimRes.ok) throw new Error('Failed to save victim');
+        const victimResult = await victimRes.json();
+        const victimId =
+          victimResult?.data?.id ||
+          victimResult?.id ||
+          victimResult?.data?.victimId ||
+          victimResult?.victimId;
+        if (victimId) victimIds.push(victimId);
+      }
+
+      // 3. Add perpetrators and get their IDs
+      const perpetratorIds: string[] = [];
+      for (const perpetrator of perpetrators) {
+        const perpRes = await fetch('/api/perpetrators', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...perpetrator, articleId }),
+        });
+        if (!perpRes.ok) throw new Error('Failed to save perpetrator');
+        const perpResult = await perpRes.json();
+        const perpetratorId =
+          perpResult?.data?.id ||
+          perpResult?.id ||
+          perpResult?.data?.perpetratorId ||
+          perpResult?.perpetratorId;
+        if (perpetratorId) perpetratorIds.push(perpetratorId);
+      }
+
+      // 4. Add event referencing article and participant IDs
+      const eventPayload = {
+        id: uuidv4(),
+        eventTypes: ['homicide'],
+        articleId,
+        participants: {
+          victim: victimIds,
+          perpetrator: perpetratorIds,
+        },
+        details: {
+          ...articleData,
+          typeOfMurder,
+          createdAt: new Date().toISOString(),
+        },
+      };
+
+      const eventRes = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventPayload),
+      });
+      if (!eventRes.ok) throw new Error('Failed to save homicide case');
+      const eventResult = await eventRes.json();
+      // Optionally check eventResult for eventId or data.id if needed
+
       toast.success('Homicide case saved successfully!');
-      
+
       // Reset form
       setArticleData(null);
       setVictims([]);
       setPerpetrators([]);
       setTypeOfMurder('');
       setCurrentStep(1);
-      
     } catch (error) {
       console.error('Error saving homicide case:', error);
       toast.error('Failed to save homicide case. Please try again.');
@@ -137,7 +209,11 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
     { value: 'Unknown/Other', label: 'Unknown/Other' },
   ];
 
-  const isReadyToSubmit = articleData && victims.length > 0 && perpetrators.length > 0 && typeOfMurder;
+  const isReadyToSubmit =
+    articleData &&
+    victims.length > 0 &&
+    perpetrators.length > 0 &&
+    typeOfMurder;
 
   return (
     <Container fluid className="py-4">
@@ -154,15 +230,25 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
           <Card className="mb-4">
             <Card.Body>
               <h5>Form Progress</h5>
-              <ProgressBar now={progress()} label={`${progress()}%`} className="mb-2" />
+              <ProgressBar
+                now={progress()}
+                label={`${progress()}%`}
+                className="mb-2"
+              />
               <div className="d-flex justify-content-between">
                 <small className={articleData ? 'text-success' : 'text-muted'}>
                   ✓ Article Info {articleData ? '(Complete)' : '(Incomplete)'}
                 </small>
-                <small className={victims.length > 0 ? 'text-success' : 'text-muted'}>
+                <small
+                  className={victims.length > 0 ? 'text-success' : 'text-muted'}
+                >
                   ✓ Victims ({victims.length})
                 </small>
-                <small className={perpetrators.length > 0 ? 'text-success' : 'text-muted'}>
+                <small
+                  className={
+                    perpetrators.length > 0 ? 'text-success' : 'text-muted'
+                  }
+                >
                   ✓ Perpetrators ({perpetrators.length})
                 </small>
                 <small className={typeOfMurder ? 'text-success' : 'text-muted'}>
@@ -253,7 +339,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                       onChange={(e) => setTypeOfMurder(e.target.value)}
                       required
                     >
-                      {typeOfMurderOptions.map(option => (
+                      {typeOfMurderOptions.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>
@@ -266,11 +352,24 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                 {isReadyToSubmit && (
                   <Alert variant="success" className="mt-4">
                     <h5>Case Summary</h5>
-                    <p><strong>Article:</strong> {articleData?.newsReportHeadline}</p>
-                    <p><strong>Victims:</strong> {victims.length} victim(s)</p>
-                    <p><strong>Perpetrators:</strong> {perpetrators.length} perpetrator(s)</p>
-                    <p><strong>Type of Murder:</strong> {typeOfMurder}</p>
-                    <p><strong>Date of Publication:</strong> {articleData?.dateOfPublication}</p>
+                    <p>
+                      <strong>Article:</strong>{' '}
+                      {articleData?.newsReportHeadline}
+                    </p>
+                    <p>
+                      <strong>Victims:</strong> {victims.length} victim(s)
+                    </p>
+                    <p>
+                      <strong>Perpetrators:</strong> {perpetrators.length}{' '}
+                      perpetrator(s)
+                    </p>
+                    <p>
+                      <strong>Type of Murder:</strong> {typeOfMurder}
+                    </p>
+                    <p>
+                      <strong>Date of Publication:</strong>{' '}
+                      {articleData?.dateOfPublication}
+                    </p>
                   </Alert>
                 )}
 

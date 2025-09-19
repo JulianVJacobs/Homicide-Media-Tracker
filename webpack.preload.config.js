@@ -1,5 +1,5 @@
 /**
- * Simplified webpack config for Electron preload script (standalone Next.js approach)  
+ * Simplified webpack config for Electron preload script (standalone Next.js approach)
  */
 const path = require('path');
 
@@ -9,10 +9,11 @@ const distPath = path.join(rootPath, 'dist', 'main');
 
 const configuration = {
   devtool: false,
-  mode: 'production', 
+  mode: 'production',
   target: 'electron-preload',
   entry: path.join(srcMainPath, 'preload.ts'),
-  
+  devtool: 'source-map',
+
   output: {
     path: distPath,
     filename: 'preload.js',

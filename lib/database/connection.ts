@@ -1,6 +1,6 @@
 /**
  * Database Connection Manager for Homicide Media Tracker
- * 
+ *
  * This module manages LibSQL connections for both local and remote storage
  * with cross-platform compatibility.
  */
@@ -46,7 +46,7 @@ class DatabaseManager {
   private getDefaultConfig(): DatabaseConfig {
     const isPackaged = app?.isPackaged ?? false;
     const userDataPath = app?.getPath('userData') ?? './data';
-    
+
     // Ensure data directory exists
     if (!fs.existsSync(userDataPath)) {
       fs.mkdirSync(userDataPath, { recursive: true });
@@ -77,19 +77,19 @@ class DatabaseManager {
       console.log(`User data path: ${app?.getPath('userData') ?? 'unknown'}`);
       console.log(`Node.js version: ${process.version}`);
       console.log(`Platform: ${process.platform} ${process.arch}`);
-      
+
       // Ensure the database directory exists
       const dbDir = path.dirname(this.config.local.path);
       if (!fs.existsSync(dbDir)) {
         fs.mkdirSync(dbDir, { recursive: true });
       }
-      
+
       // Enhanced LibSQL client creation with comprehensive error handling
       const isPackaged = app?.isPackaged ?? false;
-      
+
       console.log(`Creating libsql client (packaged: ${isPackaged})`);
       console.log(`Database path: ${this.config.local.path}`);
-      
+
       // Multiple fallback strategies for libsql client creation
       const clientStrategies = [
         // Strategy 1: Standard file URL for packaged apps
@@ -101,71 +101,87 @@ class DatabaseManager {
             return createClient({ url: `file:${this.config.local.path}` });
           }
         },
-        
+
         // Strategy 2: Simple path without file: prefix
         () => createClient({ url: this.config.local.path }),
-        
+
         // Strategy 3: File protocol with triple slash
         () => {
           const normalizedPath = this.config.local.path.replace(/\\/g, '/');
           return createClient({ url: `file:///${normalizedPath}` });
         },
-        
+
         // Strategy 4: Absolute path with explicit options
-        () => createClient({ 
-          url: path.resolve(this.config.local.path),
-          authToken: undefined 
-        }),
+        () =>
+          createClient({
+            url: path.resolve(this.config.local.path),
+            authToken: undefined,
+          }),
       ];
-      
+
       let clientCreated = false;
       let lastError: Error | null = null;
-      
+
       for (let i = 0; i < clientStrategies.length; i++) {
         try {
           console.log(`Attempting libsql client creation strategy ${i + 1}...`);
           this.localClient = clientStrategies[i]();
-          console.log(`LibSQL client created successfully with strategy ${i + 1}`);
+          console.log(
+            `LibSQL client created successfully with strategy ${i + 1}`,
+          );
           clientCreated = true;
           break;
         } catch (strategyError: unknown) {
-          const errorMessage = strategyError instanceof Error ? strategyError.message : String(strategyError);
+          const errorMessage =
+            strategyError instanceof Error
+              ? strategyError.message
+              : String(strategyError);
           console.error(`Strategy ${i + 1} failed:`, errorMessage);
-          lastError = strategyError instanceof Error ? strategyError : new Error(String(strategyError));
+          lastError =
+            strategyError instanceof Error
+              ? strategyError
+              : new Error(String(strategyError));
           continue;
         }
       }
-      
+
       if (!clientCreated || !this.localClient) {
-        throw new Error(`All libsql client creation strategies failed. Last error: ${lastError?.message}`);
+        throw new Error(
+          `All libsql client creation strategies failed. Last error: ${lastError?.message}`,
+        );
       }
-      
+
       // Initialise Drizzle ORM
       console.log('Initialising Drizzle ORM...');
       this.localDb = drizzle(this.localClient, { schema });
-      
+
       // Run migrations to create tables
       console.log('Running database migrations...');
       await this.runMigrations();
-      
+
       // Insert default configuration
       console.log('Initialising app configuration...');
       await this.initialiseAppConfig();
-      
+
       console.log('Local database initialised successfully');
     } catch (error) {
       console.error('Failed to initialise local database:', error);
       console.error('Database path:', this.config.local.path);
       console.error('App packaged state:', app?.isPackaged ?? 'unknown');
       console.error('User data path:', app?.getPath('userData') ?? 'unknown');
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      
+      console.error(
+        'Error stack:',
+        error instanceof Error ? error.stack : 'No stack trace',
+      );
+
       // Don't throw in packaged environment - allow app to start without database
       if (app?.isPackaged) {
-        console.warn('Database initialisation failed in packaged environment. App will continue without database functionality.');
+        console.warn(
+          'Database initialisation failed in packaged environment. App will continue without database functionality.',
+        );
         return;
       }
-      
+
       throw error;
     }
   }
@@ -179,20 +195,20 @@ class DatabaseManager {
         url,
         authToken,
       });
-      
+
       this.remoteDrizzle = drizzle(this.remoteClient, { schema });
-      
+
       this.config.remote = {
         url,
         authToken,
         syncInterval: 15, // Default 15 minutes
       };
-      
+
       this.config.sync.enabled = true;
-      
+
       // Test connection
       await this.testRemoteConnection();
-      
+
       console.log('Remote database configured successfully');
     } catch (error) {
       console.error('Failed to configure remote database:', error);
@@ -208,7 +224,7 @@ class DatabaseManager {
     if (!this.remoteDrizzle) {
       return false;
     }
-    
+
     try {
       // Simple query to test connection
       await this.remoteDrizzle.select().from(schema.appConfig).limit(1);
@@ -228,10 +244,17 @@ class DatabaseManager {
     }
 
     const migrations = [
+      // Generalized Participants table
+      `CREATE TABLE IF NOT EXISTS participants (
+        id TEXT PRIMARY KEY,
+        role TEXT NOT NULL,
+        details TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`,
       // Articles table
       `CREATE TABLE IF NOT EXISTS articles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        article_id TEXT NOT NULL UNIQUE,
+        id TEXT PRIMARY KEY,
         news_report_id TEXT,
         news_report_url TEXT,
         news_report_headline TEXT,
@@ -247,10 +270,21 @@ class DatabaseManager {
         sync_status TEXT DEFAULT 'pending',
         last_sync_at TEXT
       )`,
-      
+
+      // Events table (matches API payload)
+      `CREATE TABLE IF NOT EXISTS events (
+        id TEXT PRIMARY KEY,
+        event_types TEXT,
+        article_ids TEXT NOT NULL,
+        participant_ids TEXT,
+        details TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`,
+
       // Victims table
       `CREATE TABLE IF NOT EXISTS victims (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TRXT PRIMARY KEY,
         article_id TEXT NOT NULL,
         victim_name TEXT,
         date_of_death TEXT,
@@ -270,12 +304,12 @@ class DatabaseManager {
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         sync_status TEXT DEFAULT 'pending',
         last_sync_at TEXT,
-        FOREIGN KEY (article_id) REFERENCES articles (article_id)
+        FOREIGN KEY (article_id) REFERENCES articles (id)
       )`,
-      
+
       // Perpetrators table
       `CREATE TABLE IF NOT EXISTS perpetrators (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT PRIMARY KEY,
         article_id TEXT NOT NULL,
         perpetrator_name TEXT,
         perpetrator_relationship_to_victim TEXT,
@@ -288,9 +322,9 @@ class DatabaseManager {
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
         sync_status TEXT DEFAULT 'pending',
         last_sync_at TEXT,
-        FOREIGN KEY (article_id) REFERENCES articles (article_id)
+        FOREIGN KEY (article_id) REFERENCES articles (id)
       )`,
-      
+
       // Users table
       `CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -302,7 +336,7 @@ class DatabaseManager {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         last_login_at TEXT
       )`,
-      
+
       // Sync metadata table
       `CREATE TABLE IF NOT EXISTS sync_metadata (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -314,7 +348,7 @@ class DatabaseManager {
         remote_url TEXT,
         is_enabled INTEGER DEFAULT 0
       )`,
-      
+
       // App configuration table
       `CREATE TABLE IF NOT EXISTS app_config (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -324,9 +358,9 @@ class DatabaseManager {
         description TEXT,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP
       )`,
-      
+
       // Indexes for performance
-      `CREATE INDEX IF NOT EXISTS idx_articles_article_id ON articles(article_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_articles_article_id ON articles(id)`,
       `CREATE INDEX IF NOT EXISTS idx_victims_article_id ON victims(article_id)`,
       `CREATE INDEX IF NOT EXISTS idx_perpetrators_article_id ON perpetrators(article_id)`,
       `CREATE INDEX IF NOT EXISTS idx_articles_sync_status ON articles(sync_status)`,
@@ -374,7 +408,8 @@ class DatabaseManager {
 
     for (const config of defaultConfigs) {
       try {
-        await this.localDb.insert(schema.appConfig)
+        await this.localDb
+          .insert(schema.appConfig)
           .values(config)
           .onConflictDoNothing();
       } catch (error) {
@@ -388,7 +423,9 @@ class DatabaseManager {
    */
   getLocal() {
     if (!this.localDb) {
-      throw new Error('Local database not initialised. Call initialiseLocal() first.');
+      throw new Error(
+        'Local database not initialised. Call initialiseLocal() first.',
+      );
     }
     return this.localDb;
   }
@@ -398,7 +435,9 @@ class DatabaseManager {
    */
   getRemote() {
     if (!this.remoteDrizzle) {
-      throw new Error('Remote database not configured. Call configureRemote() first.');
+      throw new Error(
+        'Remote database not configured. Call configureRemote() first.',
+      );
     }
     return this.remoteDrizzle;
   }
@@ -412,23 +451,23 @@ class DatabaseManager {
     }
 
     const backupPath = `${this.config.local.backupPath}-${Date.now()}`;
-    
+
     try {
       // With LibSQL, we need to copy the database file
       // First, close the connection temporarily
       if (this.localClient) {
         this.localClient.close();
       }
-      
+
       // Copy the database file
       fs.copyFileSync(this.config.local.path, backupPath);
-      
+
       // Reconnect to the database
       this.localClient = createClient({
-        url: `file:${this.config.local.path}`
+        url: `file:${this.config.local.path}`,
       });
       this.localDb = drizzle(this.localClient, { schema });
-      
+
       console.log(`Database backup created: ${backupPath}`);
       return backupPath;
     } catch (error) {
@@ -446,7 +485,7 @@ class DatabaseManager {
     }
 
     const intervalMs = this.config.remote.syncInterval * 60 * 1000;
-    
+
     this.syncInterval = setInterval(async () => {
       try {
         await this.syncWithRemote();
@@ -455,7 +494,9 @@ class DatabaseManager {
       }
     }, intervalMs);
 
-    console.log(`Auto sync started (interval: ${this.config.remote.syncInterval} minutes)`);
+    console.log(
+      `Auto sync started (interval: ${this.config.remote.syncInterval} minutes)`,
+    );
   }
 
   /**
@@ -478,14 +519,14 @@ class DatabaseManager {
     }
 
     console.log('Starting database synchronization...');
-    
+
     // This is a simplified sync - in production you'd want more sophisticated conflict resolution
     try {
       // Sync articles
       await this.syncTable('articles');
       await this.syncTable('victims');
       await this.syncTable('perpetrators');
-      
+
       console.log('Database synchronization completed');
     } catch (error) {
       console.error('Sync failed:', error);
@@ -499,7 +540,7 @@ class DatabaseManager {
   private async syncTable(tableName: string): Promise<void> {
     // This is a basic implementation - you'd want more sophisticated sync logic
     console.log(`Syncing table: ${tableName}`);
-    
+
     // For now, just update sync status
     if (this.localDb) {
       const now = new Date().toISOString();
@@ -513,15 +554,15 @@ class DatabaseManager {
    */
   async close(): Promise<void> {
     this.stopAutoSync();
-    
+
     if (this.remoteClient) {
       this.remoteClient.close();
     }
-    
+
     if (this.localClient) {
       this.localClient.close();
     }
-    
+
     console.log('Database connections closed');
   }
 

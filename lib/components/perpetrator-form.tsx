@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Button, Row, Col, Alert, ListGroup } from 'react-bootstrap';
+import {
+  Card,
+  Form,
+  Button,
+  Row,
+  Col,
+  Alert,
+  ListGroup,
+} from 'react-bootstrap';
 import { PerpetratorData } from '@/lib/types/homicide';
 
 interface PerpetratorFormProps {
@@ -10,16 +18,22 @@ interface PerpetratorFormProps {
   onClearPerpetrators: () => void;
 }
 
-const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrators, onClearPerpetrators }) => {
-  const [currentPerpetrator, setCurrentPerpetrator] = useState<PerpetratorData>({
-    perpetratorName: '',
-    relationshipToVictim: '',
-    suspectIdentified: '',
-    suspectArrested: '',
-    suspectCharged: '',
-    conviction: '',
-    sentence: '',
-  });
+const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
+  onSubmit,
+  perpetrators = [],
+  onClearPerpetrators,
+}) => {
+  const [currentPerpetrator, setCurrentPerpetrator] = useState<PerpetratorData>(
+    {
+      perpetratorName: '',
+      relationshipToVictim: '',
+      suspectIdentified: '',
+      suspectArrested: '',
+      suspectCharged: '',
+      conviction: '',
+      sentence: '',
+    },
+  );
 
   const [isValid, setIsValid] = useState(false);
 
@@ -30,13 +44,13 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
   }, [currentPerpetrator]);
 
   const handleChange = (field: keyof PerpetratorData, value: string) => {
-    setCurrentPerpetrator(prev => ({ ...prev, [field]: value }));
+    setCurrentPerpetrator((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleAddPerpetrator = () => {
     if (isValid) {
       onSubmit(currentPerpetrator);
-      
+
       // Reset form
       setCurrentPerpetrator({
         perpetratorName: '',
@@ -83,24 +97,31 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
       <Card.Header>
         <div className="d-flex justify-content-between align-items-center">
           <h4 className="mb-0">Perpetrator Information</h4>
-          {perpetrators.length > 0 && (
-            <Button variant="outline-danger" size="sm" onClick={onClearPerpetrators}>
+          {Array.isArray(perpetrators) && perpetrators.length > 0 && (
+            <Button
+              variant="outline-danger"
+              size="sm"
+              onClick={onClearPerpetrators}
+            >
               Clear All Perpetrators
             </Button>
           )}
         </div>
       </Card.Header>
       <Card.Body>
-        {perpetrators.length > 0 && (
+        {Array.isArray(perpetrators) && perpetrators.length > 0 && (
           <Alert variant="info" className="mb-3">
             <strong>{perpetrators.length} perpetrator(s) added:</strong>
             <ListGroup variant="flush" className="mt-2">
               {perpetrators.map((perpetrator, index) => (
                 <ListGroup.Item key={index} className="px-0">
                   <strong>{perpetrator.perpetratorName}</strong>
-                  {perpetrator.relationshipToVictim && ` - ${perpetrator.relationshipToVictim}`}
-                  {perpetrator.suspectArrested && ` | Arrested: ${perpetrator.suspectArrested}`}
-                  {perpetrator.conviction && ` | Conviction: ${perpetrator.conviction}`}
+                  {perpetrator.relationshipToVictim &&
+                    ` - ${perpetrator.relationshipToVictim}`}
+                  {perpetrator.suspectArrested &&
+                    ` | Arrested: ${perpetrator.suspectArrested}`}
+                  {perpetrator.conviction &&
+                    ` | Conviction: ${perpetrator.conviction}`}
                 </ListGroup.Item>
               ))}
             </ListGroup>
@@ -115,7 +136,9 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
                 <Form.Control
                   type="text"
                   value={currentPerpetrator.perpetratorName}
-                  onChange={(e) => handleChange('perpetratorName', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('perpetratorName', e.target.value)
+                  }
                   placeholder="Full name or 'Unknown' if not identified"
                   required
                 />
@@ -126,9 +149,11 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
                 <Form.Label>Relationship to Victim</Form.Label>
                 <Form.Select
                   value={currentPerpetrator.relationshipToVictim}
-                  onChange={(e) => handleChange('relationshipToVictim', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('relationshipToVictim', e.target.value)
+                  }
                 >
-                  {relationshipOptions.map(option => (
+                  {relationshipOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -144,9 +169,11 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
                 <Form.Label>Suspect Identified</Form.Label>
                 <Form.Select
                   value={currentPerpetrator.suspectIdentified}
-                  onChange={(e) => handleChange('suspectIdentified', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('suspectIdentified', e.target.value)
+                  }
                 >
-                  {yesNoOptions.map(option => (
+                  {yesNoOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -159,9 +186,11 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
                 <Form.Label>Suspect Arrested</Form.Label>
                 <Form.Select
                   value={currentPerpetrator.suspectArrested}
-                  onChange={(e) => handleChange('suspectArrested', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('suspectArrested', e.target.value)
+                  }
                 >
-                  {yesNoOptions.map(option => (
+                  {yesNoOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -174,9 +203,11 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
                 <Form.Label>Suspect Charged</Form.Label>
                 <Form.Select
                   value={currentPerpetrator.suspectCharged}
-                  onChange={(e) => handleChange('suspectCharged', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('suspectCharged', e.target.value)
+                  }
                 >
-                  {yesNoOptions.map(option => (
+                  {yesNoOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -194,7 +225,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
                   value={currentPerpetrator.conviction}
                   onChange={(e) => handleChange('conviction', e.target.value)}
                 >
-                  {convictionOptions.map(option => (
+                  {convictionOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -216,7 +247,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({ onSubmit, perpetrator
           </Row>
 
           <div className="d-flex justify-content-end">
-            <Button 
+            <Button
               variant="primary"
               onClick={handleAddPerpetrator}
               disabled={!isValid}

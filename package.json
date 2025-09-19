@@ -1,6 +1,6 @@
 {
   "name": "homicide-media-tracker",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "An application to track (homicide) media.",
   "keywords": [
     "electron",
@@ -32,19 +32,20 @@
   "scripts": {
     "all.package": "npm run build.electron && npm run package",
     "app.prepare": "node scripts/prepare-app.js",
-    "build": "next build",
+    "build": "node scripts/generate-public-cache.js && next build",
     "build.electron": "npm run build && npm run build.main && npm run build.preload && npm run app.prepare",
     "build.preload": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true webpack --config webpack.preload.config.js",
     "build.main": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true webpack --config webpack.main.config.js",
     "build-and-package.electron.all": "npm run build.electron && npm run all.package",
-    "build-and-start.web": "npm run build && next start",
     "build-and-package.electron.linux-appimage": "npm run build.electron && npm run linux-appimage.package",
     "build-and-package.electron.windows-portable": "npm run build.electron && npm run windows-portable.package",
     "build-and-package.electron.macos-dmg": "npm run build.electron && npm run macos-dmg.package",
+    "build-and-start.web": "npm run build && next start",
     "dev": "next dev",
     "dev.electron": "cross-env NODE_ENV=development electron dist/main/main.js",
     "start.electron": "npm run dev.electron",
     "start": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && npm run dev.electron\"",
+    "start.web": "next start",
     "lint": "next lint",
     "lint.fix": "cross-env NODE_ENV=development eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "package.all": "electron-builder build --win --mac --linux --publish never",
@@ -55,51 +56,6 @@
     "package.web": "npm run build",
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir release/app",
     "test": "jest"
-  },
-  "browserslist": [
-    "electron >= 31.0.0"
-  ],
-  "prettier": {
-    "singleQuote": true,
-    "overrides": [
-      {
-        "files": [
-          ".prettierrc",
-          ".eslintrc"
-        ],
-        "options": {
-          "parser": "json"
-        }
-      }
-    ]
-  },
-  "jest": {
-    "moduleDirectories": [
-      "node_modules",
-      "release/app/node_modules",
-      "src"
-    ],
-    "moduleFileExtensions": [
-      "js",
-      "jsx",
-      "ts",
-      "tsx",
-      "json"
-    ],
-    "moduleNameMapper": {
-      "\\.(css|less|sass|scss)$": "identity-obj-proxy"
-    },
-    "setupFiles": [],
-    "testEnvironment": "jsdom",
-    "testEnvironmentOptions": {
-      "url": "http://localhost/"
-    },
-    "testPathIgnorePatterns": [
-      "release/app/dist"
-    ],
-    "transform": {
-      "\\.(ts|tsx|js|jsx)$": "ts-jest"
-    }
   },
   "dependencies": {
     "@electron/notarize": "^2.3.2",
@@ -112,6 +68,13 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.21.2"
+  },
+  "optionalDependencies": {
+    "@libsql/linux-x64": "^0.5.6",
+    "@libsql/linux-arm64": "^0.5.6",
+    "@libsql/darwin-x64": "^0.5.6",
+    "@libsql/darwin-arm64": "^0.5.6",
+    "@libsql/win32-x64": "^0.5.6"
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
@@ -196,6 +159,51 @@
     "webpack-dev-server": "^5.2.2",
     "webpack-merge": "^5.9.0"
   },
+  "browserslist": [
+    "electron >= 31.0.0"
+  ],
+  "prettier": {
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": [
+          ".prettierrc",
+          ".eslintrc"
+        ],
+        "options": {
+          "parser": "json"
+        }
+      }
+    ]
+  },
+  "jest": {
+    "moduleDirectories": [
+      "node_modules",
+      "release/app/node_modules",
+      "src"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "jsx",
+      "ts",
+      "tsx",
+      "json"
+    ],
+    "moduleNameMapper": {
+      "\\.(css|less|sass|scss)$": "identity-obj-proxy"
+    },
+    "setupFiles": [],
+    "testEnvironment": "jsdom",
+    "testEnvironmentOptions": {
+      "url": "http://localhost/"
+    },
+    "testPathIgnorePatterns": [
+      "release/app/dist"
+    ],
+    "transform": {
+      "\\.(ts|tsx|js|jsx)$": "ts-jest"
+    }
+  },
   "build": {
     "productName": "HomicideMediaTracker",
     "appId": "org.wits.HomicideMediaTracker",
@@ -220,6 +228,13 @@
       "node_modules/@libsql/**/*",
       "node_modules/libsql/**/*",
       "node_modules/drizzle-orm/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/@libsql/",
+        "to": "resources/libsql"
+      },
+      "./assets/**"
     ],
     "mac": {
       "sign": "scripts/notarize.js",
@@ -274,9 +289,6 @@
       ],
       "category": "Development"
     },
-    "extraResources": [
-      "./assets/**"
-    ],
     "publish": {
       "provider": "github",
       "owner": "electron-react-boilerplate",

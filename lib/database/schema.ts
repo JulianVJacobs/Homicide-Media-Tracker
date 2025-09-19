@@ -1,17 +1,22 @@
 /**
  * Database Schema for Homicide Media Tracker
- * 
+ *
  * This schema defines the SQLite tables that mirror the PostgreSQL structure
  * from the original server implementation, optimized for local storage and sync.
  */
 
-import { sqliteTable, text, integer, real, blob } from 'drizzle-orm/sqlite-core';
+import {
+  sqliteTable,
+  text,
+  integer,
+  real,
+  blob,
+} from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 
 // Articles table - media articles about homicides
 export const articles = sqliteTable('articles', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  articleId: text('article_id').notNull().unique(), // Generated from URL, author, title
+  id: text('id').primaryKey(), // Generated from URL, author, title, now used as PK
   newsReportId: text('news_report_id'),
   newsReportUrl: text('news_report_url'),
   newsReportHeadline: text('news_report_headline'),
@@ -30,8 +35,8 @@ export const articles = sqliteTable('articles', {
 
 // Victims table - victim information for homicide cases
 export const victims = sqliteTable('victims', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  articleId: text('article_id').notNull(), // Foreign key to articles
+  id: text('id').primaryKey(), // UUID PK
+  articleId: text('article_id').notNull(), // FK to articles.articleId
   victimName: text('victim_name'),
   dateOfDeath: text('date_of_death'), // Store as ISO string
   placeOfDeathProvince: text('place_of_death_province'),
@@ -54,8 +59,8 @@ export const victims = sqliteTable('victims', {
 
 // Perpetrators table - suspect/perpetrator information
 export const perpetrators = sqliteTable('perpetrators', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  articleId: text('article_id').notNull(), // Foreign key to articles
+  id: text('id').primaryKey(), // UUID PK
+  articleId: text('article_id').notNull(), // FK to articles.articleId
   perpetratorName: text('perpetrator_name'),
   perpetratorRelationshipToVictim: text('perpetrator_relationship_to_victim'),
   suspectIdentified: text('suspect_identified'),
@@ -80,6 +85,32 @@ export const users = sqliteTable('users', {
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   lastLoginAt: text('last_login_at'),
 });
+
+// Generalized Events table
+export const events = sqliteTable('events', {
+  id: text('id').primaryKey(), // UUID PK
+  eventTypes: text('event_types', { mode: 'json' }).notNull(), // array of types
+  articleIds: text('article_ids', { mode: 'json' }).notNull(), // array of FK to articles.articleId
+  participantIds: text('participant_ids', { mode: 'json' }), // array of FK to victims.victimId and perpetrators.perpetratorId
+  details: text('details', { mode: 'json' }), // event-specific data
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export type Event = typeof events.$inferSelect;
+export type NewEvent = typeof events.$inferInsert;
+
+// Generalized Participants table
+export const participants = sqliteTable('participants', {
+  id: text('id').primaryKey(), // UUID PK
+  role: text('role').notNull(),
+  details: text('details', { mode: 'json' }), // participant-specific data
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export type Participant = typeof participants.$inferSelect;
+export type NewParticipant = typeof participants.$inferInsert;
 
 // Sync metadata table - tracks synchronization state
 export const syncMetadata = sqliteTable('sync_metadata', {

@@ -1,22 +1,154 @@
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open('news-media-cache-v1').then(cache => {
-      return cache.addAll([
+    caches.open('news-media-cache-v1').then(async cache => {
+      // Fetch the list of files to cache, generated at build time
+      let filesToCache = [
         '/',
-        '/favicon.ico',
-        '/manifest.json',
-        // Add other static assets and offline pages here
-      ]);
+        '/offline.html',
+      ];
+      try {
+        const response = await fetch('/cache.json');
+        if (response.ok) {
+          filesToCache = await response.json();
+        }
+      } catch (err) {
+        // Fallback: cache minimal assets if file missing
+      }
+      return cache.addAll(filesToCache);
     })
   );
 });
 
+// Runtime caching for API and other requests
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  // Intercept all API POST requests
+  if (event.request.method === 'POST' && url.pathname.startsWith('/api/')) {
+    event.respondWith((async () => {
+      try {
+        // Try to send request online
+        const response = await fetch(event.request.clone());
+        return response;
+      } catch (err) {
+        // Offline: store request in IndexedDB for later sync
+        await storePostRequest(event.request);
+        // Return a generic offline response
+        return new Response(JSON.stringify({
+          success: false,
+          offline: true,
+          message: 'Request queued for sync when online.'
+        }), {
+          status: 202,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    })());
+    return;
+  }
+  // GET API requests: cache as before
+  if (event.request.method === 'GET' && url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      caches.open('api-cache-v1').then(async cache => {
+        try {
+          const response = await fetch(event.request);
+          cache.put(event.request, response.clone());
+          return response;
+        } catch (err) {
+          const cached = await cache.match(event.request);
+          if (cached) return cached;
+          // Always return a valid Response
+          return new Response(JSON.stringify({ success: false, offline: true, message: 'No cached API response available.' }), {
+            status: 504,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      })
+    );
+    return;
+  }
+  // Serve schema files from cache when offline
+  if (event.request.method === 'GET' && event.request.url.includes('/schemas/')) {
+    event.respondWith(
+      caches.match(event.request).then(response => {
+        return response || fetch(event.request).catch(() => new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }));
+      })
+    );
+    return;
+  }
+  // Cache static assets and offline fallback
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
+    caches.match(event.request).then(async response => {
+      if (response) return response;
+      try {
+        return await fetch(event.request);
+      } catch (err) {
+        const offline = await caches.match('/offline.html');
+        if (offline) return offline;
+        // Always return a valid Response
+        return new Response('Offline', { status: 504, statusText: 'Gateway Timeout' });
+      }
     })
   );
+});
+
+// IndexedDB helper for storing POST requests
+function storePostRequest(request) {
+  return request.clone().json().then(body => {
+    return new Promise((resolve, reject) => {
+      const open = indexedDB.open('offline-post-queue', 1);
+      open.onupgradeneeded = () => {
+        open.result.createObjectStore('queue', { keyPath: 'id', autoIncrement: true });
+      };
+      open.onsuccess = () => {
+        const db = open.result;
+        const tx = db.transaction('queue', 'readwrite');
+        tx.objectStore('queue').add({ url: request.url, method: request.method, body });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      };
+      open.onerror = () => reject(open.error);
+    });
+  });
+}
+
+self.addEventListener('sync', event => {
+  if (event.tag === 'sync-api-posts') {
+    event.waitUntil(syncQueuedPosts());
+  }
+});
+
+function syncQueuedPosts() {
+  return new Promise((resolve, reject) => {
+    const open = indexedDB.open('offline-post-queue', 1);
+    open.onsuccess = () => {
+      const db = open.result;
+      const tx = db.transaction('queue', 'readwrite');
+      const store = tx.objectStore('queue');
+      const getAll = store.getAll();
+      getAll.onsuccess = async () => {
+        const posts = getAll.result;
+        for (const post of posts) {
+          try {
+            await fetch(post.url, {
+              method: post.method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(post.body)
+            });
+            store.delete(post.id);
+          } catch (err) {
+            // If still offline, keep in queue
+          }
+        }
+        resolve();
+      };
+      getAll.onerror = () => reject(getAll.error);
+    };
+    open.onerror = () => reject(open.error);
+  });
+}
+
+self.addEventListener('online', () => {
+  self.registration.sync.register('sync-api-posts');
 });
 
 self.addEventListener('activate', event => {

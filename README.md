@@ -1,38 +1,50 @@
 # Homicide Media Tracker
 
+## Purpose
+
 A data collection and analysis tool for tracking homicide cases from media sources. This project supports both a web-style Next.js development experience and a native desktop distribution via Electron.
 
 This single README combines development guidance from the project and an older backup README. It focuses on practical steps, architecture, and troubleshooting for contributors and maintainers.
 
-## Purpose
+## Roadmap
 
+**Current version: 1.1.0**
 
-## Future Migration & Generalization Plan
-
-This project is planned to transition from being specific to homicide reports to a general event reporting model. The new schema will:
-
-- Support reports about any class of event (not just homicide)
-- Events will have participants, and participants can relate to other participants
-- A template/profile system will allow users to define participant types (e.g., "victim", "perpetrator") and add custom fields for each profile
-- Forms will be dynamically generated based on the selected profile and its fields
-- The current homicide-specific schema will be preserved as a "preloaded configuration" for backward compatibility
-
-Migration steps will include:
-- Designing new core entities: Event, Report, Participant, Relationship
-- Implementing the template/profile system and dynamic form logic
-- Migrating existing homicide data to the new schema
-- Ensuring backward compatibility and loading the preloaded configuration on setup
-
-This plan is documented here for future reference. Focus is currently on PWA offline support before starting this migration.
+|     | Version Target | Type  | Feature / Enhancement                                                            | Description / Notes                                                      |
+| --- | -------------- | ----- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [ ]   | 1.2.x          | Major | Make PWA offline compatible                                                      | Ensure full offline functionality for browser and packaged app           |
+| [ ]   | 1.x.x          | Minor | Combine victim and perpetrator steps into "participants" step                    | Dropdown to switch between profiles; future: fully configurable profiles |
+| [ ]   | 1.x.x          | Minor | Add "alias" field to every participant                                           | Optional field for alternative names                                     |
+| [ ]   | 1.x.x          | Minor | Perpetrator "unknown" input as checkbox                                          | Replace text input with checkbox for cleaner data                        |
+| [ ]   | 1.x.x          | Minor | Victim-perpetrator relationship "other" option                                   | Add text input; allow saving custom options for reuse                    |
+| [ ]   | 1.x.x          | Minor | Perpetrator sentencing: support multiple sentences                               | Ordinal + multiple life sentences (e.g., 2 life + 15 years)              |
+| [ ]   | 1.x.x          | Minor | Add final review step                                                            | Summarise all entries before submission                                  |
+| [ ]   | 1.x.x          | Minor | Add "type of murder" field to perpetrator form                                   | Checklist with "other" option for multiple possibilities                 |
+| [ ]   | 1.x.x          | Minor | Change "type of murder" from dropdown to checklist                               | Allow multiple selections and custom "other" option                      |
+| [ ]   | 1.x.x          | Minor | Make participant entries editable after "add"                                    | Allow editing after adding participants                                  |
+| [ ]   | 1.x.x          | Minor | Show detailed summary of participants after "add"                                | Help users spot edits needed                                             |
+| [ ]   | 2.x.x          | Major | Generalise schema to event reporting model                                       | Transition from homicide-specific to general event reporting             |
+| [ ]   | 2.x.x          | Major | Support reports about any class of event                                         | Not limited to homicide; supports broader event types                    |
+| [ ]   | 2.x.x          | Major | Events will have participants, and participants can relate to other participants | Flexible participant relationships                                       |
+| [ ]   | 2.x.x          | Major | Template/profile system for participant types                                    | Define types (e.g., "victim", "perpetrator") and custom fields           |
+| [ ]   | 2.x.x          | Major | Dynamically generated forms based on profile and fields                          | Forms adapt to selected profile and its fields                           |
+| [ ]   | 2.x.x          | Major | Preserve homicide-specific schema as preloaded configuration                     | Ensures backward compatibility                                           |
+| [ ]   | 2.x.x          | Major | Design new core entities: Event, Report, Participant, Relationship               | Foundational migration step                                              |
+| [ ]   | 2.x.x          | Major | Implement template/profile system and dynamic form logic                         | Enables flexible data entry                                              |
+| [ ]   | 2.x.x          | Major | Migrate existing homicide data to new schema                                     | Data migration for continuity                                            |
+| [ ]   | 2.x.x          | Major | Ensure backward compatibility and load preloaded configuration on setup          | Seamless transition for existing users                                   |
+| [ ]   | x.x.x          | Minor | Report queue                                                                     | Users can backlog reports and process them later                         |
+| [ ]   | x.x.x          | Minor | Draft support                                                                    | Articles/participants can be saved as drafts if event creation fails, with review and completion options.                     |
 
 ---
 
 The Homicide Media Tracker is designed for research teams to:
- - Collect structured homicide data from media articles
- - Detect duplicates across sources
- - Support multi-user research workflows with optional remote sync
- - Operate offline using a local LibSQL/SQLite database and optionally sync to a remote server
- - Visualize and export data for analysis
+
+- Collect structured homicide data from media articles
+- Detect duplicates across sources
+- Support multi-user research workflows with optional remote sync
+- Operate offline using a local LibSQL/SQLite database and optionally sync to a remote server
+- Visualize and export data for analysis
 
 ## Quick Start (development)
 
@@ -156,7 +168,7 @@ See `src/main/main.ts` and `lib/database/connection.ts` for the concrete impleme
 - How to handle unidentified suspects? Consider restricting name fields until identification is confirmed.
 
 If you'd like, I can:
+
 - add a short developer checklist for PR reviewers (migrations, packaging, IPC changes),
 - expand IPC examples with the exact `preload.ts` calls and a small renderer snippet,
 - or add the virtualenv / runtime cache instructions from `.github/copilot/README.md` into a `CONTRIBUTING.md`.
-

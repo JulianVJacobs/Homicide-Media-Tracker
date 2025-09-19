@@ -6,8 +6,9 @@ const nextConfig = {
 
   // Experimental features for better Electron integration
   experimental: {
-    serverComponentsExternalPackages: ['electron'], 
+    serverComponentsExternalPackages: ['electron'],
   },
+  productionBrowserSourceMaps: true,
 
   // Configure webpack for Electron compatibility
   webpack: (config, { isServer, dev }) => {

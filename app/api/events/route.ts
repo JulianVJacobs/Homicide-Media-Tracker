@@ -154,10 +154,10 @@ export async function POST(request: NextRequest) {
       .insert(schema.events)
       .values({
         id,
-        eventTypes: JSON.stringify(eventTypes),
-        articleIds: JSON.stringify(body.articleIds),
-        participantIds: JSON.stringify(body.participantIds),
-        details: JSON.stringify(details),
+        eventTypes: eventTypes,
+        articleIds: body.articleIds,
+        participantIds: body.participantIds,
+        details: details,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })

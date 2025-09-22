@@ -25,9 +25,23 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters for filtering
     const url = new URL(request.url);
+    const id = url.searchParams.get('id');
     const limit = parseInt(url.searchParams.get('limit') || '50');
     const offset = parseInt(url.searchParams.get('offset') || '0');
     const search = url.searchParams.get('search') || '';
+
+    // If id is present, fetch single article
+    if (id) {
+      const article = await db
+        .select()
+        .from(schema.articles)
+        .where(eq(schema.articles.id, id))
+        .limit(1);
+      return NextResponse.json({
+        success: true,
+        data: article[0] || null,
+      });
+    }
 
     // Build query with search filter
     let articles;
@@ -310,9 +324,7 @@ export async function DELETE(request: NextRequest) {
       .where(eq(schema.perpetrators.articleId, articleId));
 
     // Delete the article
-    await db
-      .delete(schema.articles)
-      .where(eq(schema.articles.id, articleId));
+    await db.delete(schema.articles).where(eq(schema.articles.id, articleId));
 
     return NextResponse.json({
       success: true,

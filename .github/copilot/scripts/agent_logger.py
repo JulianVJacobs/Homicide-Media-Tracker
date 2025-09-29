@@ -52,7 +52,7 @@ class AgentLogger:
         }
         # Best-effort schema validation/normalization
         try:
-            entry = self._validate_and_normalize(entry)
+            entry = self._validate_and_normalise(entry)
         except Exception:
             # If validation fails, still attempt to write the raw entry
             pass
@@ -77,8 +77,8 @@ class AgentLogger:
             # best-effort logging: swallow errors so agents don't crash
             pass
 
-    def _validate_and_normalize(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        """Ensure required fields exist and have expected types. Return normalized entry.
+    def _validate_and_normalise(self, entry: Dict[str, Any]) -> Dict[str, Any]:
+        """Ensure required fields exist and have expected types. Return normalised entry.
 
         This is intentionally permissive: it will coerce simple values and fill defaults.
         """

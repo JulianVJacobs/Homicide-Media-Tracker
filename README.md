@@ -10,31 +10,78 @@ This single README combines development guidance from the project and an older b
 
 **Current version: 1.1.0**
 
-|     | Version Target | Type  | Feature / Enhancement                                                            | Description / Notes                                                      |
-| --- | -------------- | ----- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| [ ]   | 1.2.x          | Major | Make PWA offline compatible                                                      | Ensure full offline functionality for browser and packaged app           |
-| [ ]   | 1.x.x          | Minor | Combine victim and perpetrator steps into "participants" step                    | Dropdown to switch between profiles; future: fully configurable profiles |
-| [ ]   | 1.x.x          | Minor | Add "alias" field to every participant                                           | Optional field for alternative names                                     |
-| [ ]   | 1.x.x          | Minor | Perpetrator "unknown" input as checkbox                                          | Replace text input with checkbox for cleaner data                        |
-| [ ]   | 1.x.x          | Minor | Victim-perpetrator relationship "other" option                                   | Add text input; allow saving custom options for reuse                    |
-| [ ]   | 1.x.x          | Minor | Perpetrator sentencing: support multiple sentences                               | Ordinal + multiple life sentences (e.g., 2 life + 15 years)              |
-| [ ]   | 1.x.x          | Minor | Add final review step                                                            | Summarise all entries before submission                                  |
-| [ ]   | 1.x.x          | Minor | Add "type of murder" field to perpetrator form                                   | Checklist with "other" option for multiple possibilities                 |
-| [ ]   | 1.x.x          | Minor | Change "type of murder" from dropdown to checklist                               | Allow multiple selections and custom "other" option                      |
-| [ ]   | 1.x.x          | Minor | Make participant entries editable after "add"                                    | Allow editing after adding participants                                  |
-| [ ]   | 1.x.x          | Minor | Show detailed summary of participants after "add"                                | Help users spot edits needed                                             |
-| [ ]   | 2.x.x          | Major | Generalise schema to event reporting model                                       | Transition from homicide-specific to general event reporting             |
-| [ ]   | 2.x.x          | Major | Support reports about any class of event                                         | Not limited to homicide; supports broader event types                    |
-| [ ]   | 2.x.x          | Major | Events will have participants, and participants can relate to other participants | Flexible participant relationships                                       |
-| [ ]   | 2.x.x          | Major | Template/profile system for participant types                                    | Define types (e.g., "victim", "perpetrator") and custom fields           |
-| [ ]   | 2.x.x          | Major | Dynamically generated forms based on profile and fields                          | Forms adapt to selected profile and its fields                           |
-| [ ]   | 2.x.x          | Major | Preserve homicide-specific schema as preloaded configuration                     | Ensures backward compatibility                                           |
-| [ ]   | 2.x.x          | Major | Design new core entities: Event, Report, Participant, Relationship               | Foundational migration step                                              |
-| [ ]   | 2.x.x          | Major | Implement template/profile system and dynamic form logic                         | Enables flexible data entry                                              |
-| [ ]   | 2.x.x          | Major | Migrate existing homicide data to new schema                                     | Data migration for continuity                                            |
-| [ ]   | 2.x.x          | Major | Ensure backward compatibility and load preloaded configuration on setup          | Seamless transition for existing users                                   |
-| [ ]   | x.x.x          | Minor | Report queue                                                                     | Users can backlog reports and process them later                         |
-| [ ]   | x.x.x          | Minor | Draft support                                                                    | Articles/participants can be saved as drafts if event creation fails, with review and completion options.                     |
+- [ ] **1.x.x**
+  - [ ] **1.2.x**
+    - [ ] Make PWA offline compatible
+      - [ ] Implement service worker for asset caching
+      - [ ] Ensure IndexedDB sync for all CRUD operations
+      - [ ] Test offline/online transitions in browser and Electron
+  - [ ] Combine victim and perpetrator steps into "participants" step
+    - [ ] Add dropdown to switch between profiles
+    - [ ] Refactor forms for participant type
+    - [ ] Make profiles fully configurable
+  - [ ] Add "alias" field to every participant
+    - [ ] Update schema to include alias
+    - [ ] Add input field to participant form
+  - [ ] Perpetrator "unknown" input as checkbox
+    - [ ] Replace text input with checkbox
+    - [ ] Update validation logic
+  - [ ] Victim-perpetrator relationship "other" option
+    - [ ] Add text input for custom relationships
+    - [ ] Allow saving custom options for reuse
+  - [ ] Perpetrator sentencing: support multiple sentences
+    - [ ] Update schema for multiple sentences
+    - [ ] Refactor UI for ordinal + multiple life sentences
+  - [ ] Add final review step
+    - [ ] Summarise all entries before submission
+    - [ ] Add review modal to UI
+  - [ ] Add "type of murder" field to perpetrator form
+    - [ ] Add checklist input
+    - [ ] Support "other" option
+  - [ ] Change "type of murder" from dropdown to checklist
+    - [ ] Refactor UI for multiple selections
+    - [ ] Add custom "other" option
+  - [ ] Make participant entries editable after "add"
+    - [ ] Add edit button to participant list
+    - [ ] Implement edit modal
+  - [ ] Show detailed summary of participants after "add"
+    - [ ] Display summary table
+    - [ ] Highlight incomplete/invalid entries
+- [ ] **2.x.x**
+  - [ ] Generalise schema to event reporting model
+    - [ ] Design new core entities: Event, Report, Participant, Relationship
+    - [ ] Migrate existing homicide data to new schema
+    - [ ] Preserve homicide-specific schema as preloaded configuration
+  - [ ] Support reports about any class of event
+    - [ ] Refactor event creation logic
+    - [ ] Add event type selector
+  - [ ] Events will have participants, and participants can relate to other participants
+    - [ ] Implement flexible participant relationships
+    - [ ] Update UI for relationship mapping
+  - [ ] Template/profile system for participant types
+    - [ ] Define types (e.g., "victim", "perpetrator") and custom fields
+    - [ ] Implement dynamic form generation
+  - [ ] Dynamically generated forms based on profile and fields
+    - [ ] Refactor form logic for dynamic fields
+    - [ ] Add profile selection UI
+  - [ ] Implement template/profile system and dynamic form logic
+    - [ ] Enable flexible data entry
+    - [ ] Test with multiple event types
+  - [ ] Ensure backward compatibility and load preloaded configuration on setup
+    - [ ] Test migration for existing users
+    - [ ] Add fallback logic for legacy data
+- [ ] **x.x.x**
+  - [ ] Report queue
+    - [ ] Implement queue logic for backlog reports
+    - [ ] Add UI for processing queued reports
+  - [ ] Draft support
+    - [ ] Allow saving articles/participants as drafts
+    - [ ] Add review and completion options
+  - [ ] Detailed Sync Status Visualization
+    - [ ] Implement circular progress tracking component
+    - [ ] Animate fill for in-progress syncs
+    - [ ] Show green check mark if all records are synced
+    - [ ] Show red cross if any record fails
 
 ---
 
@@ -44,7 +91,7 @@ The Homicide Media Tracker is designed for research teams to:
 - Detect duplicates across sources
 - Support multi-user research workflows with optional remote sync
 - Operate offline using a local LibSQL/SQLite database and optionally sync to a remote server
-- Visualize and export data for analysis
+- Visualise and export data for analysis
 
 ## Quick Start (development)
 
@@ -97,9 +144,9 @@ Note: Packaging requires proper code signing and platform-specific entitlements 
 ## Architecture Summary
 
 - Frontend: Next.js app lives in `app/` (App Router, Next 14). API routes are under `app/api/*/route.ts`.
-- Electron main: `src/main/main.ts` handles app lifecycle, spawns or connects to the Next.js server, registers IPC handlers, and initializes the local database.
+- Electron main: `src/main/main.ts` handles app lifecycle, spawns or connects to the Next.js server, registers IPC handlers, and initialises the local database.
 - Preload: `src/main/preload.ts` exposes a safe IPC bridge to the renderer.
-- Database: Local LibSQL (via `@libsql/client`) and Drizzle ORM live in `lib/database/*`. The singleton `databaseManager` centralizes connections, migrations, backup and sync logic.
+- Database: Local LibSQL (via `@libsql/client`) and Drizzle ORM live in `lib/database/*`. The singleton `databaseManager` centralises connections, migrations, backup and sync logic.
 - Packaging: `electron-builder` config lives in `package.json` `build` section. Packaged app includes `.next/standalone/server.js` and uses `release/app` files.
 
 See `src/main/main.ts` and `lib/database/connection.ts` for the concrete implementations of server management and DB behaviours.

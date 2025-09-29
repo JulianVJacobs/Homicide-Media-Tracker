@@ -15,6 +15,7 @@ import {
 } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { HomicideCase, ApiResponse } from '@/lib/types/homicide';
+import { getBaseUrl } from '../platform';
 
 interface ListHomicidesProps {
   onBack: () => void;
@@ -47,95 +48,112 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
     setLoading(true);
     setError(null);
 
+    // Offline-first: try local/offline API first, fall back to network if unavailable or fails
+    const params = new URLSearchParams({
+      page: currentPage.toString(),
+      limit: itemsPerPage.toString(),
+      ...(searchTerm && { search: searchTerm }),
+    });
+
+    let result: ApiResponse<any> | null = null;
+    let offlineError: any = null;
     try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString(),
-        ...(searchTerm && { search: searchTerm }),
-      });
+      // Try offline API
+      const { get: getEvents } = await import('@/app/api/events/offline');
+      const req = new Request(`${getBaseUrl()}?${params}`);
+      result = await getEvents(req);
+    } catch (err) {
+      offlineError = err;
+    }
 
-      const response = await fetch(`/api/events?${params}`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    if (!result || !result.success || !result.data) {
+      // Fallback to network API
+      try {
+        const response = await fetch(`/api/events?${params}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        result = await response.json();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch homicide cases',
+        );
+        toast.error('Failed to load homicide cases');
+        setLoading(false);
+        return;
       }
+    }
 
-      const result: ApiResponse<any> = await response.json();
-
-      if (result.success && result.data) {
-        const events = Array.isArray(result.data.events)
-          ? result.data.events
-          : [];
-        // For each event, fetch related data and assemble full case
-        const assembledCases = await Promise.all(
-          events.map(async (event: any) => {
-            // Fetch article
-            let articleData = null;
-            if (
-              Array.isArray(event.articleIds) &&
-              event.articleIds.length > 0
-            ) {
+    if (result && result.success && result.data) {
+      const events = Array.isArray(result.data.events)
+        ? result.data.events
+        : [];
+      // For each event, fetch related data and assemble full case
+      const assembledCases = await Promise.all(
+        events.map(async (event: any) => {
+          // Fetch article
+          let articleData = null;
+          if (Array.isArray(event.articleIds) && event.articleIds.length > 0) {
+            try {
+              const { get: getArticle } = await import(
+                '@/app/api/articles/offline'
+              );
+              const req = new Request(
+                `${getBaseUrl()}?id=${event.articleIds[0]}`,
+              );
+              const articleRes = await getArticle(req);
+              articleData = articleRes.data || null;
+            } catch {}
+          }
+          // Fetch victims
+          let victims = [];
+          if (Array.isArray(event.participantIds)) {
+            for (const pid of event.participantIds) {
               try {
-                const res = await fetch(
-                  `/api/articles?id=${event.articleIds[0]}`,
+                const { get: getVictim } = await import(
+                  '@/app/api/victims/offline'
                 );
-                if (res.ok) {
-                  const articleRes = await res.json();
-                  articleData = articleRes.data || null;
-                }
+                const req = new Request(`${getBaseUrl()}?id=${pid}`);
+                const victimRes = await getVictim(req);
+                if (victimRes.data) victims.push(victimRes.data);
               } catch {}
             }
-            // Fetch victims
-            let victims = [];
-            if (Array.isArray(event.participantIds)) {
-              for (const pid of event.participantIds) {
-                try {
-                  const res = await fetch(`/api/victims?id=${pid}`);
-                  if (res.ok) {
-                    const victimRes = await res.json();
-                    if (victimRes.data) victims.push(victimRes.data);
-                  }
-                } catch {}
-              }
+          }
+          // Fetch perpetrators
+          let perpetrators = [];
+          if (Array.isArray(event.participantIds)) {
+            for (const pid of event.participantIds) {
+              try {
+                const { get: getPerpetrator } = await import(
+                  '@/app/api/perpetrators/offline'
+                );
+                const req = new Request(`${getBaseUrl()}?id=${pid}`);
+                const perpRes = await getPerpetrator(req);
+                if (perpRes.data) perpetrators.push(perpRes.data);
+              } catch {}
             }
-            // Fetch perpetrators
-            let perpetrators = [];
-            if (Array.isArray(event.participantIds)) {
-              for (const pid of event.participantIds) {
-                try {
-                  const res = await fetch(`/api/perpetrators?id=${pid}`);
-                  if (res.ok) {
-                    const perpRes = await res.json();
-                    if (perpRes.data) perpetrators.push(perpRes.data);
-                  }
-                } catch {}
-              }
-            }
-            return {
-              id: event.id,
-              articleData,
-              victims,
-              perpetrators,
-              typeOfMurder: event.details?.typeOfMurder || '',
-              createdAt: event.createdAt,
-              updatedAt: event.updatedAt,
-            };
-          }),
-        );
-        setCases(assembledCases);
-        setTotalPages(result.data.totalPages || 1);
-        setTotalCases(result.data.total || 0);
-      } else {
-        throw new Error(result.error || 'Failed to fetch cases');
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to fetch homicide cases',
+          }
+          return {
+            id: event.id,
+            articleData,
+            victims,
+            perpetrators,
+            syncStatus: event.syncStatus,
+            failureCount: event.failureCount,
+            typeOfMurder: event.details?.typeOfMurder || '',
+            createdAt: event.createdAt,
+            updatedAt: event.updatedAt,
+          };
+        }),
       );
+      setCases(assembledCases);
+      setTotalPages(result.data.totalPages || 1);
+      setTotalCases(result.data.total || 0);
+    } else {
+      setError(result?.error || 'Failed to fetch homicide cases');
       toast.error('Failed to load homicide cases');
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -273,6 +291,7 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                           <th>Victims</th>
                           <th>Murder Type</th>
                           <th>Province</th>
+                          <th>Sync Status</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -331,6 +350,25 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                                 {getVictimsLength(case_) > 0 &&
                                   Array.isArray(case_.victims) &&
                                   case_.victims[0]?.province}
+                              </td>
+                              <td>
+                                {typeof case_.syncStatus === 'string' ? (
+                                  case_.syncStatus === 'failed' ? (
+                                    <Badge bg="danger">Failed</Badge>
+                                  ) : case_.syncStatus === 'pending' ? (
+                                    <Badge bg="warning">Pending</Badge>
+                                  ) : (
+                                    <Badge bg="success">Synced</Badge>
+                                  )
+                                ) : (
+                                  <Badge bg="secondary">Unknown</Badge>
+                                )}
+                                {typeof case_.failureCount === 'number' &&
+                                  case_.failureCount >= 1 && (
+                                    <span className="ms-2 small text-danger">
+                                      {case_.failureCount} failed
+                                    </span>
+                                  )}
                               </td>
                               <td>
                                 <Button
@@ -402,34 +440,83 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
         <Modal.Body>
           {selectedCase && (
             <div>
+              {/* Sync Status & Actions */}
+              <div className="mb-3">
+                <strong>Sync Status:</strong>{' '}
+                {selectedCase.syncStatus === 'failed' ? (
+                  <Badge bg="danger">Failed</Badge>
+                ) : selectedCase.syncStatus === 'pending' ? (
+                  <Badge bg="warning">Pending</Badge>
+                ) : (
+                  <Badge bg="success">Synced</Badge>
+                )}
+                {typeof selectedCase.failureCount === 'number' &&
+                  selectedCase.failureCount >= 1 && (
+                    <span className="ms-2 small text-danger">
+                      {selectedCase.failureCount} failed
+                    </span>
+                  )}
+              </div>
+              {selectedCase.syncStatus === 'failed' && (
+                <Alert variant="danger" className="mt-2">
+                  <strong>Sync Failed:</strong>{' '}
+                  {selectedCase.lastError || 'Unknown error'}
+                  <br />
+                  <span>
+                    Attempts:{' '}
+                    {typeof selectedCase.failureCount === 'number'
+                      ? selectedCase.failureCount
+                      : 0}
+                  </span>
+                  <div className="mt-2">
+                    {/* TODO: Implement retrySync and deleteSyncEntry handlers */}
+                    <Button variant="outline-primary" size="sm" disabled>
+                      Retry Sync
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      className="ms-2"
+                      disabled
+                    >
+                      Delete Sync Entry
+                    </Button>
+                  </div>
+                </Alert>
+              )}
+              {/* ...existing case details UI... */}
               <h5>Article Information</h5>
               <p>
                 <strong>Headline:</strong>{' '}
-                {selectedCase.articleData.newsReportHeadline}
+                {selectedCase?.articleData?.newsReportHeadline}
               </p>
               <p>
-                <strong>Source:</strong> {selectedCase.articleData.newsSource}
+                <strong>Source:</strong> {selectedCase?.articleData?.newsSource}
               </p>
               <p>
                 <strong>Date:</strong>{' '}
-                {formatDate(selectedCase.articleData.dateOfPublication)}
+                {selectedCase?.articleData?.dateOfPublication &&
+                  formatDate(selectedCase.articleData.dateOfPublication)}
               </p>
               <p>
                 <strong>URL:</strong>{' '}
-                <a
-                  href={selectedCase.articleData.newsReportUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View Article
-                </a>
+                {selectedCase?.articleData?.newsReportUrl ? (
+                  <a
+                    href={selectedCase.articleData.newsReportUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Article
+                  </a>
+                ) : (
+                  <span className="text-muted">N/A</span>
+                )}
               </p>
-              {selectedCase.articleData.author && (
+              {selectedCase?.articleData?.author && (
                 <p>
                   <strong>Author:</strong> {selectedCase.articleData.author}
                 </p>
               )}
-
               <h5 className="mt-4">
                 Victims (
                 {Array.isArray(selectedCase?.victims)
@@ -466,7 +553,6 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                     </Card.Body>
                   </Card>
                 ))}
-
               <h5 className="mt-4">
                 Perpetrators (
                 {Array.isArray(selectedCase?.perpetrators)
@@ -506,19 +592,21 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                     </Card.Body>
                   </Card>
                 ))}
-
               <h5 className="mt-4">Case Information</h5>
               <p>
-                <strong>Type of Murder:</strong> {selectedCase.typeOfMurder}
+                <strong>Type of Murder:</strong> {selectedCase?.typeOfMurder}
               </p>
               <p>
                 <strong>Created:</strong>{' '}
-                {selectedCase.createdAt && formatDate(selectedCase.createdAt)}
+                {selectedCase?.createdAt && formatDate(selectedCase.createdAt)}
               </p>
             </div>
           )}
         </Modal.Body>
         <Modal.Footer>
+          <Button variant="primary" disabled>
+            Edit
+          </Button>
           <Button variant="secondary" onClick={() => setShowDetailModal(false)}>
             Close
           </Button>

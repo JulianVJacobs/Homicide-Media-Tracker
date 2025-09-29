@@ -34,18 +34,18 @@ const electronHandler = {
   // Database operations
   database: {
     getStatus: (): Promise<{
-      isInitialized: boolean;
+      isInitialised: boolean;
       syncEnabled: boolean;
       localPath: string;
       remoteUrl: string | null;
       error?: string;
     }> => ipcRenderer.invoke('database-status'),
-    
+
     sync: (): Promise<{
       success: boolean;
       error?: string;
     }> => ipcRenderer.invoke('database-sync'),
-    
+
     createBackup: (): Promise<{
       success: boolean;
       backupPath?: string;

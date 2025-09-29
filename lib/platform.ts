@@ -1,3 +1,12 @@
+export const getBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+};
+export const isOnline = () => {
+  return typeof window !== 'undefined' && window.navigator.onLine;
+};
 // Platform detection utilities for dual Next.js/Electron app
 
 export const isElectron = () => {
@@ -38,4 +47,6 @@ export default {
   isElectron,
   isWeb,
   getEnvironment,
+  isOnline,
+  getBaseUrl,
 };

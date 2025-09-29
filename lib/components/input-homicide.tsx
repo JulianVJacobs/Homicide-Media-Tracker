@@ -11,6 +11,7 @@ import {
   ProgressBar,
 } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { getBaseUrl } from '../platform';
 import { v4 as uuidv4 } from 'uuid';
 import ArticleForm from './article-form';
 import VictimForm from './victim-form';
@@ -97,63 +98,43 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
 
     try {
       setLoading(true);
+      // Use offline.ts for all CRUD
+      const { post: addArticle } = await import('@/app/api/articles/offline');
+      const { post: addVictim } = await import('@/app/api/victims/offline');
+      const { post: addPerpetrator } = await import(
+        '@/app/api/perpetrators/offline'
+      );
+      const { post: addEvent } = await import('@/app/api/events/offline');
 
-      const articleRes = await fetch('/api/articles', {
+      // 1. Add article
+      const articleReq = new Request(getBaseUrl(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(articleData),
       });
-      let articleId;
-      if (articleRes.status === 409) {
-        // Duplicate detected, use returned articleId
-        const conflictResult = await articleRes.json();
-        articleId =
-          conflictResult?.articleId || conflictResult?.data?.articleId;
-        if (!articleId)
-          throw new Error('Duplicate article, but no articleId returned');
-        toast.info('Article already exists. Using existing article.');
-      } else if (articleRes.ok) {
-        const articleResult = await articleRes.json();
-        articleId = articleResult?.data?.articleId || articleResult?.articleId;
-        if (!articleId) throw new Error('No article ID returned');
-      } else {
-        throw new Error('Failed to save article');
-      }
+      const articleResult = await addArticle(articleReq);
+      const articleId = articleResult?.data?.id;
+      console.log(articleResult);
 
       // 2. Add victims and get their IDs
       const victimIds: string[] = [];
       for (const victim of victims) {
-        const victimRes = await fetch('/api/victims', {
+        const req = new Request(getBaseUrl(), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...victim, articleId }),
         });
-        if (!victimRes.ok) throw new Error('Failed to save victim');
-        const victimResult = await victimRes.json();
-        const victimId =
-          victimResult?.data?.id ||
-          victimResult?.id ||
-          victimResult?.data?.victimId ||
-          victimResult?.victimId;
-        if (victimId) victimIds.push(victimId);
+        const result = await addVictim(req);
+        if (result?.data?.id) victimIds.push(result.data.id);
       }
 
       // 3. Add perpetrators and get their IDs
       const perpetratorIds: string[] = [];
       for (const perpetrator of perpetrators) {
-        const perpRes = await fetch('/api/perpetrators', {
+        const req = new Request(getBaseUrl(), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...perpetrator, articleId }),
         });
-        if (!perpRes.ok) throw new Error('Failed to save perpetrator');
-        const perpResult = await perpRes.json();
-        const perpetratorId =
-          perpResult?.data?.id ||
-          perpResult?.id ||
-          perpResult?.data?.perpetratorId ||
-          perpResult?.perpetratorId;
-        if (perpetratorId) perpetratorIds.push(perpetratorId);
+        const result = await addPerpetrator(req);
+        if (result?.data?.id) perpetratorIds.push(result.data.id);
       }
 
       // 4. Add event referencing article and participant IDs
@@ -171,18 +152,12 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
           createdAt: new Date().toISOString(),
         },
       };
-
-      const eventRes = await fetch('/api/events', {
+      const eventReq = new Request(getBaseUrl(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventPayload),
       });
-      if (!eventRes.ok) throw new Error('Failed to save homicide case');
-      const eventResult = await eventRes.json();
-      // Optionally check eventResult for eventId or data.id if needed
-
+      await addEvent(eventReq);
       toast.success('Homicide case saved successfully!');
-
       // Reset form
       setArticleData(null);
       setVictims([]);

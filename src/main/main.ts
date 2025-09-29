@@ -2,7 +2,7 @@
 
 /**
  * Homicide Media Tracker - Electron Main Process
- * 
+ *
  * This module manages the Next.js standalone server and Electron window.
  * In development, it connects to the Next.js dev server.
  * In production, it spawns the Next.js standalone server as a child process.
@@ -15,7 +15,7 @@ import { spawn, ChildProcess } from 'child_process';
 import http from 'http';
 import net from 'net';
 import MenuBuilder from './menu';
-import { databaseManager } from '../../lib/database/connection';
+import { dbm } from '../../lib/database/connection';
 
 class AppUpdater {
   constructor() {
@@ -34,14 +34,16 @@ let serverPort: number = 3000;
 const findAvailablePort = (startPort: number): Promise<number> => {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
-    
+
     server.listen(startPort, () => {
       const port = (server.address() as net.AddressInfo).port;
       server.close(() => resolve(port));
     });
-    
+
     server.on('error', () => {
-      findAvailablePort(startPort + 1).then(resolve).catch(reject);
+      findAvailablePort(startPort + 1)
+        .then(resolve)
+        .catch(reject);
     });
   });
 };
@@ -49,7 +51,7 @@ const findAvailablePort = (startPort: number): Promise<number> => {
 const waitForServer = (url: string, timeout = 30000): Promise<void> => {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
-    
+
     const checkServer = () => {
       const req = http.get(url, { timeout: 1000 }, (res) => {
         if (res.statusCode === 200) {
@@ -58,17 +60,17 @@ const waitForServer = (url: string, timeout = 30000): Promise<void> => {
           scheduleNextCheck();
         }
       });
-      
+
       req.on('error', () => {
         scheduleNextCheck();
       });
-      
+
       req.on('timeout', () => {
         req.destroy();
         scheduleNextCheck();
       });
     };
-    
+
     const scheduleNextCheck = () => {
       if (Date.now() - startTime > timeout) {
         reject(new Error(`Server startup timeout after ${timeout}ms`));
@@ -76,14 +78,14 @@ const waitForServer = (url: string, timeout = 30000): Promise<void> => {
         setTimeout(checkServer, 500);
       }
     };
-    
+
     checkServer();
   });
 };
 
 const startNextServer = async (): Promise<string> => {
   const isDev = process.env.NODE_ENV === 'development';
-  
+
   if (isDev) {
     // Development: assume Next.js dev server is running
     const serverUrl = 'http://localhost:3000';
@@ -92,7 +94,9 @@ const startNextServer = async (): Promise<string> => {
       log.info('Connected to Next.js development server');
       return serverUrl;
     } catch (error) {
-      log.error('Next.js development server not found. Please run "npm run dev" first.');
+      log.error(
+        'Next.js development server not found. Please run "npm run dev" first.',
+      );
       throw error;
     }
   } else {
@@ -100,33 +104,35 @@ const startNextServer = async (): Promise<string> => {
     const port = await findAvailablePort(3000);
     serverPort = port;
     const serverUrl = `http://localhost:${port}`;
-    
+
     // Path to the standalone server - in packaged app, server.js should be unpacked
     const isPackaged = app.isPackaged;
-    const serverPath = isPackaged 
+    const serverPath = isPackaged
       ? path.join(process.resourcesPath, 'app.asar.unpacked', 'server.js')
       : path.join(__dirname, '../../.next/standalone/server.js');
-    
+
     log.info(`Starting Next.js server at ${serverUrl}`);
     log.info(`Server path: ${serverPath}`);
-    
+
     // Use the appropriate Node.js executable based on environment
-    const nodeExecutable = isPackaged 
-      ? process.execPath  // In packaged mode, we'll need to handle this differently
+    const nodeExecutable = isPackaged
+      ? process.execPath // In packaged mode, we'll need to handle this differently
       : 'node';
-    
+
     log.info(`Using Node executable: ${nodeExecutable}`);
-    
+
     // In packaged mode, we need to use Electron's Node.js runtime
     if (isPackaged) {
-      log.warn('Note: Using Electron executable for Node.js runtime in packaged mode');
+      log.warn(
+        'Note: Using Electron executable for Node.js runtime in packaged mode',
+      );
       log.info(`Electron version: ${process.versions.electron}`);
       log.info(`Node version: ${process.versions.node}`);
     }
-    
+
     // Start Next.js server as child process
     const spawnArgs = [serverPath];
-    
+
     nextServer = spawn(nodeExecutable, spawnArgs, {
       env: {
         ...process.env,
@@ -145,7 +151,7 @@ const startNextServer = async (): Promise<string> => {
         log.info(`Next.js Server: ${data.toString().trim()}`);
       });
     }
-    
+
     if (nextServer.stderr) {
       nextServer.stderr.on('data', (data) => {
         log.error(`Next.js Server Error: ${data.toString().trim()}`);
@@ -164,7 +170,7 @@ const startNextServer = async (): Promise<string> => {
     // Wait for server to be ready
     await waitForServer(serverUrl);
     log.info('Next.js standalone server is ready');
-    
+
     return serverUrl;
   }
 };
@@ -185,24 +191,25 @@ ipcMain.handle('get-server-port', () => {
 // Database IPC handlers
 ipcMain.handle('database-status', async () => {
   try {
-    // Check if database is initialized
-    if (!databaseManager.getLocal) {
+    // Check if database is initialised
+    if (!dbm.getLocal) {
       return {
-        isInitialized: false,
-        error: 'Database not initialized (running in packaged mode without database support)',
+        isInitialised: false,
+        error:
+          'Database not initialised (running in packaged mode without database support)',
       };
     }
-    
-    const config = databaseManager.getConfig();
+
+    const config = dbm.getConfig();
     return {
-      isInitialized: true,
+      isInitialised: true,
       syncEnabled: config.sync.enabled,
       localPath: config.local.path,
       remoteUrl: config.remote?.url || null,
     };
   } catch (error) {
     return {
-      isInitialized: false,
+      isInitialised: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
@@ -210,14 +217,14 @@ ipcMain.handle('database-status', async () => {
 
 ipcMain.handle('database-sync', async () => {
   try {
-    if (!databaseManager.getLocal) {
+    if (!dbm.getLocal) {
       return {
         success: false,
-        error: 'Database not initialized (running in packaged mode)',
+        error: 'Database not initialised (running in packaged mode)',
       };
     }
-    
-    await databaseManager.syncWithRemote();
+
+    await dbm.syncWithRemote();
     return { success: true };
   } catch (error) {
     return {
@@ -229,14 +236,14 @@ ipcMain.handle('database-sync', async () => {
 
 ipcMain.handle('database-backup', async () => {
   try {
-    if (!databaseManager.getLocal) {
+    if (!dbm.getLocal) {
       return {
         success: false,
-        error: 'Database not initialized (running in packaged mode)',
+        error: 'Database not initialised (running in packaged mode)',
       };
     }
-    
-    const backupPath = await databaseManager.createBackup();
+
+    const backupPath = await dbm.createBackup();
     return { success: true, backupPath };
   } catch (error) {
     return {
@@ -273,7 +280,7 @@ const installExtensions = async () => {
   return installer
     .default(
       extensions.map((name) => installer[name]),
-      forceDownload
+      forceDownload,
     )
     .catch(console.log);
 };
@@ -283,34 +290,36 @@ const createWindow = async (): Promise<void> => {
     await installExtensions();
   }
 
-  // Initialize database first - with enhanced packaging support
+  // Initialise database first - with enhanced packaging support
   try {
     log.info('Initializing local database...');
     log.info(`App is packaged: ${app.isPackaged}`);
     log.info(`Resources path: ${process.resourcesPath}`);
     log.info(`App path: ${app.getAppPath()}`);
-    
-    await databaseManager.initialiseLocal();
-    log.info('Database initialized successfully');
-    
+
+    await dbm.initialiseLocal();
+    log.info('Database initialised successfully');
+
     // Start auto-sync if enabled
-    databaseManager.startAutoSync();
+    dbm.startAutoSync();
   } catch (error) {
-    log.error('Failed to initialize database:', error);
+    log.error('Failed to initialise database:', error);
     log.error('Database error details:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : 'No stack trace',
-      name: error instanceof Error ? error.name : 'Unknown error type'
+      name: error instanceof Error ? error.name : 'Unknown error type',
     });
-    
+
     // In development, this should throw to help debugging
     if (!app.isPackaged) {
       log.error('Development mode - rethrowing database error for debugging');
       throw error;
     }
-    
+
     // In packaged mode, continue startup but log the failure
-    log.warn('Packaged mode - continuing app startup without database functionality');
+    log.warn(
+      'Packaged mode - continuing app startup without database functionality',
+    );
   }
 
   // Start Next.js server
@@ -352,7 +361,7 @@ const createWindow = async (): Promise<void> => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
-    if (process.env.START_MINIMIZED) {
+    if (process.env.START_MINIMised) {
       mainWindow.minimize();
     } else {
       mainWindow.show();
@@ -382,21 +391,21 @@ const createWindow = async (): Promise<void> => {
  */
 
 app.on('window-all-closed', () => {
-  // Cleanup: Close database connections (if initialized)
+  // Cleanup: Close database connections (if initialised)
   try {
-    databaseManager.close().catch((error) => {
+    dbm.close().catch((error) => {
       log.error('Error closing database:', error);
     });
   } catch (error) {
-    // Database wasn't initialized - no cleanup needed
-    log.info('Database cleanup skipped (not initialized)');
+    // Database wasn't initialised - no cleanup needed
+    log.info('Database cleanup skipped (not initialised)');
   }
-  
+
   // Cleanup: Kill Next.js server when all windows are closed
   if (nextServer) {
     log.info('Terminating Next.js server...');
     nextServer.kill('SIGTERM');
-    
+
     // Force kill after timeout
     setTimeout(() => {
       if (nextServer && !nextServer.killed) {
@@ -415,16 +424,16 @@ app.on('window-all-closed', () => {
 
 // Cleanup on app quit
 app.on('before-quit', () => {
-  // Close database connections first (if initialized)
+  // Close database connections first (if initialised)
   try {
-    databaseManager.close().catch((error) => {
+    dbm.close().catch((error) => {
       log.error('Error closing database during quit:', error);
     });
   } catch (error) {
-    // Database wasn't initialized - no cleanup needed
-    log.info('Database cleanup on quit skipped (not initialized)');
+    // Database wasn't initialised - no cleanup needed
+    log.info('Database cleanup on quit skipped (not initialised)');
   }
-  
+
   if (nextServer) {
     log.info('App quitting, terminating Next.js server...');
     nextServer.kill('SIGTERM');

@@ -45,6 +45,9 @@ export interface HomicideCase {
   typeOfMurder: string;
   createdAt?: string;
   updatedAt?: string;
+  syncStatus?: string;
+  failureCount?: number;
+  lastError?: string;
 }
 
 // Province and town data structure

@@ -151,8 +151,8 @@ data_entry_layout = dbc.Container([
 data_display_layout = dbc.Container([
     dbc.Card([
         dbc.CardHeader("Homicide Data Display"),
-        dbc.CardBody([ 
-                        # Grouped and organized checklist for column selection
+        dbc.CardBody([
+                        # Grouped and organised checklist for column selection
             dbc.Row([
                 dbc.Col([
                     dcc.Checklist(
@@ -182,9 +182,9 @@ data_display_layout = dbc.Container([
                 ], width=4)
             ], className="mb-3"),
 
-            
+
             dbc.Button("Display Table", id = 'display-button', color = "success", className = "mt-3" ),
-            
+
             # Display message container (for error or informational messages)
             html.Div(id='message-container', className="mt-3"),
             html.Div(id='table-container',  className="mt-3")
@@ -298,7 +298,7 @@ duplicates_table_layout = dbc.Container([
                     dbc.Button("Delete duplicates", id='delete-duplicates-button', n_clicks=0, color="danger"),
                 ], width=6, className="d-flex justify-content-end")
             ], className="mb-3"),
-            
+
             html.Div(id='duplicates-message', className="mb-3")
             ]),
         dbc.Col([
@@ -368,7 +368,7 @@ def display_page(pathname):
         return duplicates_table_layout
     else:
         return data_entry_layout
-    
+
 # Province-Town Callback
 @app.callback(
     Output('town-dropdown', 'options'),
@@ -415,7 +415,7 @@ def update_town_dropdown(province_value):
 )
 #Insert data in to table code
 def submit_form(n_clicks, url, outlet, pub_date, author, headline, subs, wire, victim_name, death_date,
-                victim_age, race, location_type, town, province, sexual_assault, mode_of_death, 
+                victim_age, race, location_type, town, province, sexual_assault, mode_of_death,
                 robbery, suspect_arrested, suspect_convicted, perp_name, relationship,
                 multi_murder, extreme_violence, femicide, notes):
     if n_clicks is None:
@@ -425,20 +425,20 @@ def submit_form(n_clicks, url, outlet, pub_date, author, headline, subs, wire, v
 
     # Prepare the SQL insert statement
     insert_query = '''INSERT INTO homicide_news
-            (news_report_url, news_report_platform, date_of_publication, author, news_report_headline, no_of_subs, 
-            wire_service, victim_name, date_of_death, age_of_victim, race_of_victim, type_of_location, 
-            place_of_death_town, place_of_death_province, sexual_assault, mode_of_death_specific, robbery_y_n_u, 
-            suspect_arrested, suspect_convicted, perpetrator_name, perpetrator_relationship_to_victim, 
+            (news_report_url, news_report_platform, date_of_publication, author, news_report_headline, no_of_subs,
+            wire_service, victim_name, date_of_death, age_of_victim, race_of_victim, type_of_location,
+            place_of_death_town, place_of_death_province, sexual_assault, mode_of_death_specific, robbery_y_n_u,
+            suspect_arrested, suspect_convicted, perpetrator_name, perpetrator_relationship_to_victim,
             multiple_murder, extreme_violence_y_n_m_u, intimate_femicide_y_n_u, notes)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'''
 
 
     values = (url, outlet, pub_date, author, headline, subs, wire, victim_name, death_date,
-            victim_age, race, location_type, province, town, sexual_assault, mode_of_death, 
-            robbery, suspect_arrested, suspect_convicted, perp_name, relationship, 
+            victim_age, race, location_type, province, town, sexual_assault, mode_of_death,
+            robbery, suspect_arrested, suspect_convicted, perp_name, relationship,
             multi_murder, extreme_violence, femicide, notes)
 
-        
+
     # Execute the insertion
     cur.execute(insert_query, values)
     conn.commit()  # Ensure the transaction is committed
@@ -466,7 +466,7 @@ def export_csv(n_clicks):
 
 
 
-# Handle CSV Upload to the same table 
+# Handle CSV Upload to the same table
 @app.callback(
     Output('upload-output-1', 'children'),
     Input('upload-data-1', 'contents'),
@@ -477,7 +477,7 @@ def upload_csv(contents):
     if contents:
         # Split the contents into metadata and base64-encoded data
         content_type, content_string = contents.split(',')
-        
+
         # Decode the base64-encoded string
         decoded = base64.b64decode(content_string)
 
@@ -485,7 +485,7 @@ def upload_csv(contents):
             # Specify semicolon as the delimiter and handle bad lines
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), sep=';', on_bad_lines='skip')
             print(df.head())  # Print first few rows for debugging
-            
+
             # Try appending the data to the database
             df.to_sql('homicide_news', engine, if_exists='append', index=False)
             return "CSV data appended successfully."
@@ -507,7 +507,7 @@ def upload_csv(contents):
     prevent_initial_call= True
 )
 
-#uploading CSV to a new table functionality of the dashboard 
+#uploading CSV to a new table functionality of the dashboard
 def upload_csv_to_new_table(contents):
     if contents:
         content_type, content_string = contents.split(',')
@@ -535,13 +535,13 @@ def upload_csv_to_new_table(contents):
     prevent_initial_call=True
 )
 
-#Display table functionality while allowing users to display specific columns in the table 
+#Display table functionality while allowing users to display specific columns in the table
 def update_data_display(display_clicks, selected_columns_1, selected_columns_2, selected_columns_3):
     ctx = dash.callback_context
     if not ctx.triggered:
         print("No input was triggered.")
         return dash.no_update, dash.no_update
-    
+
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
     print(f"Triggered by: {triggered_id}")
 
@@ -567,7 +567,7 @@ def update_data_display(display_clicks, selected_columns_1, selected_columns_2, 
         message, table = display_selected_columns(display_clicks, ordered_selected_columns)
         print(f"display_selected_columns returned: message='{message}', table={'not None' if table is not None else 'None'}")
         return message, table
-    
+
     print("No condition was met.")
     return dash.no_update, dash.no_update
 
@@ -576,7 +576,7 @@ def update_data_display(display_clicks, selected_columns_1, selected_columns_2, 
 def display_selected_columns(n_clicks, selected_columns):
     if n_clicks is None or n_clicks == 0:
         return "Please click the 'Display Table' button to show data", None
-    
+
     if not selected_columns:
         return "No columns selected. Please select at least one column", None
 
@@ -586,7 +586,7 @@ def display_selected_columns(n_clicks, selected_columns):
             user="postgres", password="Khiz1234"
         ) as conn:
             # Build the SQL query dynamically based on selected columns
-            query = f"SELECT {', '.join(selected_columns)} FROM homicide_news"  
+            query = f"SELECT {', '.join(selected_columns)} FROM homicide_news"
             df = pd.read_sql_query(query, conn)
 
         # Debugging: print the selected columns and the dataframe
@@ -626,7 +626,7 @@ def update_duplicates_display(check_clicks, delete_duplicates_clicks, display_du
     if not ctx.triggered:
         print("No input was triggered.")
         return dash.no_update, dash.no_update
-    
+
     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
     print(f"Triggered by: {triggered_id}")
 
@@ -653,15 +653,15 @@ def check_duplicates(n_clicks, columns):
         return "Please enter one or more columns to check for duplicates."
 
     column_list = [col.strip() for col in columns.split(',')]
-    
+
     try:
-    
+
         with psycopg2.connect(
             host="localhost", port="5432", database="homicide_main",
             user="postgres", password="Khiz1234"
         ) as conn:
             query = f"""
-                SELECT {', '.join(column_list)}, COUNT(*) 
+                SELECT {', '.join(column_list)}, COUNT(*)
                 FROM homicide_news
                 GROUP BY {', '.join(column_list)}
                 HAVING COUNT(*) > 1
@@ -673,12 +673,12 @@ def check_duplicates(n_clicks, columns):
             return dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
     except Exception as e:
         return f"An error ocurred : {str(e)}"
-    
+
 #Deleting duplicates in the field and inserting it into a duplicates table
 def delete_duplicates(n_clicks, column_name):
     if n_clicks == 0 or not column_name:
         return '', dash.no_update
-    
+
     try:
         with psycopg2.connect(
             host="localhost", port="5432", database="homicide_main",
@@ -687,8 +687,8 @@ def delete_duplicates(n_clicks, column_name):
             with conn.cursor() as cursor:
                 # Check if the column exists
                 cursor.execute(f"""
-                    SELECT column_name 
-                    FROM information_schema.columns 
+                    SELECT column_name
+                    FROM information_schema.columns
                     WHERE table_name='homicide_news' AND column_name='{column_name}'
                 """)
                 if not cursor.fetchone():
@@ -741,11 +741,11 @@ def delete_duplicates(n_clicks, column_name):
         print(f"Error in delete_duplicates: {str(e)}")  # Log the error
         return f"An error occurred: {str(e)}", dash.no_update
 
-#Displaying the duplicates table 
-def display_duplicates_table(n_clicks):    
+#Displaying the duplicates table
+def display_duplicates_table(n_clicks):
     if n_clicks is None or n_clicks == 0:
         return "Please click the 'Display Duplicate Table' button to show data"
-    
+
     try:
         with psycopg2.connect(
             host="localhost", port="5432", database="homicide_main",
@@ -754,12 +754,12 @@ def display_duplicates_table(n_clicks):
             query = '''SELECT * FROM duplicates'''
             print(f"Executing query: {query}")
             df = pd.read_sql_query(query, conn)
-        
+
         print(f"Query executed successfully. Dataframe shape: {df.shape}")
         if df.empty:
             print("The resulting dataframe is empty.")
             return "No data found.",None
-        
+
         table = dash_table.DataTable(
             columns=[{"name": col, "id": col} for col in df.columns],
             data=df.to_dict('records'),
@@ -767,7 +767,7 @@ def display_duplicates_table(n_clicks):
             style_table={'overflowX': 'auto'},
             style_cell={'textAlign': 'left'}
         )
-        
+
         print("Table created successfully.")
         return "", table  # Return only the table, no message needed
     except Exception as e:
@@ -782,7 +782,7 @@ def delete_record(n_clicks, article_id):
         return '', dash.no_update
     count_in_delete = -1
     count_in_homicide = -1
-    
+
     try:
         article_id = int(article_id)
 
@@ -802,8 +802,8 @@ def delete_record(n_clicks, article_id):
                 print(count_in_delete)
 
                 if count_in_homicide == 0 and count_in_delete == 0:
-                    return html.Div(f"No record found with the article_id {article_id} in either table.") 
-                
+                    return html.Div(f"No record found with the article_id {article_id} in either table.")
+
                 if count_in_delete > 0:
                     return html.Div(f"Record with article_id {article_id} has already been deleted and is in the delete_dash table.")
 
@@ -819,12 +819,12 @@ def delete_record(n_clicks, article_id):
 
                     for record in records:
                         cursor.execute("""
-                            INSERT INTO delete_dash (article_id, news_report_url, news_report_headline, 
-                            news_report_platform, date_of_publication, author, wire_service, no_of_subs, victim_name, 
-                            date_of_death, race_of_victim, age_of_victim, place_of_death_province, place_of_death_town, 
-                            type_of_location, sexual_assault, mode_of_death_specific, robbery_y_n_u, perpetrator_name, 
-                            perpetrator_relationship_to_victim, suspect_arrested, suspect_convicted, multiple_murder, 
-                            intimate_femicide_y_n_u, extreme_violence_y_n_m_u, notes) 
+                            INSERT INTO delete_dash (article_id, news_report_url, news_report_headline,
+                            news_report_platform, date_of_publication, author, wire_service, no_of_subs, victim_name,
+                            date_of_death, race_of_victim, age_of_victim, place_of_death_province, place_of_death_town,
+                            type_of_location, sexual_assault, mode_of_death_specific, robbery_y_n_u, perpetrator_name,
+                            perpetrator_relationship_to_victim, suspect_arrested, suspect_convicted, multiple_murder,
+                            intimate_femicide_y_n_u, extreme_violence_y_n_m_u, notes)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                             record)
 
@@ -879,7 +879,7 @@ def display_delete_table(n_clicks):
     State('delete-record-input', 'value'),
     prevent_initial_call = True
 )
-# Handling the delete function 
+# Handling the delete function
 def handle_delete(n_clicks, article_id):
     if n_clicks is None or n_clicks == 0:
         return dash.no_update
@@ -896,7 +896,7 @@ def handle_delete(n_clicks, article_id):
 def update_table(n_clicks):
     return display_delete_table(n_clicks)
 
-#Callbacks to manage the data visualization functionality 
+#Callbacks to manage the data visualization functionality
 @app.callback(
     Output('plot-type-dropdown', 'options'),
     Input('plot-category-dropdown', 'value'),
@@ -910,7 +910,7 @@ def update_plot_type_dropdown(category_value):
         return [{'label': 'Choropleth Map', 'value': 'choropleth_map'}]
     elif category_value == 'demographic_insights':
         return [
-            {'label': 'Bar Chart (Race Breakdown)', 'value': 'race_bar_chart'}, 
+            {'label': 'Bar Chart (Race Breakdown)', 'value': 'race_bar_chart'},
             {'label': 'Age Distribution Histogram', 'value': 'age_histogram'},
             {'label': 'Gender Comparison Plot', 'value': 'gender_comparison'}
         ]
@@ -935,59 +935,59 @@ def render_plot(category_value, plot_type_value):
     try:
         fig = None
     # Homicides Over Time
-   
+
         if category_value == 'homicides_over_time':
                 query = """
-                    SELECT "VICTIM NAME", MONTH 
+                    SELECT "VICTIM NAME", MONTH
                     FROM open_day_homicide_data
                     GROUP BY "VICTIM NAME", MONTH
                 """
                 df = pd.read_sql(query, conn)
-                
+
                 # Check if df is empty before proceeding
                 if df.empty:
                     print("No data returned from the database.")
                     return html.Div("No data available to display.")
-                
+
                 # Convert month names to datetime objects
                 df['date'] = pd.to_datetime(df['month'], format='%B', errors='coerce')
-                
+
                 # If the above fails, try with abbreviated month names
                 if df['date'].isnull().all():
                     df['date'] = pd.to_datetime(df['month'], format='%b', errors='coerce')
-                
+
                 # If there are still null values, print the problematic entries
                 if df['date'].isnull().any():
                     print("Problematic month entries:")
                     print(df[df['date'].isnull()]['month'].unique())
-                
+
                 # Check if any valid dates were created
                 if df['date'].isnull().all():
                     print("All month entries are invalid.")
                     return html.Div("Unable to process month data for plotting.")
-                
+
                 # Group by month and get the count
                 data = df.groupby('month').size().reset_index(name='count')
-                
+
                 # Add the datetime column for sorting
                 data['date'] = pd.to_datetime(data['month'], format='%B', errors='coerce')
                 if data['date'].isnull().all():
                     data['date'] = pd.to_datetime(data['month'], format='%b', errors='coerce')
-                
+
                 # Sort the data by date
                 data = data.sort_values('date')
-                
+
                 # Check if there is any data left after sorting
                 if data.empty:
                     print("No valid data to plot after grouping and sorting.")
                     return html.Div("No data available to display.")
-                
+
                 # Plot based on plot_type_value
                 if plot_type_value == 'line_plot':
                     fig = px.line(data, x='month', y='count', title='Homicides Over Time')
                 elif plot_type_value == 'bar_chart':
                     fig = px.bar(data, x='month', y='count', title='Homicides Over Time')
-                
+
                 # Set the x-axis tick order
                 fig.update_xaxes(categoryorder='array', categoryarray=data['month'])
 
@@ -995,24 +995,24 @@ def render_plot(category_value, plot_type_value):
 # Geographical Distribution
         elif category_value == 'geographical_distribution':
             query = """
-                SELECT province, COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count 
+                SELECT province, COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count
                 FROM open_day_homicide_data
                 GROUP BY province
             """
             df = pd.read_sql(query, conn)
-            
+
             if plot_type_value == 'choropleth_map':
-                fig = px.choropleth(df, 
-                        geojson=geojson_data, 
+                fig = px.choropleth(df,
+                        geojson=geojson_data,
                         locations='province',  # Use lowercase 'province'
-                        featureidkey="properties.name", 
-                        color='count', 
-                        color_continuous_scale="Reds", 
+                        featureidkey="properties.name",
+                        color='count',
+                        color_continuous_scale="Reds",
                         title='Homicides by Province',
                         scope='africa')
 
     # Focus on South Africa
-                fig.update_geos(fitbounds="locations", visible = False)  
+                fig.update_geos(fitbounds="locations", visible = False)
 
     # Update layout: background color, centered title, and margins
                 fig.update_layout(
@@ -1031,12 +1031,12 @@ def render_plot(category_value, plot_type_value):
         elif category_value == 'demographic_insights':
             if plot_type_value == 'race_bar_chart':
                 query = """
-                    SELECT race, COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count 
-                    FROM open_day_homicide_data 
-                    GROUP BY race 
+                    SELECT race, COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count
+                    FROM open_day_homicide_data
+                    GROUP BY race
                 """
                 df = pd.read_sql(query, conn)
-                fig = px.bar(df, x='race', y='count', title='Race Breakdown of Victims', color_discrete_sequence=['red']) 
+                fig = px.bar(df, x='race', y='count', title='Race Breakdown of Victims', color_discrete_sequence=['red'])
 
             elif plot_type_value == 'age_histogram':
                 query = """
@@ -1047,12 +1047,12 @@ def render_plot(category_value, plot_type_value):
                 df = pd.read_sql(query, conn)
                 if df.empty:
                     return "No valid age data available."
-                
+
                 fig = px.histogram(df, x='age', nbins=20, title='Age Distribution of Homicide Victims')
 
             elif plot_type_value == 'gender_comparison':
                 query = """
-                    SELECT "SUSPECT GENDER", COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count 
+                    SELECT "SUSPECT GENDER", COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count
                     FROM open_day_homicide_data
                     WHERE "SUSPECT GENDER" IS NOT NULL
                     GROUP BY "SUSPECT GENDER"
@@ -1064,48 +1064,48 @@ def render_plot(category_value, plot_type_value):
         elif category_value == 'victim_perpetrator_relationship':
             if plot_type_value == 'relationship_bar_chart':
                 query = """
-                    SELECT "VIC SUSP RELATIONSHIP", COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count 
-                    FROM open_day_homicide_data 
+                    SELECT "VIC SUSP RELATIONSHIP", COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count
+                    FROM open_day_homicide_data
                     WHERE "VIC SUSP RELATIONSHIP"IS NOT NULL
                     GROUP BY "VIC SUSP RELATIONSHIP"
                 """
                 df = pd.read_sql(query, conn)
 
-                fig = px.bar(df, 
-                            x="VIC SUSP RELATIONSHIP", 
-                            y='count', 
+                fig = px.bar(df,
+                            x="VIC SUSP RELATIONSHIP",
+                            y='count',
                             title='Homicides by Victim-Perpetrator Relationship')
 
             elif plot_type_value == 'relationship_heatmap':
                 query = """
-                    SELECT "VIC SUSP RELATIONSHIP", "MODE OF DEATH", COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count 
-                    FROM open_day_homicide_data 
+                    SELECT "VIC SUSP RELATIONSHIP", "MODE OF DEATH", COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count
+                    FROM open_day_homicide_data
                     WHERE "VIC SUSP RELATIONSHIP" IS NOT NULL AND "MODE OF DEATH" IS NOT NULL
                     GROUP BY "VIC SUSP RELATIONSHIP", "MODE OF DEATH"
                 """
                 df = pd.read_sql(query, conn)
 
-                fig = px.density_heatmap(df, 
-                                        x="VIC SUSP RELATIONSHIP", 
-                                        y="MODE OF DEATH", 
-                                        z='count', 
+                fig = px.density_heatmap(df,
+                                        x="VIC SUSP RELATIONSHIP",
+                                        y="MODE OF DEATH",
+                                        z='count',
                                         title='Relationship vs Mode of Death Heatmap')
 
         #Multivariable plot which shows the correlation between different fields
         elif category_value == 'multivariate_comparisons':
             if plot_type_value == 'scatter_plot':
                 query = """
-                    SELECT "LOCATION (HOME/PUBLIC/WORK/UNKNOWN)", COUNT(DISTINCT "VICTIM NAME"|| ' ' || MONTH::text) as homicide_count 
+                    SELECT "LOCATION (HOME/PUBLIC/WORK/UNKNOWN)", COUNT(DISTINCT "VICTIM NAME"|| ' ' || MONTH::text) as homicide_count
                     FROM open_day_homicide_data
-                    WHERE "LOCATION (HOME/PUBLIC/WORK/UNKNOWN)" IS NOT NULL 
+                    WHERE "LOCATION (HOME/PUBLIC/WORK/UNKNOWN)" IS NOT NULL
                     GROUP BY "LOCATION (HOME/PUBLIC/WORK/UNKNOWN)"
                 """
                 df = pd.read_sql(query, conn)
-                
+
                 #Scatter plot of location type vs homicide count
                 fig = px.scatter(
                     df,
-                    x="LOCATION (HOME/PUBLIC/WORK/UNKNOWN)", 
+                    x="LOCATION (HOME/PUBLIC/WORK/UNKNOWN)",
                     y='homicide_count',
                     title='Location Type vs Homicide Count',
                     labels={
@@ -1115,12 +1115,12 @@ def render_plot(category_value, plot_type_value):
                     size='homicide_count',  # Size of points by homicide count
                     color='homicide_count'  # Color points by homicide count
                 )
-                fig.update_traces(marker_size=10) 
+                fig.update_traces(marker_size=10)
                 fig.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
 
             elif plot_type_value == 'bubble_plot':
                 query = """
-                    SELECT "MODE OF DEATH", "SUSPECT CONVICTED", COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count 
+                    SELECT "MODE OF DEATH", "SUSPECT CONVICTED", COUNT(DISTINCT "VICTIM NAME" || ' ' || MONTH::text) as count
                     FROM open_day_homicide_data
                     WHERE "MODE OF DEATH" IS NOT NULL AND "SUSPECT CONVICTED" IS NOT NULL
                     GROUP BY "MODE OF DEATH", "SUSPECT CONVICTED"
@@ -1133,10 +1133,10 @@ def render_plot(category_value, plot_type_value):
                     'Unknown': 'purple'
                 }
 
-                fig = px.scatter(df, 
-                                x="MODE OF DEATH", 
-                                y="SUSPECT CONVICTED", 
-                                size='count', 
+                fig = px.scatter(df,
+                                x="MODE OF DEATH",
+                                y="SUSPECT CONVICTED",
+                                size='count',
                                 color='SUSPECT CONVICTED',
                                 color_discrete_map=color_map,
                                 hover_data=['count'],
@@ -1166,7 +1166,7 @@ def render_plot(category_value, plot_type_value):
         return html.Div(f"An erro occured: {str(e)}")
         #return "Please select a plot type."
 
-#Callback to handle the custom data visualisation in which the user can visualise different aspects of the data 
+#Callback to handle the custom data visualisation in which the user can visualise different aspects of the data
 #and see the correlation between the different fields in the data
 @app.callback(
     Output('custom-bar-graph', 'figure'),

@@ -43,7 +43,7 @@ def load_thread_relationships(repo_root):
                 # maybe the JSON already contains the mapping under 'threads' names
                 if 'threads' in data:
                     # convert threads -> mapping of name -> edges list; keep as-is for generator
-                    # Attempt to normalize back to thread_relationships simple mapping when possible
+                    # Attempt to normalise back to thread_relationships simple mapping when possible
                     mapping = {}
                     for k, v in data['threads'].items():
                         rels = {}
@@ -110,7 +110,7 @@ def infer_thread_relationships_from_sessions(sessions):
     co = defaultdict(lambda: defaultdict(int))
     co_examples = defaultdict(lambda: defaultdict(list))
 
-    # Normalize threads per session: collect primary + related; if none, try to infer from path
+    # Normalise threads per session: collect primary + related; if none, try to infer from path
     for s in sessions:
         threads = []
         if s.get('primary_thread'):

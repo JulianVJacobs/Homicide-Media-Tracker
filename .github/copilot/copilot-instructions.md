@@ -5,19 +5,16 @@ This Markdown file is designed to orchestrate the flow of tasks for AI agents. I
 ## Task Flow
 
 1. **Locate the Configuration File**
-
    - Path: `.github/copilot/config.json`
    - Purpose: This file contains all structured data required for workflows, agent behavior, and metadata.
 
 2. **Reference Relevant Sections**
-
    - **Workflows**: For task execution patterns, see the `workflows` section.
    - **Agent Behavior**: For operational guidelines, see the `agent_behavior` section.
    - **Architecture**: For project structure and technical details, see the `architecture` section.
    - **Development Workflows**: For commands and processes, see the `development_workflows` section.
 
 3. **Parse the JSON File**
-
    - AI agents must parse the JSON file directly to retrieve all instructions.
    - Use the sections listed above to guide task execution.
 
@@ -39,13 +36,13 @@ Each workflow in the configuration file follows this schema:
 
 ```json
 {
-  "name": "initialize_chat",
-  "description": "Initialize a chat session by searching logs and creating a context file.",
-  "triggers": ["chat_initialized", "user_command:initialize"],
+  "name": "initialise_chat",
+  "description": "Initialise a chat session by searching logs and creating a context file.",
+  "triggers": ["chat_initialised", "user_command:initialise"],
   "actions": ["get_date", "search_logs", "filter_logs"],
   "related_rules": ["context_priority", "tool_usage"],
   "examples": [
-    "Use this workflow to initialize a new chat session.",
+    "Use this workflow to initialise a new chat session.",
     "Use this workflow to create a context file for an ongoing session."
   ]
 }

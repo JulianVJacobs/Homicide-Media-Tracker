@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databaseManager } from '../../../../lib/database/connection';
-import { detectDuplicates } from '../../../../lib/database/utils';
-import * as schema from '../../../../lib/database/schema';
+import { dbm } from '../../../../lib/db/manager';
+import { detectDuplicates } from '../../../../lib/components/utils';
+import * as schema from '../../../../lib/db/schema';
 
 /**
  * POST /api/articles/duplicates - Detect duplicate articles
@@ -10,17 +10,22 @@ export async function POST(request: NextRequest) {
   try {
     const articleData = await request.json();
 
-    if (!articleData.newsReportUrl || !articleData.newsReportHeadline || !articleData.author) {
+    if (
+      !articleData.newsReportUrl ||
+      !articleData.newsReportHeadline ||
+      !articleData.author
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: 'URL, headline, and author are required for duplicate detection',
+          error:
+            'URL, headline, and author are required for duplicate detection',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const db = databaseManager.getLocal();
+    const db = dbm.getLocal();
 
     // Get all existing articles for comparison
     const existingArticles = await db.select().from(schema.articles);
@@ -36,7 +41,6 @@ export async function POST(request: NextRequest) {
         matches: duplicates,
       },
     });
-
   } catch (error) {
     console.error('Failed to detect duplicates:', error);
     return NextResponse.json(
@@ -44,7 +48,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Failed to detect duplicates',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -57,7 +61,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const threshold = parseFloat(url.searchParams.get('threshold') || '0.7');
 
-    const db = databaseManager.getLocal();
+    const db = dbm.getLocal();
 
     // Get all articles
     const articles = await db.select().from(schema.articles);
@@ -73,7 +77,7 @@ export async function GET(request: NextRequest) {
 
       const duplicates = detectDuplicates(currentArticle, remainingArticles);
       const highConfidenceMatches = duplicates.filter(
-        match => match.similarity >= threshold
+        (match) => match.similarity >= threshold,
       );
 
       if (highConfidenceMatches.length > 0) {
@@ -86,8 +90,8 @@ export async function GET(request: NextRequest) {
 
         // Mark all articles in this group as processed
         processed.add(currentArticle.id);
-        highConfidenceMatches.forEach(match => {
-          const matchedArticle = articles.find(a => a.id === match.id);
+        highConfidenceMatches.forEach((match) => {
+          const matchedArticle = articles.find((a: schema.Article) => a.id === match.id);
           if (matchedArticle) {
             processed.add(matchedArticle.id);
           }
@@ -104,7 +108,6 @@ export async function GET(request: NextRequest) {
         totalArticles: articles.length,
       },
     });
-
   } catch (error) {
     console.error('Failed to get duplicate articles:', error);
     return NextResponse.json(
@@ -112,7 +115,7 @@ export async function GET(request: NextRequest) {
         success: false,
         error: 'Failed to retrieve duplicate articles',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

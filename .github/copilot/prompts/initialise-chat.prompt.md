@@ -1,6 +1,6 @@
 ---
 mode: agent
-description: Initialize chat session by searching own logs and creating context file per copilot-config.yml
+description: Initialise chat session by searching own logs and creating context file per copilot-config.yml
 ---
 
 # Chat Initialization & Context Creation
@@ -78,6 +78,6 @@ sleep 3 && grep -l "Tue Sep  9 13:54:24 UTC 2025" .copilot-chats/*.json | head -
 1. Parse `.copilot-chats/{sessionId}.json` for chat metadata
 2. Extract request-action-result patterns from conversation
 3. Identify active/inactive threads from tool usage
-4. Create machine-readable context file optimized for AI agent parsing
+4. Create machine-readable context file optimised for AI agent parsing
 
 Execute this initialization immediately upon session start to establish proper context retention.

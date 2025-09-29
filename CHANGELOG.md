@@ -127,7 +127,7 @@ For full change list, see https://github.com/electron-react-boilerplate/electron
 # 0.15.0 (2018.8.25)
 
 - Performance: cache webpack uglify results
-- Feature: add start minimized feature
+- Feature: add start minimised feature
 - Feature: lint and fix styles with prettier and stylelint
 - Feature: add greenkeeper support
 
@@ -173,7 +173,7 @@ For full change list, see https://github.com/electron-react-boilerplate/electron
 #### Misc
 
 - Removed `babel-polyfill`
-- Renamed and alphabetized npm scripts
+- Renamed and alphabetised npm scripts
 
 #### Breaking
 
@@ -257,7 +257,7 @@ Here's the most notable changes since `v0.10.0`. Its been about a year since a r
 
 #### Improvements
 
-- **Parallelize renderer and main build processes when running `npm run build`**
+- **Parallelise renderer and main build processes when running `npm run build`**
 - **Dynamically generate electron app menu**
 - **Improved vscode integration:** [#856](https://github.com/electron-react-boilerplate/electron-react-boilerplate/pull/856)
 
@@ -360,7 +360,7 @@ Here's the most notable changes since `v0.10.0`. Its been about a year since a r
 
 #### Improvements
 
-- **Initialize ExtractTextPlugin once:** [#64](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/64).
+- **Initialise ExtractTextPlugin once:** [#64](https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues/64).
 
 # 0.6.2 (2015.10.18)
 

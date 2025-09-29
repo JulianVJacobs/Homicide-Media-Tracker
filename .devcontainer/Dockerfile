@@ -61,7 +61,7 @@ USER vscode
 # Set working directory
 WORKDIR /workspace
 
-# Initialize wine for the user and create entrypoint
+# Initialise wine for the user and create entrypoint
 RUN wine --version && \
     echo '#!/bin/bash' > /home/vscode/entrypoint.sh && \
     echo '' >> /home/vscode/entrypoint.sh && \
@@ -72,7 +72,7 @@ RUN wine --version && \
     echo 'export WINEARCH=win64' >> /home/vscode/entrypoint.sh && \
     echo 'export WINEPREFIX=/home/vscode/.wine' >> /home/vscode/entrypoint.sh && \
     echo '' >> /home/vscode/entrypoint.sh && \
-    echo '# Initialize Wine if needed' >> /home/vscode/entrypoint.sh && \
+    echo '# Initialise Wine if needed' >> /home/vscode/entrypoint.sh && \
     echo 'if [ ! -d "$WINEPREFIX" ]; then' >> /home/vscode/entrypoint.sh && \
     echo '  echo "Initializing Wine..."' >> /home/vscode/entrypoint.sh && \
     echo '  wineboot --init &>/dev/null' >> /home/vscode/entrypoint.sh && \

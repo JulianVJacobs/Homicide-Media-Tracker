@@ -88,39 +88,39 @@ def display_table(selected_columns):
     except Exception as e:
         st.error(f"Error in display_selected_columns: {str(e)}")
 
-    
+
 #Insert functionality
-def insert_data(report_url, news_publisher, date_of_publication, wire_service, author_name, news_headline, 
-                victim_name, age, date_of_death, mode_of_death, race, location_type, province, town, 
+def insert_data(report_url, news_publisher, date_of_publication, wire_service, author_name, news_headline,
+                victim_name, age, date_of_death, mode_of_death, race, location_type, province, town,
                 suspect_name, no_of_suspects, suspect_arrested, suspect_convicted, relationship, sexual_assault,
                 robbery, multiple_murder, extreme_violence, intimate_femicide, notes):
-    
-    insert_query = text('''INSERT INTO homicide_news 
-            (news_report_url, news_report_platform, date_of_publication, author, news_report_headline, no_of_subs, 
-            wire_service, victim_name, date_of_death, age_of_victim, race_of_victim, type_of_location, 
-            place_of_death_town, place_of_death_province, sexual_assault, mode_of_death_specific, robbery_y_n_u, 
-            suspect_arrested, suspect_convicted, perpetrator_name, perpetrator_relationship_to_victim, 
+
+    insert_query = text('''INSERT INTO homicide_news
+            (news_report_url, news_report_platform, date_of_publication, author, news_report_headline, no_of_subs,
+            wire_service, victim_name, date_of_death, age_of_victim, race_of_victim, type_of_location,
+            place_of_death_town, place_of_death_province, sexual_assault, mode_of_death_specific, robbery_y_n_u,
+            suspect_arrested, suspect_convicted, perpetrator_name, perpetrator_relationship_to_victim,
             multiple_murder, extreme_violence_y_n_m_u, intimate_femicide_y_n_u, notes)
-            VALUES (:report_url, :news_publisher, :date_of_publication, :author_name, :news_headline, :no_of_suspects, 
-            :wire_service, :victim_name, :date_of_death, :age, :race, :location_type, :town, :province, 
-            :sexual_assault, :mode_of_death, :robbery, :suspect_arrested, :suspect_convicted, 
+            VALUES (:report_url, :news_publisher, :date_of_publication, :author_name, :news_headline, :no_of_suspects,
+            :wire_service, :victim_name, :date_of_death, :age, :race, :location_type, :town, :province,
+            :sexual_assault, :mode_of_death, :robbery, :suspect_arrested, :suspect_convicted,
             :suspect_name, :relationship, :multiple_murder, :extreme_violence, :intimate_femicide, :notes)''')
 
     values = {
-        'report_url': report_url, 'news_publisher': news_publisher, 'date_of_publication': date_of_publication, 
-        'author_name': author_name, 'news_headline': news_headline, 'no_of_suspects': no_of_suspects, 
-        'wire_service': wire_service, 'victim_name': victim_name, 'date_of_death': date_of_death, 
-        'age': age, 'race': race, 'location_type': location_type, 'town': town, 'province': province, 
-        'sexual_assault': sexual_assault, 'mode_of_death': mode_of_death, 'robbery': robbery, 
-        'suspect_arrested': suspect_arrested, 'suspect_convicted': suspect_convicted, 
-        'suspect_name': suspect_name, 'relationship': relationship, 'multiple_murder': multiple_murder, 
+        'report_url': report_url, 'news_publisher': news_publisher, 'date_of_publication': date_of_publication,
+        'author_name': author_name, 'news_headline': news_headline, 'no_of_suspects': no_of_suspects,
+        'wire_service': wire_service, 'victim_name': victim_name, 'date_of_death': date_of_death,
+        'age': age, 'race': race, 'location_type': location_type, 'town': town, 'province': province,
+        'sexual_assault': sexual_assault, 'mode_of_death': mode_of_death, 'robbery': robbery,
+        'suspect_arrested': suspect_arrested, 'suspect_convicted': suspect_convicted,
+        'suspect_name': suspect_name, 'relationship': relationship, 'multiple_murder': multiple_murder,
         'extreme_violence': extreme_violence, 'intimate_femicide': intimate_femicide, 'notes': notes
     }
 
-    
+
     # Debug: Print the values
     st.write("Values: ", values)
-    
+
     with engine.connect() as connection:
         connection.execute(insert_query, values)
         connection.commit()
@@ -161,7 +161,7 @@ def create_delete_table():
             deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     '''
-    
+
     with engine.connect() as connection:
         connection.execute(text(create_table_query))
         print("Delete table checked/created.")
@@ -180,16 +180,16 @@ def delete_data(record_id):
     insert_query = text('''
         INSERT INTO delete
         (article_id, news_report_url, news_report_platform, date_of_publication, author, news_report_headline, no_of_subs, wire_service,
-         victim_name, date_of_death, age_of_victim, race_of_victim, type_of_location, place_of_death_town, place_of_death_province, 
-         sexual_assault, mode_of_death_specific, robbery_y_n_u, suspect_arrested, suspect_convicted, perpetrator_name, 
+         victim_name, date_of_death, age_of_victim, race_of_victim, type_of_location, place_of_death_town, place_of_death_province,
+         sexual_assault, mode_of_death_specific, robbery_y_n_u, suspect_arrested, suspect_convicted, perpetrator_name,
          perpetrator_relationship_to_victim, multiple_murder, extreme_violence_y_n_m_u, intimate_femicide_y_n_u, notes)
-        VALUES 
+        VALUES
         (:article_id, :news_report_url, :news_report_platform, :date_of_publication, :author, :news_report_headline, :no_of_subs, :wire_service,
-         :victim_name, :date_of_death, :age_of_victim, :race_of_victim, :type_of_location, :place_of_death_town, :place_of_death_province, 
-         :sexual_assault, :mode_of_death_specific, :robbery_y_n_u, :suspect_arrested, :suspect_convicted, :perpetrator_name, 
+         :victim_name, :date_of_death, :age_of_victim, :race_of_victim, :type_of_location, :place_of_death_town, :place_of_death_province,
+         :sexual_assault, :mode_of_death_specific, :robbery_y_n_u, :suspect_arrested, :suspect_convicted, :perpetrator_name,
          :perpetrator_relationship_to_victim, :multiple_murder, :extreme_violence_y_n_m_u, :intimate_femicide_y_n_u, :notes)
     ''')
-    
+
     with engine.connect() as connection:
         # Fetch the record that will be deleted
         result = connection.execute(select_query, {"record_id": record_id}).fetchone()
@@ -197,11 +197,11 @@ def delete_data(record_id):
         if result is not None:
                     # Convert the fetched result to a dictionary for easy parameter binding
                     record = dict(result._mapping)
-                    
+
                     # Insert the record into the delete table
                     connection.execute(insert_query, record)
                     connection.commit()
-                    
+
                     # Now delete the record from the homicide_news table
                     connection.execute(delete_query, {"record_id": record_id})
                     connection.commit()
@@ -209,14 +209,14 @@ def delete_data(record_id):
                     return f"Record {record_id} deleted and stored in the delete table."
         else:
                     return f"Record {record_id} not found."
-                
+
 def display_delete():
     delete_table_query = "SELECT * FROM delete"
     data = fetch_data(delete_table_query)
     st.dataframe(data, height=600, width=1500)  # Adjust height and width here
 
-    
-#Duplicates - Here we will show the duplicates, delete them and store them in another table called duplicates 
+
+#Duplicates - Here we will show the duplicates, delete them and store them in another table called duplicates
 def check_duplicates(columns):
     if not columns:
         st.write("Please enter one or more columns to check for duplicates.")
@@ -231,8 +231,8 @@ def check_duplicates(columns):
             user="postgres", password="Khiz1234"
         ) as conn:
             query = f"""
-                SELECT {', '.join(column_list)}, COUNT(*) 
-                FROM homicide_news 
+                SELECT {', '.join(column_list)}, COUNT(*)
+                FROM homicide_news
                 GROUP BY {', '.join(column_list)}
                 HAVING COUNT(*) > 1
             """
@@ -248,7 +248,7 @@ def check_duplicates(columns):
 
     except Exception as e:
         st.error(f"Error checking duplicates: {str(e)}")
-        
+
 # Function to delete duplicates based on a specific column
 def delete_duplicates(column_name, columns_to_display):
     if not column_name:
@@ -263,8 +263,8 @@ def delete_duplicates(column_name, columns_to_display):
             with conn.cursor() as cursor:
                 # Check if the column exists
                 cursor.execute(f"""
-                    SELECT column_name 
-                    FROM information_schema.columns 
+                    SELECT column_name
+                    FROM information_schema.columns
                     WHERE table_name='homicide_news' AND column_name='{column_name}'
                 """)
                 if not cursor.fetchone():
@@ -332,15 +332,15 @@ def delete_duplicates(column_name, columns_to_display):
 def display_duplicates():
     duplicates_table_query = "SELECT * FROM duplicates"
     data = fetch_data(duplicates_table_query)
-    st.dataframe(data, height=600, width=1500) 
+    st.dataframe(data, height=600, width=1500)
 
-# Visualize data
-def visualize_data():
+# Visualise data
+def visualise_data():
 
 # Define the dropdowns for plot categories and plot types
     category_value = st.selectbox(
         'Select Plot Category',
-        ['homicides_over_time', 'geographical_distribution', 'demographic_insights', 
+        ['homicides_over_time', 'geographical_distribution', 'demographic_insights',
         'victim_perpetrator_relationship', 'multivariate_comparisons']
     )
     return category_value
@@ -365,7 +365,7 @@ def update_plot_type_dropdown(category_value):
 # Fetch data and render plot based on selections
 def render_plot(category_value, plot_type_value):
     connect = get_db_connection()
-    fig = None  # Initialize figure
+    fig = None  # Initialise figure
 
     if category_value == 'homicides_over_time':
         query = """
@@ -374,7 +374,7 @@ def render_plot(category_value, plot_type_value):
             GROUP BY victim_name, date_of_death
         """
         df = pd.read_sql(query, connect)
-        
+
         df['date_of_death'] = pd.to_datetime(df['date_of_death'])
         df['year_of_death'] = df['date_of_death'].dt.year
         data = df.groupby('year_of_death').size().reset_index(name='count')
@@ -386,8 +386,8 @@ def render_plot(category_value, plot_type_value):
 
     elif category_value == 'geographical_distribution':
         query = """
-            SELECT place_of_death_province, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count 
-            FROM homicide_news 
+            SELECT place_of_death_province, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count
+            FROM homicide_news
             GROUP BY place_of_death_province
         """
         df = pd.read_sql(query, connect)
@@ -422,13 +422,13 @@ def render_plot(category_value, plot_type_value):
                 lataxis_range=[-35, -22],  # Latitude bounds for South Africa
                 lonaxis_range=[16, 33]     # Longitude bounds for South Africa
             )
-                    
+
 
     elif category_value == 'demographic_insights':
         if plot_type_value == 'Bar Chart (Race Breakdown)':
             query = """
-                SELECT race_of_victim, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count 
-                FROM homicide_news 
+                SELECT race_of_victim, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count
+                FROM homicide_news
                 GROUP BY race_of_victim
             """
             df = pd.read_sql(query, connect)
@@ -448,7 +448,7 @@ def render_plot(category_value, plot_type_value):
 
         elif plot_type_value == 'Gender Comparison Plot':
             query = """
-                SELECT perpetrator_gender, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count 
+                SELECT perpetrator_gender, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count
                 FROM homicide_news
                 WHERE perpetrator_gender IS NOT NULL
                 GROUP BY perpetrator_gender
@@ -459,8 +459,8 @@ def render_plot(category_value, plot_type_value):
     elif category_value == 'victim_perpetrator_relationship':
         if plot_type_value == 'Relationship Bar Chart':
             query = """
-                SELECT perpetrator_relationship_to_victim, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count 
-                FROM homicide_news 
+                SELECT perpetrator_relationship_to_victim, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count
+                FROM homicide_news
                 WHERE perpetrator_relationship_to_victim IS NOT NULL
                 GROUP BY perpetrator_relationship_to_victim
             """
@@ -469,8 +469,8 @@ def render_plot(category_value, plot_type_value):
 
         elif plot_type_value == 'Heatmap':
             query = """
-                SELECT perpetrator_relationship_to_victim, mode_of_death_specific, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count 
-                FROM homicide_news 
+                SELECT perpetrator_relationship_to_victim, mode_of_death_specific, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count
+                FROM homicide_news
                 WHERE perpetrator_relationship_to_victim IS NOT NULL AND mode_of_death_specific IS NOT NULL
                 GROUP BY perpetrator_relationship_to_victim, mode_of_death_specific
             """
@@ -480,9 +480,9 @@ def render_plot(category_value, plot_type_value):
     elif category_value == 'multivariate_comparisons':
         if plot_type_value == 'Scatter Plot':
             query = """
-                SELECT type_of_location, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as homicide_count 
-                FROM homicide_news 
-                WHERE type_of_location IS NOT NULL 
+                SELECT type_of_location, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as homicide_count
+                FROM homicide_news
+                WHERE type_of_location IS NOT NULL
                 GROUP BY type_of_location
             """
             df = pd.read_sql(query, connect)
@@ -490,8 +490,8 @@ def render_plot(category_value, plot_type_value):
 
         elif plot_type_value == 'Bubble Plot':
             query = """
-                SELECT mode_of_death_specific, suspect_convicted, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count 
-                FROM homicide_news 
+                SELECT mode_of_death_specific, suspect_convicted, COUNT(DISTINCT victim_name || ' ' || date_of_death::text) as count
+                FROM homicide_news
                 WHERE mode_of_death_specific IS NOT NULL AND suspect_convicted IS NOT NULL
                 GROUP BY mode_of_death_specific, suspect_convicted
             """
@@ -575,16 +575,16 @@ def upload_csv():
             ) as conn:
                 df.to_sql('homicide_news', engine, if_exists='append', index=False)
                 st.success("CSV data appended successfully to table 'homicide_news'.")
-        
+
         except pd.errors.ParserError as e:
             st.error(f"Parsing error: {e}")
-        
+
         except UnicodeDecodeError as e:
             st.error(f"Decoding error: {e}")
-        
+
         except Exception as e:
-            st.error(f"An error occurred: {e}") 
-            
+            st.error(f"An error occurred: {e}")
+
 # Function to upload and append CSV data to a new table
 def upload_csv_to_new_table():
     uploaded_file = st.file_uploader("Choose a CSV file to upload and append to 'homicide_complete'", type="csv")
@@ -602,13 +602,13 @@ def upload_csv_to_new_table():
             ) as conn:
                 df.to_sql('homicide_complete', engine, if_exists='append', index=False)
                 st.success("CSV data appended successfully to 'homicide_complete'.")
-        
+
         except pd.errors.ParserError as e:
             st.error(f"Parsing error: {e}")
-        
+
         except UnicodeDecodeError as e:
             st.error(f"Decoding error: {e}")
-        
+
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
@@ -616,105 +616,105 @@ def upload_csv_to_new_table():
 st.sidebar.title("Homicide Data Tracker")
 
 # Sidebar for actions
-action = st.sidebar.radio("Choose an action", ["Display Data", "Insert Data", "Delete Data", "Visualize Data","Custom Data Visualization", "Data Duplicates", "Export and Upload Data"])
+action = st.sidebar.radio("Choose an action", ["Display Data", "Insert Data", "Delete Data", "Visualise Data","Custom Data Visualization", "Data Duplicates", "Export and Upload Data"])
 
 if action == "Display Data":
     highlighted_title("Homicide Data Table")
-    
-    available_columns = ['news_report_url', 'news_report_platform', 'date_of_publication', 'author', 
-                            'news_report_headline', 'no_of_subs', 'wire_service', 'victim_name', 'date_of_death', 
-                            'age_of_victim', 'race_of_victim', 'type_of_location', 'place_of_death_town', 
-                            'place_of_death_province', 'sexual_assault', 'mode_of_death_specific', 'robbery_y_n_u', 
-                            'suspect_arrested', 'suspect_convicted', 'perpetrator_name', 'perpetrator_relationship_to_victim', 
+
+    available_columns = ['news_report_url', 'news_report_platform', 'date_of_publication', 'author',
+                            'news_report_headline', 'no_of_subs', 'wire_service', 'victim_name', 'date_of_death',
+                            'age_of_victim', 'race_of_victim', 'type_of_location', 'place_of_death_town',
+                            'place_of_death_province', 'sexual_assault', 'mode_of_death_specific', 'robbery_y_n_u',
+                            'suspect_arrested', 'suspect_convicted', 'perpetrator_name', 'perpetrator_relationship_to_victim',
                             'multiple_murder', 'extreme_violence_y_n_m_u', 'intimate_femicide_y_n_u', 'notes']  # Replace with actual column names
     selected_columns = st.multiselect("Select columns to display in the table", available_columns)
-    
+
     display_all_columns = st.checkbox("Display All Columns", value=False)
-    
+
     if display_all_columns:
         display_whole_table()
     else:
         display_table(selected_columns)
-        
+
 elif action == "Insert Data":
     highlighted_title("Insert New Homicide Record")
-    
+
     #Input the url for the article
     report_url = st.text_area("Enter the news article or news report url")
-    
+
     news_publisher = st.text_input("Enter the news article publisher")
-    
+
     date_of_publication = st.date_input("Date of publication")
-    
+
     wire_service = st.text_input("Enter the wire service")
-    
+
     author_name  =  st.text_input("Enter the name of the author")
-    
+
     news_headline = st.text_input("Enter the news headline")
-    
+
     victim_name = st.text_input("Enter victim name")
-    
+
     age = st.selectbox("Victim's Age", list(range(0, 121)))
-    
+
     date_of_death = st.date_input("Enter the date of death")
-    
+
     mode_of_death = st.text_input("Enter the specific mode of death")
-    
+
     race = st.selectbox("Race", race_options)
-    
+
     location_type = st.text_input("Enter the type of location")
-    
+
     # Step 1: Select the province
     province = st.selectbox("Select Province", list(provinces.keys()))
-    
+
     # Step 2: Based on the selected province, select the town
     town = st.selectbox("Select Town", provinces[province])
-    
+
     suspect_name = st.text_input("Enter perpetrator name")
-    
+
     no_of_suspects = st.selectbox("Number of suspects", list(range(1, 200)))
-    
+
     suspect_arrested = st.selectbox("Is the perpetrator arrested", bool_options)
-    
+
     suspect_convicted = st.selectbox("Is the suspect convicted", bool_options)
-    
+
     relationship = st.selectbox("Relationship to Victim", relationship_options)
-    
+
     sexual_assault = st.selectbox("Sexual Assault", bool_options)
-    
+
     robbery = st.selectbox("Was there a robbery", bool_options)
-    
+
     multiple_murder = st.selectbox("Was there multiple murders", bool_options)
-    
+
     extreme_violence = st.selectbox("Was there extreme violence", bool_options)
-    
+
     intimate_femicide = st.selectbox("Intimate Femicide", bool_options)
-    
+
     notes = st.text_area("Extra notes")
-    
-    
+
+
     # Insert data into the database
     if st.button("Insert Record"):
-        insert_data(report_url, news_publisher, date_of_publication, wire_service, author_name, news_headline, 
-                victim_name, age, date_of_death, mode_of_death, race, location_type, province, town, 
+        insert_data(report_url, news_publisher, date_of_publication, wire_service, author_name, news_headline,
+                victim_name, age, date_of_death, mode_of_death, race, location_type, province, town,
                 suspect_name, no_of_suspects, suspect_arrested, suspect_convicted, relationship, sexual_assault,
                 robbery, multiple_murder, extreme_violence, intimate_femicide, notes)
         st.success("Record inserted successfully")
 
 elif action == "Delete Data":
     highlighted_title("Delete Record")
-    
+
     record_id = st.number_input("Record ID to delete", min_value=1)
-    
+
     if st.button("Delete Record"):
         delete_data(record_id)
         st.success("Record deleted successfully")
     st.subheader("Delete table")
     display_delete()
 
-elif action == "Visualize Data":
+elif action == "Visualise Data":
     highlighted_title("Data Visualisation")
-    cat_value = visualize_data()
+    cat_value = visualise_data()
     #conn = get_db_connection()
     plot_value = update_plot_type_dropdown(cat_value)
     st.write(f"Selected Category: {cat_value}")
@@ -728,23 +728,23 @@ elif action == "Data Duplicates":
     columns =  st.text_input("Enter columns to check for duplicates (comma-separated)")
     if st.button("Check Duplicates"):
         check_duplicates(columns)
-    
+
     st.subheader("Delete duplicate records")
-    column_to_display = st.multiselect("Select columns to display", 
+    column_to_display = st.multiselect("Select columns to display",
                                        ['news_report_url', 'news_report_platform', 'date_of_publication', 'author',
-                                        'news_report_headline', 'no_of_subs', 'wire_service', 'victim_name', 
-                                        'date_of_death', 'age_of_victim', 'race_of_victim', 'type_of_location', 
-                                        'place_of_death_town', 'place_of_death_province', 'sexual_assault', 
-                                        'mode_of_death_specific', 'robbery_y_n_u', 'suspect_arrested', 
-                                        'suspect_convicted', 'perpetrator_name', 'perpetrator_relationship_to_victim', 
-                                        'multiple_murder', 'extreme_violence_y_n_m_u', 'intimate_femicide_y_n_u', 
+                                        'news_report_headline', 'no_of_subs', 'wire_service', 'victim_name',
+                                        'date_of_death', 'age_of_victim', 'race_of_victim', 'type_of_location',
+                                        'place_of_death_town', 'place_of_death_province', 'sexual_assault',
+                                        'mode_of_death_specific', 'robbery_y_n_u', 'suspect_arrested',
+                                        'suspect_convicted', 'perpetrator_name', 'perpetrator_relationship_to_victim',
+                                        'multiple_murder', 'extreme_violence_y_n_m_u', 'intimate_femicide_y_n_u',
                                         'notes'])
     # Button to trigger the delete duplicates operation
     if st.button("Delete Duplicates"):
         delete_duplicates(columns, column_to_display)
     st.subheader("Duplicates table")
     display_duplicates()
-    
+
 elif action == "Export and Upload Data":
     highlighted_title("Export and Upload data")
     st.subheader("Export Data to CSV")
@@ -753,18 +753,18 @@ elif action == "Export and Upload Data":
     upload_csv()
     st.subheader("Upload CSV to New Table")
     upload_csv_to_new_table()
-    
+
 elif action == "Custom Data Visualization":
     highlighted_title("Customisable Bar Graph")
     x_axis = st.selectbox("Select x-axis for Bar Graph", options=['age_of_victim','place_of_death_province', 'race_of_victim',
                                                                  'perpetrator_relationship_to_victim'])
     y_axis = 'count'
-    
+
     # Button to generate the bar graph
     if st.button("Generate Bar Graph"):
         update_custom_bar_graph(x_axis)
-    
-    
-   
 
-    
+
+
+
+

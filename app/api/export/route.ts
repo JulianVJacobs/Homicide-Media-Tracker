@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { eq, gte, lte, like, or, and } from 'drizzle-orm';
-import { databaseManager } from '../../../lib/database/connection';
-import * as schema from '../../../lib/database/schema';
+import { dbm } from '../../../lib/db/manager';
+import * as schema from '../../../lib/db/schema';
 
 /**
  * Interface for export filters
@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const format = url.searchParams.get('format') || 'json'; // json, csv, xlsx
-    const includePersonalData = url.searchParams.get('includePersonalData') === 'true';
+    const includePersonalData =
+      url.searchParams.get('includePersonalData') === 'true';
 
     // Parse filters
     const filters: ExportFilters = {
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
       suspectStatus: url.searchParams.get('suspectStatus') || undefined,
     };
 
-    const db = databaseManager.getLocal();
+    const db = dbm.getLocal();
 
     // Build where conditions for each table
     const articleWhereConditions = [];
@@ -45,57 +46,83 @@ export async function GET(request: NextRequest) {
 
     // Apply date filters
     if (filters.dateFrom) {
-      articleWhereConditions.push(gte(schema.articles.dateOfPublication, filters.dateFrom));
+      articleWhereConditions.push(
+        gte(schema.articles.dateOfPublication, filters.dateFrom),
+      );
     }
     if (filters.dateTo) {
-      articleWhereConditions.push(lte(schema.articles.dateOfPublication, filters.dateTo));
+      articleWhereConditions.push(
+        lte(schema.articles.dateOfPublication, filters.dateTo),
+      );
     }
 
     // Apply victim filters
     if (filters.province) {
-      victimWhereConditions.push(eq(schema.victims.placeOfDeathProvince, filters.province));
+      victimWhereConditions.push(
+        eq(schema.victims.placeOfDeathProvince, filters.province),
+      );
     }
     if (filters.gender) {
-      victimWhereConditions.push(eq(schema.victims.genderOfVictim, filters.gender));
+      victimWhereConditions.push(
+        eq(schema.victims.genderOfVictim, filters.gender),
+      );
     }
     if (filters.ageRange) {
-      victimWhereConditions.push(eq(schema.victims.ageRangeOfVictim, filters.ageRange));
+      victimWhereConditions.push(
+        eq(schema.victims.ageRangeOfVictim, filters.ageRange),
+      );
     }
     if (filters.modeOfDeath) {
-      victimWhereConditions.push(eq(schema.victims.modeOfDeathGeneral, filters.modeOfDeath));
+      victimWhereConditions.push(
+        eq(schema.victims.modeOfDeathGeneral, filters.modeOfDeath),
+      );
     }
 
     // Apply perpetrator filters
     if (filters.suspectStatus) {
-      perpetratorWhereConditions.push(eq(schema.perpetrators.suspectIdentified, filters.suspectStatus));
+      perpetratorWhereConditions.push(
+        eq(schema.perpetrators.suspectIdentified, filters.suspectStatus),
+      );
     }
 
     // Execute queries with proper conditions
-    const articles = articleWhereConditions.length > 0
-      ? await db.select().from(schema.articles).where(
-          articleWhereConditions.length === 1
-            ? articleWhereConditions[0]
-            : and(...articleWhereConditions)
-        )
-      : await db.select().from(schema.articles);
+    const articles =
+      articleWhereConditions.length > 0
+        ? await db
+            .select()
+            .from(schema.articles)
+            .where(
+              articleWhereConditions.length === 1
+                ? articleWhereConditions[0]
+                : and(...articleWhereConditions),
+            )
+        : await db.select().from(schema.articles);
 
-    const victims = victimWhereConditions.length > 0
-      ? await db.select().from(schema.victims).where(
-          victimWhereConditions.length === 1
-            ? victimWhereConditions[0]
-            : and(...victimWhereConditions)
-        )
-      : await db.select().from(schema.victims);
+    const victims =
+      victimWhereConditions.length > 0
+        ? await db
+            .select()
+            .from(schema.victims)
+            .where(
+              victimWhereConditions.length === 1
+                ? victimWhereConditions[0]
+                : and(...victimWhereConditions),
+            )
+        : await db.select().from(schema.victims);
 
-    const perpetrators = perpetratorWhereConditions.length > 0
-      ? await db.select().from(schema.perpetrators).where(
-          perpetratorWhereConditions.length === 1
-            ? perpetratorWhereConditions[0]
-            : and(...perpetratorWhereConditions)
-        )
-      : await db.select().from(schema.perpetrators);
+    const perpetrators =
+      perpetratorWhereConditions.length > 0
+        ? await db
+            .select()
+            .from(schema.perpetrators)
+            .where(
+              perpetratorWhereConditions.length === 1
+                ? perpetratorWhereConditions[0]
+                : and(...perpetratorWhereConditions),
+            )
+        : await db.select().from(schema.perpetrators);
 
-    // Remove personal data if not authorized
+    // Remove personal data if not authorised
     let processedData = {
       articles,
       victims,
@@ -104,29 +131,33 @@ export async function GET(request: NextRequest) {
 
     if (!includePersonalData) {
       processedData = {
-        articles: articles.map(article => ({
+        articles: articles.map((article: schema.Article) => ({
           ...article,
           // Remove or anonymize personal identifying information
           newsReportUrl: '[URL_REMOVED]',
           author: article.author ? '[AUTHOR_REMOVED]' : null,
         })),
-        victims: victims.map(victim => ({
+        victims: victims.map((victim: schema.Victim) => ({
           ...victim,
           // Remove personal identifying information
           victimName: victim.victimName ? '[NAME_REMOVED]' : null,
         })),
-        perpetrators: perpetrators.map(perpetrator => ({
+        perpetrators: perpetrators.map((perpetrator: schema.Perpetrator) => ({
           ...perpetrator,
           // Remove personal identifying information
-          perpetratorName: perpetrator.perpetratorName ? '[NAME_REMOVED]' : null,
+          perpetratorName: perpetrator.perpetratorName
+            ? '[NAME_REMOVED]'
+            : null,
         })),
       };
     }
 
     // Combine data for analysis
-    const combinedData = articles.map(article => {
-      const articleVictims = victims.filter(v => v.articleId === article.id);
-      const articlePerpetrators = perpetrators.filter(p => p.articleId === article.id);
+    const combinedData = articles.map((article: schema.Article) => {
+      const articleVictims = victims.filter((v: schema.Victim) => v.articleId === article.id);
+      const articlePerpetrators = perpetrators.filter(
+        (p: schema.Perpetrator) => p.articleId === article.id,
+      );
 
       return {
         article,
@@ -161,7 +192,6 @@ export async function GET(request: NextRequest) {
           },
         });
     }
-
   } catch (error) {
     console.error('Failed to export data:', error);
     return NextResponse.json(
@@ -169,7 +199,7 @@ export async function GET(request: NextRequest) {
         success: false,
         error: 'Failed to export data',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -265,7 +295,7 @@ export async function POST(request: NextRequest) {
       groupBy = null,
     } = await request.json();
 
-    const db = databaseManager.getLocal();
+    const db = dbm.getLocal();
 
     // This would implement more complex filtering and custom field selection
     // For now, redirect to GET with basic filters
@@ -280,7 +310,6 @@ export async function POST(request: NextRequest) {
     const newRequest = new NextRequest(newUrl, { method: 'GET' });
 
     return await GET(newRequest);
-
   } catch (error) {
     console.error('Failed to export data:', error);
     return NextResponse.json(
@@ -288,7 +317,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Failed to export data',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

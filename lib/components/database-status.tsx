@@ -1,6 +1,6 @@
 /**
  * Database Status Component for Homicide Media Tracker
- * 
+ *
  * This component displays the current database status, sync capabilities,
  * and provides controls for database operations like backup and sync.
  */
@@ -12,7 +12,7 @@ import { Card, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 
 interface DatabaseStatus {
-  isInitialized: boolean;
+  isInitialised: boolean;
   syncEnabled: boolean;
   localPath: string;
   remoteUrl: string | null;
@@ -34,7 +34,7 @@ const DatabaseStatus: React.FC = () => {
       } else {
         // Fallback for web environment - database is managed by API routes
         setStatus({
-          isInitialized: true,
+          isInitialised: true,
           syncEnabled: false,
           localPath: 'API Routes',
           remoteUrl: null,
@@ -43,7 +43,7 @@ const DatabaseStatus: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch database status:', error);
       setStatus({
-        isInitialized: false,
+        isInitialised: false,
         syncEnabled: false,
         localPath: '',
         remoteUrl: null,
@@ -64,7 +64,7 @@ const DatabaseStatus: React.FC = () => {
     try {
       const result = await (window as any).electron.database.sync();
       if (result.success) {
-        toast.success('Database synchronized successfully');
+        toast.success('Database synchronised successfully');
         await fetchStatus(); // Refresh status
       } else {
         toast.error(`Sync failed: ${result.error}`);
@@ -101,7 +101,7 @@ const DatabaseStatus: React.FC = () => {
 
   useEffect(() => {
     fetchStatus();
-    
+
     // Refresh status every 30 seconds
     const interval = setInterval(fetchStatus, 30000);
     return () => clearInterval(interval);
@@ -122,9 +122,7 @@ const DatabaseStatus: React.FC = () => {
     return (
       <Card>
         <Card.Body>
-          <Alert variant="danger">
-            Failed to load database status
-          </Alert>
+          <Alert variant="danger">Failed to load database status</Alert>
         </Card.Body>
       </Card>
     );
@@ -143,18 +141,18 @@ const DatabaseStatus: React.FC = () => {
           <div className="col-md-8">
             <div className="mb-3">
               <strong>Status:</strong>{' '}
-              {status.isInitialized ? (
-                <Badge bg="success">Initialized</Badge>
+              {status.isInitialised ? (
+                <Badge bg="success">Initialised</Badge>
               ) : (
-                <Badge bg="danger">Not Initialized</Badge>
+                <Badge bg="danger">Not Initialised</Badge>
               )}
             </div>
-            
+
             <div className="mb-3">
               <strong>Local Database:</strong>{' '}
               <code className="small">{status.localPath}</code>
             </div>
-            
+
             <div className="mb-3">
               <strong>Remote Sync:</strong>{' '}
               {status.syncEnabled ? (
@@ -177,11 +175,11 @@ const DatabaseStatus: React.FC = () => {
               </Alert>
             )}
           </div>
-          
+
           <div className="col-md-4">
             <div className="d-grid gap-2">
-              <Button 
-                variant="outline-primary" 
+              <Button
+                variant="outline-primary"
                 size="sm"
                 onClick={fetchStatus}
                 disabled={loading}
@@ -189,10 +187,10 @@ const DatabaseStatus: React.FC = () => {
                 <i className="bi bi-arrow-clockwise me-1"></i>
                 Refresh
               </Button>
-              
+
               {status.syncEnabled && (
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   size="sm"
                   onClick={handleSync}
                   disabled={syncing}
@@ -210,12 +208,12 @@ const DatabaseStatus: React.FC = () => {
                   )}
                 </Button>
               )}
-              
-              <Button 
-                variant="outline-secondary" 
+
+              <Button
+                variant="outline-secondary"
                 size="sm"
                 onClick={handleBackup}
-                disabled={backing || !status.isInitialized}
+                disabled={backing || !status.isInitialised}
               >
                 {backing ? (
                   <>

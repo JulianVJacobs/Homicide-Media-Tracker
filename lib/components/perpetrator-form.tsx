@@ -23,17 +23,18 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   perpetrators = [],
   onClearPerpetrators,
 }) => {
-  const [currentPerpetrator, setCurrentPerpetrator] = useState<PerpetratorData>(
-    {
-      perpetratorName: '',
-      relationshipToVictim: '',
-      suspectIdentified: '',
-      suspectArrested: '',
-      suspectCharged: '',
-      conviction: '',
-      sentence: '',
-    },
-  );
+  // Default data for dev/testing
+  const DEV_DEFAULT_DATA: PerpetratorData = {
+    perpetratorName: 'Alex Brown',
+    relationshipToVictim: 'Acquaintance',
+    suspectIdentified: 'Yes',
+    suspectArrested: 'No',
+    suspectCharged: 'No',
+    conviction: 'Pending',
+    sentence: '',
+  };
+  const [currentPerpetrator, setCurrentPerpetrator] =
+    useState<PerpetratorData>(DEV_DEFAULT_DATA);
 
   const [isValid, setIsValid] = useState(false);
 

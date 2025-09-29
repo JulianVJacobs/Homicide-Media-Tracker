@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { databaseManager } from '../../../../lib/database/connection';
-import * as schema from '../../../../lib/database/schema';
+import { dbm } from '../../../../lib/db/manager';
+import * as schema from '../../../../lib/db/schema';
 
 // Dynamic participant API route by role
 export async function GET(
   request: NextRequest,
   { params }: { params: { role: string } },
 ) {
-  const { ensureDatabaseInitialized } = await import(
-    '../../../../lib/database/init'
-  );
-  await ensureDatabaseInitialized();
-  const db = databaseManager.getLocal();
+  const db = dbm.getLocal();
   const role = params.role;
 
-  // Generalized: use schema[role] if defined, else fallback to participants table
+  // Generalised: use schema[role] if defined, else fallback to participants table
   const roleTableMap: Record<string, any> = {
     victim: schema.victims,
     perpetrator: schema.perpetrators,
@@ -22,11 +18,11 @@ export async function GET(
   };
   let participants = [];
   const table = roleTableMap[role] || schema.participants;
-  participants = await db.select().from(table);
+  participants = await db.select().from(table) as schema.Participant[];
   // Always include id and role in response
   return NextResponse.json({
     success: true,
-    data: participants.map((p) => ({ ...p, role: p.role ?? role })),
+    data: participants.map((p: schema.Participant) => ({ ...p, role: p.role ?? role })),
   });
 }
 
@@ -34,11 +30,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { role: string } },
 ) {
-  const { ensureDatabaseInitialized } = await import(
-    '../../../../lib/database/init'
-  );
-  await ensureDatabaseInitialized();
-  const db = databaseManager.getLocal();
+  const db = dbm.getLocal();
   const role = params.role;
   const body = await request.json();
 

@@ -11,32 +11,39 @@ interface ArticleFormProps {
 }
 
 const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
+  // Default data for dev/testing
+  const DEV_DEFAULT_DATA: ArticleData = {
+    newsReportUrl: 'https://example.com/news/sample',
+    newsReportHeadline: 'Sample Headline',
+    dateOfPublication: '2025-09-25',
+    author: 'Jane Doe',
+    wireService: 'Reuters',
+    language: 'english',
+    sourceType: 'online',
+    newsSource: 'News24',
+  };
   const [formData, setFormData] = useState<ArticleData>(
-    initialData || {
-      newsReportUrl: '',
-      newsReportHeadline: '',
-      dateOfPublication: '',
-      author: '',
-      wireService: '',
-      language: '',
-      sourceType: '',
-      newsSource: '',
-    }
+    initialData || DEV_DEFAULT_DATA,
   );
 
   const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
     // Validate required fields
-    const required = ['newsReportUrl', 'newsReportHeadline', 'dateOfPublication', 'newsSource'];
-    const allRequiredFilled = required.every(field => 
-      formData[field as keyof ArticleData].toString().trim() !== ''
+    const required = [
+      'newsReportUrl',
+      'newsReportHeadline',
+      'dateOfPublication',
+      'newsSource',
+    ];
+    const allRequiredFilled = required.every(
+      (field) => formData[field as keyof ArticleData].toString().trim() !== '',
     );
     setIsValid(allRequiredFilled);
   }, [formData]);
 
   const handleChange = (field: keyof ArticleData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -88,7 +95,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
                 <Form.Control
                   type="url"
                   value={formData.newsReportUrl}
-                  onChange={(e) => handleChange('newsReportUrl', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('newsReportUrl', e.target.value)
+                  }
                   placeholder="https://..."
                   required
                 />
@@ -103,7 +112,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
                 <Form.Control
                   type="text"
                   value={formData.newsReportHeadline}
-                  onChange={(e) => handleChange('newsReportHeadline', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('newsReportHeadline', e.target.value)
+                  }
                   placeholder="Enter the headline of the news report"
                   required
                 />
@@ -118,7 +129,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
                 <Form.Control
                   type="date"
                   value={formData.dateOfPublication}
-                  onChange={(e) => handleChange('dateOfPublication', e.target.value)}
+                  onChange={(e) =>
+                    handleChange('dateOfPublication', e.target.value)
+                  }
                   required
                 />
               </Form.Group>
@@ -170,7 +183,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
                   value={formData.language}
                   onChange={(e) => handleChange('language', e.target.value)}
                 >
-                  {languageOptions.map(option => (
+                  {languageOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -185,7 +198,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
                   value={formData.sourceType}
                   onChange={(e) => handleChange('sourceType', e.target.value)}
                 >
-                  {sourceTypeOptions.map(option => (
+                  {sourceTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -196,11 +209,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
           </Row>
 
           <div className="d-flex justify-content-end">
-            <Button 
-              type="submit" 
-              variant="primary"
-              disabled={!isValid}
-            >
+            <Button type="submit" variant="primary" disabled={!isValid}>
               Save Article Information
             </Button>
           </div>

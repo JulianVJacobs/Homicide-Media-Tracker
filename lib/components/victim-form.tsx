@@ -24,21 +24,24 @@ const VictimForm: React.FC<VictimFormProps> = ({
   victims = [],
   onClearVictims,
 }) => {
-  const [currentVictim, setCurrentVictim] = useState<VictimData>({
-    victimName: '',
-    dateOfDeath: '',
-    province: '',
-    town: '',
-    locationType: '',
-    sexualAssault: '',
-    genderOfVictim: '',
-    race: '',
-    ageOfVictim: '',
-    ageRangeOfVictim: '',
-    modeOfDeathSpecific: '',
-    modeOfDeathGeneral: '',
-    policeStation: '',
-  });
+  // Default data for dev/testing
+  const DEV_DEFAULT_DATA: VictimData = {
+    victimName: 'John Smith',
+    dateOfDeath: '2025-09-25',
+    province: 'Gauteng',
+    town: 'Johannesburg',
+    locationType: 'Residential',
+    sexualAssault: 'No',
+    genderOfVictim: 'Male',
+    race: 'African',
+    ageOfVictim: '35',
+    ageRangeOfVictim: '26-35',
+    modeOfDeathSpecific: 'Gunshot',
+    modeOfDeathGeneral: 'Homicide',
+    policeStation: 'Hillbrow',
+  };
+  const [currentVictim, setCurrentVictim] =
+    useState<VictimData>(DEV_DEFAULT_DATA);
 
   const [availableTowns, setAvailableTowns] = useState<string[]>([]);
   const [customTown, setCustomTown] = useState('');

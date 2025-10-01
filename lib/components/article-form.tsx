@@ -2,28 +2,47 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Button, Row, Col } from 'react-bootstrap';
-import { ArticleData } from '@/lib/types/homicide';
-import { v4 as uuidv4 } from 'uuid';
+import type { NewArticle } from '@/lib/db/schema';
+
+type ArticleFieldKeys = Extract<
+  keyof NewArticle,
+  | 'newsReportUrl'
+  | 'newsReportHeadline'
+  | 'dateOfPublication'
+  | 'author'
+  | 'wireService'
+  | 'language'
+  | 'typeOfSource'
+  | 'newsReportPlatform'
+  | 'notes'
+>;
+
+type ArticleFormValues = {
+  [K in ArticleFieldKeys]: NonNullable<NewArticle[K]> | '';
+};
 
 interface ArticleFormProps {
-  onSubmit: (data: ArticleData) => void;
-  initialData?: ArticleData;
+  onSubmit: (data: ArticleFormValues) => void;
+  initialData?: Partial<ArticleFormValues> | null;
 }
 
+const buildInitialState = (
+  initialData?: Partial<ArticleFormValues> | null,
+): ArticleFormValues => ({
+  newsReportUrl: initialData?.newsReportUrl ?? '',
+  newsReportHeadline: initialData?.newsReportHeadline ?? '',
+  dateOfPublication: initialData?.dateOfPublication ?? '',
+  author: initialData?.author ?? '',
+  wireService: initialData?.wireService ?? '',
+  language: initialData?.language ?? '',
+  typeOfSource: initialData?.typeOfSource ?? '',
+  newsReportPlatform: initialData?.newsReportPlatform ?? '',
+  notes: initialData?.notes ?? '',
+});
+
 const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
-  // Default data for dev/testing
-  const DEV_DEFAULT_DATA: ArticleData = {
-    newsReportUrl: 'https://example.com/news/sample',
-    newsReportHeadline: 'Sample Headline',
-    dateOfPublication: '2025-09-25',
-    author: 'Jane Doe',
-    wireService: 'Reuters',
-    language: 'english',
-    sourceType: 'online',
-    newsSource: 'News24',
-  };
-  const [formData, setFormData] = useState<ArticleData>(
-    initialData || DEV_DEFAULT_DATA,
+  const [formData, setFormData] = useState<ArticleFormValues>(
+    buildInitialState(initialData),
   );
 
   const [isValid, setIsValid] = useState(false);
@@ -34,22 +53,35 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
       'newsReportUrl',
       'newsReportHeadline',
       'dateOfPublication',
-      'newsSource',
+      'newsReportPlatform',
     ];
-    const allRequiredFilled = required.every(
-      (field) => formData[field as keyof ArticleData].toString().trim() !== '',
-    );
+    const allRequiredFilled = required.every((field) => {
+      const value = formData[field as keyof ArticleFormValues];
+      return (
+        (typeof value === 'string' ? value : (value ?? ''))
+          .toString()
+          .trim() !== ''
+      );
+    });
     setIsValid(allRequiredFilled);
   }, [formData]);
 
-  const handleChange = (field: keyof ArticleData, value: string) => {
+  useEffect(() => {
+    setFormData(buildInitialState(initialData));
+  }, [initialData]);
+
+  const handleChange = (field: keyof ArticleFormValues, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isValid) {
-      onSubmit(formData);
+      const payload: ArticleFormValues = {
+        ...formData,
+        notes: formData.notes?.trim() || '',
+      };
+      onSubmit(payload);
     }
   };
 
@@ -138,11 +170,13 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
             </Col>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label>News Source *</Form.Label>
+                <Form.Label>News Report Platform *</Form.Label>
                 <Form.Control
                   type="text"
-                  value={formData.newsSource}
-                  onChange={(e) => handleChange('newsSource', e.target.value)}
+                  value={formData.newsReportPlatform}
+                  onChange={(e) =>
+                    handleChange('newsReportPlatform', e.target.value)
+                  }
                   placeholder="e.g., News24, IOL, TimesLIVE"
                   required
                 />
@@ -195,8 +229,8 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
               <Form.Group className="mb-3">
                 <Form.Label>Source Type</Form.Label>
                 <Form.Select
-                  value={formData.sourceType}
-                  onChange={(e) => handleChange('sourceType', e.target.value)}
+                  value={formData.typeOfSource}
+                  onChange={(e) => handleChange('typeOfSource', e.target.value)}
                 >
                   {sourceTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -220,3 +254,5 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
 };
 
 export default ArticleForm;
+
+export type { ArticleFormValues };

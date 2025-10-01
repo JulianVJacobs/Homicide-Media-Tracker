@@ -1,38 +1,105 @@
-import { drizzle } from 'drizzle-orm/libsql';
-import { createClient } from '@libsql/client/web';
+import Dexie, { Table } from 'dexie';
 import {
-  articles,
-  victims,
-  perpetrators,
-  users,
-  events,
-  participants,
-  appConfig,
-  syncQueue,
   Article,
-  NewArticle,
   Victim,
-  NewVictim,
   Perpetrator,
-  NewPerpetrator,
   User,
-  NewUser,
   Event,
-  NewEvent,
   Participant,
-  NewParticipant,
   SyncQueue,
   NewSyncQueue,
   AppConfig,
-  NewAppConfig,
+  migrations,
 } from './schema';
+
+// Dexie subclass for local DB
+class NewsReportTrackerDexie extends Dexie {
+  articles!: Table<Article, string>;
+  victims!: Table<Victim, string>;
+  perpetrators!: Table<Perpetrator, string>;
+  users!: Table<User, string>;
+  events!: Table<Event, string>;
+  participants!: Table<Participant, string>;
+  syncQueue!: Table<SyncQueue, number>;
+  appConfig!: Table<AppConfig, number>;
+
+  constructor() {
+    super('NewsReportTrackerDB');
+    // SQL parser to generate Dexie schema string from migration SQL
+    // Helper to convert snake_case to camelCase
+    const toCamelCase = (str: string) =>
+      str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+
+    const parseDexieSchemaFromSQL = (sql: string): string => {
+      // Extract column definitions between parentheses (multiline compatible)
+      const match = sql.match(/\(([^]*)\)/);
+      if (!match) return '';
+      const columnsBlock = match[1];
+      const lines = columnsBlock
+        .split(/,\s*\n|,\s*/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+      const keys: string[] = [];
+      let pkField = '';
+      let autoIncField = '';
+      const uniqueFields: string[] = [];
+      for (const line of lines) {
+        // Column definition: name TYPE ...
+        const colMatch = line.match(/^([a-zA-Z0-9_]+)\s+([A-Z]+)(.*)$/i);
+        if (!colMatch) continue;
+        const [, colName, , rest] = colMatch;
+        const camelColName = toCamelCase(colName);
+        const restUpper = rest.toUpperCase();
+        if (restUpper.includes('PRIMARY KEY')) {
+          pkField = camelColName;
+          if (restUpper.includes('AUTOINCREMENT')) {
+            autoIncField = camelColName;
+          }
+        }
+        if (restUpper.includes('UNIQUE')) {
+          uniqueFields.push(camelColName);
+        }
+      }
+      for (const line of lines) {
+        const colMatch = line.match(/^([a-zA-Z0-9_]+)\s+/);
+        if (!colMatch) continue;
+        const colName = colMatch[1];
+        const camelColName = toCamelCase(colName);
+        if (camelColName === autoIncField) {
+          keys.unshift(`++${camelColName}`);
+        } else if (camelColName === pkField) {
+          keys.unshift(camelColName);
+        } else if (uniqueFields.includes(camelColName)) {
+          keys.push(`&${camelColName}`);
+        } else {
+          keys.push(camelColName);
+        }
+      }
+      return keys.join(', ');
+    };
+
+    // Dynamically map CREATE TABLE migration SQL to Dexie store keys
+    const stores: Record<string, string> = {};
+    for (const mig of migrations) {
+      const tableMatch = mig.match(
+        /CREATE TABLE IF NOT EXISTS ([a-zA-Z0-9_]+)/,
+      );
+      if (!tableMatch) {
+        continue;
+      }
+      const tableName = tableMatch[1];
+      const camelTableName = toCamelCase(tableName);
+      const schema = parseDexieSchemaFromSQL(mig);
+      if (schema) {
+        stores[camelTableName] = schema;
+      }
+    }
+    this.version(1).stores(stores);
+  }
+}
 
 // Shared config type
 export interface DatabaseConfig {
-  local: {
-    path: string;
-    backupPath?: string;
-  };
   remote?: {
     url: string;
     authToken?: string;
@@ -45,21 +112,12 @@ export interface DatabaseConfig {
 }
 
 class DatabaseManagerClient {
-  async ensureDatabaseInitialised(): Promise<void> {
-    if (!this.localDb) {
-      await this.initialiseLocal();
-    }
-  }
-  private localClient: ReturnType<typeof createClient> | null = null;
-  private localDb: ReturnType<typeof drizzle> | null = null;
+  private localDb: NewsReportTrackerDexie | null = null;
   private config: DatabaseConfig;
 
   constructor() {
     // Browser: use localStorage or other web APIs for config if needed
     this.config = {
-      local: {
-        path: 'file:news-report-tracker.db',
-      },
       sync: {
         enabled: false,
         conflictResolution: 'local',
@@ -67,20 +125,15 @@ class DatabaseManagerClient {
     };
   }
 
+  async ensureDatabaseInitialised(): Promise<void> {
+    if (!this.localDb) {
+      await this.initialiseLocal();
+    }
+  }
+
   async initialiseLocal(): Promise<void> {
-    this.localClient = createClient({ url: this.config.local.path });
-    this.localDb = drizzle(this.localClient, {
-      schema: {
-        articles,
-        victims,
-        perpetrators,
-        users,
-        events,
-        participants,
-        appConfig,
-        syncQueue,
-      },
-    });
+    this.localDb = new NewsReportTrackerDexie();
+    await this.localDb.open();
   }
 
   getLocal() {
@@ -100,16 +153,19 @@ class DatabaseManagerClient {
     this.config = { ...this.config, ...updates };
   }
 
-  async addToSyncQueue(method: string, endpoint: string, body?: any) {
+  async addToSyncQueue(method: string, endpoint: string, body?: unknown) {
     const db = this.getLocal();
-    await db.insert(syncQueue).values({
+    const payload: NewSyncQueue = {
       method,
       endpoint,
-      body,
+      body: body ?? null,
       syncStatus: 'pending',
       queuedAt: new Date().toISOString(),
       failureCount: 0,
-    });
+      lastError: null,
+    };
+
+    await db.syncQueue.add(payload as SyncQueue);
   }
 }
 

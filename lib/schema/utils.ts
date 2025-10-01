@@ -1,26 +1,62 @@
-import { z, ZodTypeAny } from 'zod';
+import { z, ZodTypeAny, ZodRawShape } from 'zod';
+
+interface BaseSchemaDefinition {
+  optional?: boolean;
+}
+
+type PrimitiveSchemaDefinition =
+  | (BaseSchemaDefinition & { type: 'string' })
+  | (BaseSchemaDefinition & { type: 'number' })
+  | (BaseSchemaDefinition & { type: 'boolean' });
+
+interface ArraySchemaDefinition extends BaseSchemaDefinition {
+  type: 'array';
+  items: SchemaDefinition;
+}
+
+interface ObjectSchemaDefinition extends BaseSchemaDefinition {
+  type: 'object';
+  properties: Record<string, SchemaDefinition>;
+}
+
+interface UnknownSchemaDefinition extends BaseSchemaDefinition {
+  type?: 'any';
+  [key: string]: unknown;
+}
+
+export type SchemaDefinition =
+  | PrimitiveSchemaDefinition
+  | ArraySchemaDefinition
+  | ObjectSchemaDefinition
+  | UnknownSchemaDefinition;
 
 // Supported types: string, number, boolean, array, object
-export function generateSchema(schemaObj: any): ZodTypeAny {
-  if (schemaObj.type === 'string')
-    return schemaObj.optional ? z.string().optional() : z.string();
-  if (schemaObj.type === 'number')
-    return schemaObj.optional ? z.number().optional() : z.number();
-  if (schemaObj.type === 'boolean')
-    return schemaObj.optional ? z.boolean().optional() : z.boolean();
-  if (schemaObj.type === 'array')
-    return schemaObj.optional
-      ? z.array(generateSchema(schemaObj.items)).optional()
-      : z.array(generateSchema(schemaObj.items));
-  if (schemaObj.type === 'object') {
-    const shape: Record<string, ZodTypeAny> = {};
-    for (const key in schemaObj.properties) {
-      shape[key] = generateSchema(schemaObj.properties[key]);
+export function generateSchema(schemaObj: SchemaDefinition): ZodTypeAny {
+  switch (schemaObj.type) {
+    case 'string':
+      return schemaObj.optional ? z.string().optional() : z.string();
+    case 'number':
+      return schemaObj.optional ? z.number().optional() : z.number();
+    case 'boolean':
+      return schemaObj.optional ? z.boolean().optional() : z.boolean();
+    case 'array':
+      return schemaObj.optional
+        ? z.array(generateSchema(schemaObj.items)).optional()
+        : z.array(generateSchema(schemaObj.items));
+    case 'object': {
+      const shapeEntries = Object.entries(schemaObj.properties).map(
+        ([key, value]) => [key, generateSchema(value)] as const,
+      );
+      const shape = Object.fromEntries(shapeEntries) as Record<
+        string,
+        ZodTypeAny
+      >;
+      const objectSchema = z.object(shape);
+      return schemaObj.optional ? objectSchema.optional() : objectSchema;
     }
-    return schemaObj.optional ? z.object(shape).optional() : z.object(shape);
+    default:
+      return schemaObj.optional ? z.any().optional() : z.any();
   }
-  // Fallback: allow any
-  return schemaObj.optional ? z.any().optional() : z.any();
 }
 
 /**
@@ -30,16 +66,18 @@ export function generateSchema(schemaObj: any): ZodTypeAny {
  */
 export function getMergedObjectSchema(
   types: string[],
-  schemaMap: Record<string, any>,
+  schemaMap: Record<string, SchemaDefinition>,
 ): ZodTypeAny {
-  let merged: ZodTypeAny = z.object({});
+  let merged: z.ZodObject<ZodRawShape> = z.object({});
   for (const type of types) {
-    if (schemaMap[type]) {
-      const candidate = generateSchema(schemaMap[type]);
-      // Only merge if candidate is a ZodObject
-      if (candidate instanceof z.ZodObject) {
-        merged = (merged as z.ZodObject<any>).merge(candidate);
-      }
+    const schemaDefinition = schemaMap[type];
+    if (!schemaDefinition) {
+      continue;
+    }
+    const candidate = generateSchema(schemaDefinition);
+    // Only merge if candidate is a ZodObject
+    if (candidate instanceof z.ZodObject) {
+      merged = merged.merge(candidate as z.ZodObject<ZodRawShape>);
     }
   }
   return merged;
@@ -49,7 +87,10 @@ export function getMergedObjectSchema(
  * Validate only the top-level schemaObj for required fields and structure.
  * Throws an error if invalid. Does NOT recurse.
  */
-export function validateSchemaObj(schemaObj: any, path: string = ''): void {
+export function validateSchemaObj(
+  schemaObj: Record<string, unknown>,
+  path = '',
+): void {
   if (typeof schemaObj !== 'object' || schemaObj === null) {
     throw new Error(`Schema at ${path || 'root'} is not an object.`);
   }

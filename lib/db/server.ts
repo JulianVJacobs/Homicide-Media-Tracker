@@ -1,6 +1,9 @@
 import { drizzle } from 'drizzle-orm/libsql';
 import { eq } from 'drizzle-orm';
 import { createClient } from '@libsql/client';
+import path from 'path';
+import fs from 'fs';
+import { app } from 'electron';
 import {
   articles,
   victims,
@@ -13,10 +16,7 @@ import {
   migrations,
 } from './schema';
 
-// Node/Electron specific imports
-const path = require('path');
-const app = require('electron').app;
-const fs = require('fs');
+type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
 
 export interface DatabaseConfig {
   local: {
@@ -50,11 +50,15 @@ class DatabaseManagerServer {
   constructor() {
     // Determine correct data path for packaged vs dev mode
     let userDataPath = app?.getPath('userData') ?? './data';
-    if (app?.isPackaged && (process as any)?.resourcesPath) {
+    const resourcesPath =
+      typeof process !== 'undefined'
+        ? (process as ElectronProcess).resourcesPath
+        : undefined;
+    if (app?.isPackaged && resourcesPath) {
       // In packaged mode, use resourcesPath for DB location if needed
-      userDataPath = (process as any).resourcesPath;
+      userDataPath = resourcesPath;
     }
-    if (fs && !fs.existsSync(userDataPath)) {
+    if (!fs.existsSync(userDataPath)) {
       try {
         fs.mkdirSync(userDataPath, { recursive: true });
       } catch (err) {
@@ -279,7 +283,6 @@ class DatabaseManagerServer {
   private async syncTable(tableName: string): Promise<void> {
     console.log(`Syncing table: ${tableName}`);
     if (this.localDb) {
-      const now = new Date().toISOString();
       // Update sync metadata (stub)
     }
   }
@@ -290,6 +293,58 @@ class DatabaseManagerServer {
 
   updateConfig(updates: Partial<DatabaseConfig>): void {
     this.config = { ...this.config, ...updates };
+  }
+
+  async createBackup(): Promise<string> {
+    if (!this.localClient) {
+      throw new Error('Local database client not initialised');
+    }
+
+    const dbPath = this.config.local.path;
+    if (!dbPath) {
+      throw new Error('Local database path is not configured');
+    }
+
+    const configuredBackupPath = this.config.local.backupPath;
+    const defaultBackupDir = path.join(path.dirname(dbPath), 'backups');
+    const backupTargetBase =
+      configuredBackupPath ??
+      path.join(defaultBackupDir, path.basename(dbPath));
+
+    const parsedPath = path.parse(backupTargetBase);
+    const backupDir = parsedPath.dir || defaultBackupDir;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupFilename = `${parsedPath.name}-${timestamp}${parsedPath.ext || '.db'}`;
+    const backupPath = path.join(backupDir, backupFilename);
+
+    await fs.promises.mkdir(backupDir, { recursive: true });
+
+    try {
+      await this.localClient.execute('PRAGMA wal_checkpoint(FULL)');
+    } catch (error) {
+      console.warn('Failed to checkpoint WAL before backup:', error);
+    }
+
+    await fs.promises.copyFile(dbPath, backupPath);
+
+    return backupPath;
+  }
+
+  async close(): Promise<void> {
+    this.stopAutoSync();
+
+    if (this.localClient) {
+      await this.localClient.close();
+      this.localClient = null;
+    }
+
+    if (this.remoteClient) {
+      await this.remoteClient.close();
+      this.remoteClient = null;
+      this.remoteDrizzle = null;
+    }
+
+    this.localDb = null;
   }
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Card,
@@ -14,37 +14,186 @@ import {
   Modal,
 } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { HomicideCase, ApiResponse } from '@/lib/types/homicide';
 import { getBaseUrl } from '../platform';
+import type { Article, Event, Victim, Perpetrator } from '../db/schema';
 
 interface ListHomicidesProps {
   onBack: () => void;
 }
 
+interface DetailedEvent
+  extends Omit<
+    Event,
+    'participantIds' | 'articleIds' | 'eventTypes' | 'details'
+  > {
+  articleData: Article | null;
+  victims: Victim[];
+  perpetrators: Perpetrator[];
+  typeOfMurder: string;
+}
+
+interface EventsApiPayload {
+  events: Event[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+interface EventsApiResponse {
+  success: boolean;
+  data?: EventsApiPayload | Event | null;
+  error?: string;
+  message?: string;
+}
+
+interface OfflineListResponse<T> {
+  success: boolean;
+  data?: T[] | T | null;
+  pagination?: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+  error?: string;
+  message?: string;
+}
+
+const isEventsPayload = (value: unknown): value is EventsApiPayload => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const data = value as Record<string, unknown>;
+  return Array.isArray(data.events) && typeof data.total === 'number';
+};
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string');
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item): item is string => typeof item === 'string',
+        );
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }
+  return [];
+}
+
+function toDetailsObject(value: unknown): Record<string, unknown> {
+  if (!value) {
+    return {};
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return typeof parsed === 'object' && parsed !== null
+        ? (parsed as Record<string, unknown>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+  return typeof value === 'object' && value !== null
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function extractArrayData<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) {
+    return payload as T[];
+  }
+  if (payload && typeof payload === 'object') {
+    return [payload as T];
+  }
+  return [];
+}
+
+async function fetchArticleById(articleId: string): Promise<Article | null> {
+  if (!articleId) {
+    return null;
+  }
+  try {
+    const { get: getArticle } = (await import(
+      '@/app/api/articles/offline'
+    )) as {
+      get: (req: Request) => Promise<OfflineListResponse<Article>>;
+    };
+    const req = new Request(`${getBaseUrl()}?id=${articleId}`);
+    const response = await getArticle(req);
+    if (!response.success || !response.data) {
+      return null;
+    }
+    return Array.isArray(response.data)
+      ? (response.data[0] ?? null)
+      : (response.data as Article);
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+async function fetchVictimsByArticle(articleId: string): Promise<Victim[]> {
+  if (!articleId) {
+    return [];
+  }
+  try {
+    const { get: getVictims } = (await import('@/app/api/victims/offline')) as {
+      get: (req: Request) => Promise<OfflineListResponse<Victim>>;
+    };
+    const req = new Request(`${getBaseUrl()}?articleId=${articleId}`);
+    const response = await getVictims(req);
+    return extractArrayData<Victim>(response.data);
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
+async function fetchPerpetratorsByArticle(
+  articleId: string,
+): Promise<Perpetrator[]> {
+  if (!articleId) {
+    return [];
+  }
+  try {
+    const { get: getPerpetrators } = (await import(
+      '@/app/api/perpetrators/offline'
+    )) as {
+      get: (req: Request) => Promise<OfflineListResponse<Perpetrator>>;
+    };
+    const req = new Request(`${getBaseUrl()}?articleId=${articleId}`);
+    const response = await getPerpetrators(req);
+    return extractArrayData<Perpetrator>(response.data);
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+}
+
 const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
-  const [cases, setCases] = useState<HomicideCase[]>([]);
-  // Defensive: never set to undefined/null
-  // Defensive helpers for victims/perpetrators arrays
-  const getVictimsLength = (case_: HomicideCase) =>
+  const [cases, setCases] = useState<DetailedEvent[]>([]);
+  const getVictimsLength = (case_: DetailedEvent) =>
     Array.isArray(case_?.victims) ? case_.victims.length : 0;
-  const getPerpetratorsLength = (case_: HomicideCase) =>
-    Array.isArray(case_?.perpetrators) ? case_.perpetrators.length : 0;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCases, setTotalCases] = useState(0);
-  const [selectedCase, setSelectedCase] = useState<HomicideCase | null>(null);
+  const [selectedCase, setSelectedCase] = useState<DetailedEvent | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    fetchCases();
-  }, [currentPage, searchTerm]);
-
-  const fetchCases = async () => {
+  const fetchCases = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -55,84 +204,45 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
       ...(searchTerm && { search: searchTerm }),
     });
 
-    let result: ApiResponse<any> | null = null;
-    let offlineError: any = null;
+    let result: EventsApiResponse | null = null;
     try {
       // Try offline API
       const { get: getEvents } = await import('@/app/api/events/offline');
       const req = new Request(`${getBaseUrl()}?${params}`);
       result = await getEvents(req);
     } catch (err) {
-      offlineError = err;
-    }
-
-    if (!result || !result.success || !result.data) {
-      // Fallback to network API
-      try {
-        const response = await fetch(`/api/events?${params}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        result = await response.json();
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to fetch homicide cases',
-        );
-        toast.error('Failed to load homicide cases');
-        setLoading(false);
-        return;
-      }
+      console.error(err);
     }
 
     if (result && result.success && result.data) {
-      const events = Array.isArray(result.data.events)
-        ? result.data.events
-        : [];
+      const payload = result.data;
+      const events = isEventsPayload(payload)
+        ? payload.events
+        : [payload as Event];
       // For each event, fetch related data and assemble full case
       const assembledCases = await Promise.all(
-        events.map(async (event: any) => {
-          // Fetch article
-          let articleData = null;
-          if (Array.isArray(event.articleIds) && event.articleIds.length > 0) {
-            try {
-              const { get: getArticle } = await import(
-                '@/app/api/articles/offline'
-              );
-              const req = new Request(
-                `${getBaseUrl()}?id=${event.articleIds[0]}`,
-              );
-              const articleRes = await getArticle(req);
-              articleData = articleRes.data || null;
-            } catch {}
-          }
-          // Fetch victims
-          let victims = [];
-          if (Array.isArray(event.participantIds)) {
-            for (const pid of event.participantIds) {
-              try {
-                const { get: getVictim } = await import(
-                  '@/app/api/victims/offline'
-                );
-                const req = new Request(`${getBaseUrl()}?id=${pid}`);
-                const victimRes = await getVictim(req);
-                if (victimRes.data) victims.push(victimRes.data);
-              } catch {}
-            }
-          }
-          // Fetch perpetrators
-          let perpetrators = [];
-          if (Array.isArray(event.participantIds)) {
-            for (const pid of event.participantIds) {
-              try {
-                const { get: getPerpetrator } = await import(
-                  '@/app/api/perpetrators/offline'
-                );
-                const req = new Request(`${getBaseUrl()}?id=${pid}`);
-                const perpRes = await getPerpetrator(req);
-                if (perpRes.data) perpetrators.push(perpRes.data);
-              } catch {}
-            }
-          }
+        events.map(async (event) => {
+          const articleIds = toStringArray(event.articleIds);
+          const primaryArticleId = articleIds[0];
+
+          const articleData = primaryArticleId
+            ? await fetchArticleById(primaryArticleId)
+            : null;
+
+          const victims = articleData?.id
+            ? await fetchVictimsByArticle(articleData.id)
+            : [];
+
+          const perpetrators = articleData?.id
+            ? await fetchPerpetratorsByArticle(articleData.id)
+            : [];
+
+          const details = toDetailsObject(event.details);
+          const typeOfMurder =
+            typeof details.typeOfMurder === 'string'
+              ? (details.typeOfMurder as string)
+              : '';
+
           return {
             id: event.id,
             articleData,
@@ -140,23 +250,33 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
             perpetrators,
             syncStatus: event.syncStatus,
             failureCount: event.failureCount,
-            typeOfMurder: event.details?.typeOfMurder || '',
+            typeOfMurder,
             createdAt: event.createdAt,
             updatedAt: event.updatedAt,
           };
         }),
       );
       setCases(assembledCases);
-      setTotalPages(result.data.totalPages || 1);
-      setTotalCases(result.data.total || 0);
+      const resolvedTotalPages = isEventsPayload(payload)
+        ? payload.totalPages
+        : 1;
+      const resolvedTotalCases = isEventsPayload(payload)
+        ? payload.total
+        : assembledCases.length;
+      setTotalPages(resolvedTotalPages || 1);
+      setTotalCases(resolvedTotalCases ?? assembledCases.length);
     } else {
       setError(result?.error || 'Failed to fetch homicide cases');
       toast.error('Failed to load homicide cases');
     }
     setLoading(false);
-  };
+  }, [currentPage, searchTerm]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchCases();
+  }, [fetchCases]);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setCurrentPage(1);
     fetchCases();
@@ -183,11 +303,17 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) {
+      return 'N/A';
+    }
+    const date = new Date(dateString);
+    return Number.isNaN(date.getTime())
+      ? 'Invalid date'
+      : date.toLocaleDateString();
   };
 
-  const showCaseDetails = (case_: HomicideCase) => {
+  const showCaseDetails = (case_: DetailedEvent) => {
     setSelectedCase(case_);
     setShowDetailModal(true);
   };
@@ -324,8 +450,8 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                               </td>
                               <td>
                                 {case_.articleData &&
-                                case_.articleData.newsSource ? (
-                                  case_.articleData.newsSource
+                                case_.articleData.newsReportPlatform ? (
+                                  case_.articleData.newsReportPlatform
                                 ) : (
                                   <span className="text-muted">N/A</span>
                                 )}
@@ -349,7 +475,7 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                               <td>
                                 {getVictimsLength(case_) > 0 &&
                                   Array.isArray(case_.victims) &&
-                                  case_.victims[0]?.province}
+                                  case_.victims[0]?.placeOfDeathProvince}
                               </td>
                               <td>
                                 {typeof case_.syncStatus === 'string' ? (
@@ -460,7 +586,7 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
               {selectedCase.syncStatus === 'failed' && (
                 <Alert variant="danger" className="mt-2">
                   <strong>Sync Failed:</strong>{' '}
-                  {selectedCase.lastError || 'Unknown error'}
+                  {selectedCase.syncStatus || 'Unknown error'}
                   <br />
                   <span>
                     Attempts:{' '}
@@ -491,7 +617,8 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                 {selectedCase?.articleData?.newsReportHeadline}
               </p>
               <p>
-                <strong>Source:</strong> {selectedCase?.articleData?.newsSource}
+                <strong>Source:</strong>{' '}
+                {selectedCase?.articleData?.newsReportPlatform}
               </p>
               <p>
                 <strong>Date:</strong>{' '}
@@ -537,13 +664,15 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                         {victim.ageOfVictim || victim.ageRangeOfVictim}
                       </p>
                       <p className="mb-1">
-                        <strong>Location:</strong> {victim.town},{' '}
-                        {victim.province}
+                        <strong>Location:</strong> {victim.placeOfDeathTown},{' '}
+                        {victim.placeOfDeathProvince}
                       </p>
-                      <p className="mb-1">
-                        <strong>Date of Death:</strong>{' '}
-                        {formatDate(victim.dateOfDeath)}
-                      </p>
+                      {victim.dateOfDeath && (
+                        <p className="mb-1">
+                          <strong>Date of Death:</strong>{' '}
+                          {formatDate(victim.dateOfDeath)}
+                        </p>
+                      )}
                       {victim.modeOfDeathGeneral && (
                         <p className="mb-1">
                           <strong>Mode of Death:</strong>{' '}
@@ -565,10 +694,10 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                   <Card key={index} className="mb-2">
                     <Card.Body>
                       <h6>{perpetrator.perpetratorName}</h6>
-                      {perpetrator.relationshipToVictim && (
+                      {perpetrator.perpetratorRelationshipToVictim && (
                         <p className="mb-1">
                           <strong>Relationship:</strong>{' '}
-                          {perpetrator.relationshipToVictim}
+                          {perpetrator.perpetratorRelationshipToVictim}
                         </p>
                       )}
                       <p className="mb-1">

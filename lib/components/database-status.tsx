@@ -19,6 +19,32 @@ interface DatabaseStatus {
   error?: string;
 }
 
+interface ElectronDatabaseAPI {
+  getStatus: () => Promise<DatabaseStatus>;
+  sync: () => Promise<{ success: boolean; error?: string }>;
+  createBackup: () => Promise<{
+    success: boolean;
+    backupPath?: string;
+    error?: string;
+  }>;
+}
+
+const getElectronDatabase = (): ElectronDatabaseAPI | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const bridge = window.electron;
+  if (
+    bridge &&
+    typeof bridge === 'object' &&
+    'database' in bridge &&
+    bridge.database
+  ) {
+    return bridge.database as ElectronDatabaseAPI;
+  }
+  return null;
+};
+
 const DatabaseStatus: React.FC = () => {
   const [status, setStatus] = useState<DatabaseStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,8 +54,9 @@ const DatabaseStatus: React.FC = () => {
   const fetchStatus = async () => {
     try {
       // Check if we're in Electron environment
-      if (typeof window !== 'undefined' && (window as any).electron?.database) {
-        const dbStatus = await (window as any).electron.database.getStatus();
+      const electronDatabase = getElectronDatabase();
+      if (electronDatabase) {
+        const dbStatus = await electronDatabase.getStatus();
         setStatus(dbStatus);
       } else {
         // Fallback for web environment - database is managed by API routes
@@ -55,14 +82,15 @@ const DatabaseStatus: React.FC = () => {
   };
 
   const handleSync = async () => {
-    if (typeof window === 'undefined' || !(window as any).electron?.database) {
+    const electronDatabase = getElectronDatabase();
+    if (!electronDatabase) {
       toast.warn('Sync is only available in desktop mode');
       return;
     }
 
     setSyncing(true);
     try {
-      const result = await (window as any).electron.database.sync();
+      const result = await electronDatabase.sync();
       if (result.success) {
         toast.success('Database synchronised successfully');
         await fetchStatus(); // Refresh status
@@ -78,14 +106,15 @@ const DatabaseStatus: React.FC = () => {
   };
 
   const handleBackup = async () => {
-    if (typeof window === 'undefined' || !(window as any).electron?.database) {
+    const electronDatabase = getElectronDatabase();
+    if (!electronDatabase) {
       toast.warn('Backup is only available in desktop mode');
       return;
     }
 
     setBacking(true);
     try {
-      const result = await (window as any).electron.database.createBackup();
+      const result = await electronDatabase.createBackup();
       if (result.success) {
         toast.success(`Backup created: ${result.backupPath}`);
       } else {

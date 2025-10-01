@@ -35,18 +35,23 @@ declare global {
     electron?: {
       // Add your electron API methods here
       ipcRenderer: {
-        invoke: (channel: string, ...args: any[]) => Promise<any>;
-        on: (channel: string, func: (...args: any[]) => void) => void;
+        invoke: <T = unknown>(
+          channel: string,
+          ...args: unknown[]
+        ) => Promise<T>;
+        on: (channel: string, func: (...args: unknown[]) => void) => void;
         removeAllListeners: (channel: string) => void;
       };
     };
   }
 }
 
-export default {
+const platformUtils = {
   isElectron,
   isWeb,
   getEnvironment,
   isOnline,
   getBaseUrl,
 };
+
+export default platformUtils;

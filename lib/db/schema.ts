@@ -3,8 +3,6 @@ import {
   sqliteTable,
   text,
   integer,
-  real,
-  blob,
   // type SQLiteTableWithColumns
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';

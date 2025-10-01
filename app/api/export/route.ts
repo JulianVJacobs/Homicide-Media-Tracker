@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq, gte, lte, like, or, and } from 'drizzle-orm';
-import { dbm } from '../../../lib/db/manager';
+import { eq, gte, lte, and, SQL } from 'drizzle-orm';
+import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
 import * as schema from '../../../lib/db/schema';
 
 /**
@@ -36,13 +36,17 @@ export async function GET(request: NextRequest) {
       modeOfDeath: url.searchParams.get('modeOfDeath') || undefined,
       suspectStatus: url.searchParams.get('suspectStatus') || undefined,
     };
-
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
     // Build where conditions for each table
-    const articleWhereConditions = [];
-    const victimWhereConditions = [];
-    const perpetratorWhereConditions = [];
+    const articleWhereConditions: SQL[] = [];
+    const victimWhereConditions: SQL[] = [];
+    const perpetratorWhereConditions: SQL[] = [];
 
     // Apply date filters
     if (filters.dateFrom) {
@@ -123,39 +127,36 @@ export async function GET(request: NextRequest) {
         : await db.select().from(schema.perpetrators);
 
     // Remove personal data if not authorised
-    let processedData = {
-      articles,
-      victims,
-      perpetrators,
-    };
-
-    if (!includePersonalData) {
-      processedData = {
-        articles: articles.map((article: schema.Article) => ({
+    const safeArticles: schema.Article[] = includePersonalData
+      ? articles
+      : articles.map((article) => ({
           ...article,
-          // Remove or anonymize personal identifying information
           newsReportUrl: '[URL_REMOVED]',
           author: article.author ? '[AUTHOR_REMOVED]' : null,
-        })),
-        victims: victims.map((victim: schema.Victim) => ({
+        }));
+
+    const safeVictims: schema.Victim[] = includePersonalData
+      ? victims
+      : victims.map((victim) => ({
           ...victim,
-          // Remove personal identifying information
           victimName: victim.victimName ? '[NAME_REMOVED]' : null,
-        })),
-        perpetrators: perpetrators.map((perpetrator: schema.Perpetrator) => ({
+        }));
+
+    const safePerpetrators: schema.Perpetrator[] = includePersonalData
+      ? perpetrators
+      : perpetrators.map((perpetrator) => ({
           ...perpetrator,
-          // Remove personal identifying information
           perpetratorName: perpetrator.perpetratorName
             ? '[NAME_REMOVED]'
             : null,
-        })),
-      };
-    }
+        }));
 
     // Combine data for analysis
-    const combinedData = articles.map((article: schema.Article) => {
-      const articleVictims = victims.filter((v: schema.Victim) => v.articleId === article.id);
-      const articlePerpetrators = perpetrators.filter(
+    const combinedData: CombinedRecord[] = safeArticles.map((article) => {
+      const articleVictims = safeVictims.filter(
+        (v: schema.Victim) => v.articleId === article.id,
+      );
+      const articlePerpetrators = safePerpetrators.filter(
         (p: schema.Perpetrator) => p.articleId === article.id,
       );
 
@@ -185,9 +186,9 @@ export async function GET(request: NextRequest) {
             },
             records: combinedData,
             summary: {
-              totalArticles: articles.length,
-              totalVictims: victims.length,
-              totalPerpetrators: perpetrators.length,
+              totalArticles: combinedData.length,
+              totalVictims: safeVictims.length,
+              totalPerpetrators: safePerpetrators.length,
             },
           },
         });
@@ -207,8 +208,19 @@ export async function GET(request: NextRequest) {
 /**
  * Generate CSV response
  */
-function generateCSVResponse(data: any[], includePersonalData: boolean) {
-  const csvRows = [];
+interface CombinedRecord {
+  article: schema.Article;
+  victims: schema.Victim[];
+  perpetrators: schema.Perpetrator[];
+  victimCount: number;
+  perpetratorCount: number;
+}
+
+function generateCSVResponse(
+  data: CombinedRecord[],
+  includePersonalData: boolean,
+) {
+  const csvRows: string[] = [];
 
   // Header row
   const headers = [
@@ -240,32 +252,33 @@ function generateCSVResponse(data: any[], includePersonalData: boolean) {
     const { article, victims, perpetrators } = record;
 
     // Create a row for each victim (or one row if no victims)
-    const victimsToProcess = victims.length > 0 ? victims : [{}];
+    const victimsToProcess: Array<schema.Victim | null> =
+      victims.length > 0 ? victims : [null];
 
     for (const victim of victimsToProcess) {
-      const perpetrator = perpetrators[0] || {}; // Take first perpetrator if any
+      const perpetrator = perpetrators[0] ?? null;
 
       const row = [
-        article.articleId,
+        article.id,
         article.dateOfPublication || '',
         `"${(article.newsReportHeadline || '').replace(/"/g, '""')}"`,
         article.typeOfSource || '',
         article.language || '',
-        victim.placeOfDeathProvince || '',
-        victim.placeOfDeathTown || '',
-        victim.genderOfVictim || '',
-        victim.ageOfVictim || victim.ageRangeOfVictim || '',
-        victim.modeOfDeathGeneral || '',
-        perpetrator.suspectIdentified || '',
-        perpetrator.suspectArrested || '',
-        perpetrator.conviction || '',
+        victim?.placeOfDeathProvince || '',
+        victim?.placeOfDeathTown || '',
+        victim?.genderOfVictim || '',
+        victim?.ageOfVictim || victim?.ageRangeOfVictim || '',
+        victim?.modeOfDeathGeneral || '',
+        perpetrator?.suspectIdentified || '',
+        perpetrator?.suspectArrested || '',
+        perpetrator?.conviction || '',
       ];
 
       if (includePersonalData) {
         row.splice(3, 0, article.newsReportUrl || '');
         row.splice(4, 0, article.author || '');
-        row.splice(10, 0, victim.victimName || '');
-        row.splice(15, 0, perpetrator.perpetratorName || '');
+        row.splice(10, 0, victim?.victimName || '');
+        row.splice(15, 0, perpetrator?.perpetratorName || '');
       }
 
       csvRows.push(row.join(','));
@@ -291,11 +304,11 @@ export async function POST(request: NextRequest) {
       format = 'json',
       includePersonalData = false,
       filters = {},
-      fields = [],
-      groupBy = null,
+    }: {
+      format?: string;
+      includePersonalData?: boolean;
+      filters?: Record<string, string>;
     } = await request.json();
-
-    const db = dbm.getLocal();
 
     // This would implement more complex filtering and custom field selection
     // For now, redirect to GET with basic filters

@@ -8,6 +8,64 @@
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 
+type NullableString = string | null | undefined;
+type UnknownRecord = Record<string, unknown>;
+
+export type ArticleInput = UnknownRecord & {
+  newsReportUrl?: NullableString;
+  newsReportHeadline?: NullableString;
+  author?: NullableString;
+  dateOfPublication?: NullableString | Date;
+};
+
+export type VictimInput = UnknownRecord & {
+  articleId?: NullableString;
+  ageOfVictim?: number | string | null;
+  dateOfDeath?: NullableString | Date;
+  placeOfDeathProvince?: NullableString;
+  placeOfDeathTown?: NullableString;
+};
+
+export type PerpetratorInput = UnknownRecord & {
+  articleId?: NullableString;
+  perpetratorName?: NullableString;
+  suspectIdentified?: NullableString;
+  suspectArrested?: NullableString;
+  suspectCharged?: NullableString;
+  conviction?: NullableString;
+  sentence?: NullableString;
+};
+
+interface DuplicateCandidate {
+  id?: string;
+  newsReportUrl?: NullableString;
+  newsReportHeadline?: NullableString;
+}
+
+interface ExportArticleRecord extends UnknownRecord {
+  id?: string | null;
+  articleId?: string | null;
+  dateOfPublication?: NullableString | Date;
+}
+
+interface ExportVictimRecord extends UnknownRecord {
+  articleId?: string | null;
+}
+
+interface ExportPerpetratorRecord extends UnknownRecord {
+  articleId?: string | null;
+}
+
+interface ArticleWithRelations extends ExportArticleRecord {
+  victims: ExportVictimRecord[];
+  perpetrators: ExportPerpetratorRecord[];
+}
+
+interface FlattenedExportRow extends ExportArticleRecord {
+  victim?: ExportVictimRecord;
+  perpetrator?: ExportPerpetratorRecord;
+}
+
 /**
  * Generate unique article ID from URL, author, and title
  * This helps identify duplicate articles across different data sources
@@ -52,27 +110,33 @@ export interface ArticleValidation {
   warnings: string[];
 }
 
-export function validateArticleData(article: any): ArticleValidation {
+export function validateArticleData(article: ArticleInput): ArticleValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   // Required fields
-  if (!article.newsReportUrl || article.newsReportUrl.trim() === '') {
+  if (
+    !article.newsReportUrl ||
+    article.newsReportUrl.toString().trim() === ''
+  ) {
     errors.push('News report URL is required');
   }
 
-  if (!article.newsReportHeadline || article.newsReportHeadline.trim() === '') {
+  if (
+    !article.newsReportHeadline ||
+    article.newsReportHeadline.toString().trim() === ''
+  ) {
     errors.push('News report headline is required');
   }
 
-  if (!article.author || article.author.trim() === '') {
+  if (!article.author || article.author.toString().trim() === '') {
     warnings.push('Author is missing - this may affect duplicate detection');
   }
 
   // URL validation
   if (article.newsReportUrl) {
     try {
-      new URL(article.newsReportUrl);
+      new URL(article.newsReportUrl.toString());
     } catch {
       errors.push('News report URL is not valid');
     }
@@ -101,7 +165,7 @@ export function validateArticleData(article: any): ArticleValidation {
 /**
  * Validate victim data
  */
-export function validateVictimData(victim: any): ArticleValidation {
+export function validateVictimData(victim: VictimInput): ArticleValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -143,7 +207,9 @@ export function validateVictimData(victim: any): ArticleValidation {
 /**
  * Validate perpetrator data
  */
-export function validatePerpetratorData(perpetrator: any): ArticleValidation {
+export function validatePerpetratorData(
+  perpetrator: PerpetratorInput,
+): ArticleValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -202,14 +268,25 @@ export interface DuplicateMatch {
 }
 
 export function detectDuplicates(
-  newArticle: any,
-  existingArticles: any[],
+  newArticle: DuplicateCandidate,
+  existingArticles: Array<DuplicateCandidate & { id: string }>,
 ): DuplicateMatch[] {
   const matches: DuplicateMatch[] = [];
 
+  const newArticleUrl = newArticle.newsReportUrl
+    ? newArticle.newsReportUrl.toString()
+    : undefined;
+  const newArticleHeadline = newArticle.newsReportHeadline
+    ? newArticle.newsReportHeadline.toString()
+    : undefined;
+
   for (const existing of existingArticles) {
     // Exact URL match
-    if (newArticle.newsReportUrl === existing.newsReportUrl) {
+    if (
+      newArticleUrl &&
+      existing.newsReportUrl &&
+      newArticleUrl === existing.newsReportUrl.toString()
+    ) {
       matches.push({
         id: existing.id,
         similarity: 1.0,
@@ -221,8 +298,8 @@ export function detectDuplicates(
 
     // Title similarity using Levenshtein distance
     const titleSimilarity = calculateSimilarity(
-      newArticle.newsReportHeadline || '',
-      existing.newsReportHeadline || '',
+      newArticleHeadline ?? '',
+      existing.newsReportHeadline?.toString() ?? '',
     );
 
     if (titleSimilarity > 0.85) {
@@ -279,41 +356,46 @@ function calculateSimilarity(str1: string, str2: string): number {
 /**
  * Normalise data for consistency
  */
-export function normaliseData(data: any): any {
-  const normalised = { ...data };
+export function normaliseData<T extends UnknownRecord>(data: T): T {
+  const normalised: UnknownRecord = { ...data };
 
   // Normalise strings
   for (const key of Object.keys(normalised)) {
-    if (typeof normalised[key] === 'string') {
-      normalised[key] = normalised[key].trim();
-
-      // Handle empty strings
-      if (normalised[key] === '') {
-        normalised[key] = null;
-      }
+    const value = normalised[key];
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      normalised[key] = trimmed === '' ? null : trimmed;
     }
   }
 
   // Normalise dates to ISO format
-  if (normalised.dateOfPublication) {
-    try {
-      normalised.dateOfPublication = new Date(
-        normalised.dateOfPublication,
-      ).toISOString();
-    } catch {
-      normalised.dateOfPublication = null;
+  if ('dateOfPublication' in normalised) {
+    const value = normalised['dateOfPublication'];
+    if (value) {
+      try {
+        const parsed =
+          value instanceof Date ? value : new Date(value as string);
+        normalised['dateOfPublication'] = parsed.toISOString();
+      } catch {
+        normalised['dateOfPublication'] = null;
+      }
     }
   }
 
-  if (normalised.dateOfDeath) {
-    try {
-      normalised.dateOfDeath = new Date(normalised.dateOfDeath).toISOString();
-    } catch {
-      normalised.dateOfDeath = null;
+  if ('dateOfDeath' in normalised) {
+    const value = normalised['dateOfDeath'];
+    if (value) {
+      try {
+        const parsed =
+          value instanceof Date ? value : new Date(value as string);
+        normalised['dateOfDeath'] = parsed.toISOString();
+      } catch {
+        normalised['dateOfDeath'] = null;
+      }
     }
   }
 
-  return normalised;
+  return normalised as T;
 }
 
 /**
@@ -334,31 +416,55 @@ export interface ExportOptions {
 }
 
 export async function exportData(
-  articles: any[],
-  victims: any[],
-  perpetrators: any[],
+  articles: ExportArticleRecord[],
+  victims: ExportVictimRecord[],
+  perpetrators: ExportPerpetratorRecord[],
   options: ExportOptions,
 ): Promise<string> {
   // Filter data based on options
   let filteredArticles = articles;
 
   if (options.dateRange) {
+    const { start, end } = options.dateRange;
     filteredArticles = articles.filter((article) => {
-      const pubDate = new Date(article.dateOfPublication);
-      return (
-        pubDate >= options.dateRange!.start && pubDate <= options.dateRange!.end
-      );
+      const rawDate = article.dateOfPublication;
+      if (!rawDate) {
+        return false;
+      }
+
+      const publicationDate =
+        rawDate instanceof Date ? rawDate : new Date(String(rawDate));
+      if (Number.isNaN(publicationDate.valueOf())) {
+        return false;
+      }
+
+      return publicationDate >= start && publicationDate <= end;
     });
   }
 
   // Combine data for export
-  const exportData = filteredArticles.map((article) => {
-    const articleVictims = victims.filter(
-      (v) => v.articleId === article.articleId,
+  const exportRows: ArticleWithRelations[] = filteredArticles.map((article) => {
+    const candidateIds = [article.articleId, article.id].filter(
+      (identifier): identifier is string =>
+        typeof identifier === 'string' && identifier.length > 0,
     );
-    const articlePerpetrators = perpetrators.filter(
-      (p) => p.articleId === article.articleId,
-    );
+    const identifierSet = new Set(candidateIds);
+
+    const articleVictims = victims.filter((victim) => {
+      const victimArticleId = victim.articleId;
+      if (typeof victimArticleId !== 'string') {
+        return false;
+      }
+      return identifierSet.has(victimArticleId);
+    });
+
+    const articlePerpetrators = perpetrators.filter((perpetrator) => {
+      const perpetratorArticleId = perpetrator.articleId;
+      if (typeof perpetratorArticleId !== 'string') {
+        return false;
+      }
+      return identifierSet.has(perpetratorArticleId);
+    });
 
     return {
       ...article,
@@ -369,11 +475,11 @@ export async function exportData(
 
   switch (options.format) {
     case 'json':
-      return JSON.stringify(exportData, null, 2);
+      return JSON.stringify(exportRows, null, 2);
 
     case 'csv':
       // Flatten data for CSV export
-      return exportToCsv(exportData);
+      return exportToCsv(exportRows);
 
     case 'xlsx':
       // This would require additional Excel library implementation
@@ -387,26 +493,27 @@ export async function exportData(
 /**
  * Convert data to CSV format
  */
-function exportToCsv(data: any[]): string {
+function exportToCsv(data: ArticleWithRelations[]): string {
   if (data.length === 0) return '';
 
   // Flatten the nested structure
-  const flattened = data.flatMap((article) => {
+  const flattened: FlattenedExportRow[] = data.flatMap((article) => {
     if (article.victims.length === 0 && article.perpetrators.length === 0) {
       return [{ ...article, victims: [], perpetrators: [] }];
     }
 
-    const rows: any[] = [];
+    const rows: FlattenedExportRow[] = [];
     const maxRows = Math.max(
       article.victims.length,
       article.perpetrators.length,
+      1,
     );
 
-    for (let i = 0; i < maxRows; i++) {
+    for (let i = 0; i < maxRows; i += 1) {
       rows.push({
         ...article,
-        victim: article.victims[i] || {},
-        perpetrator: article.perpetrators[i] || {},
+        victim: article.victims[i],
+        perpetrator: article.perpetrators[i],
       });
     }
 
@@ -417,7 +524,7 @@ function exportToCsv(data: any[]): string {
   const keys = new Set<string>();
   flattened.forEach((row) => {
     Object.keys(row).forEach((key) => {
-      if (key !== 'victims' && key !== 'perpetrators') {
+      if (!['victims', 'perpetrators', 'victim', 'perpetrator'].includes(key)) {
         keys.add(key);
       }
     });
@@ -439,27 +546,30 @@ function exportToCsv(data: any[]): string {
   // Convert rows to CSV
   flattened.forEach((row) => {
     const values = headers.map((header) => {
-      let value: any;
+      let value: unknown;
 
       if (header.startsWith('victim_')) {
         const key = header.replace('victim_', '');
-        value = row.victim?.[key] || '';
+        value = row.victim?.[key];
       } else if (header.startsWith('perpetrator_')) {
         const key = header.replace('perpetrator_', '');
-        value = row.perpetrator?.[key] || '';
+        value = row.perpetrator?.[key];
       } else {
-        value = row[header] || '';
+        value = row[header];
       }
 
-      // Escape CSV values
-      if (
-        typeof value === 'string' &&
-        (value.includes(',') || value.includes('"'))
-      ) {
-        value = `"${value.replace(/"/g, '""')}"`;
+      if (typeof value === 'string') {
+        if (value.includes(',') || value.includes('"')) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
       }
 
-      return value;
+      if (value === null || value === undefined) {
+        return '';
+      }
+
+      return String(value);
     });
 
     csvRows.push(values.join(','));
@@ -471,20 +581,18 @@ function exportToCsv(data: any[]): string {
 /**
  * sanitise data for safe storage
  */
-export function sanitiseData(data: any): any {
-  const sanitised = { ...data };
+export function sanitiseData<T extends Record<string, unknown>>(data: T): T {
+  const sanitisedEntries = Object.entries(data).map(([key, value]) => {
+    if (typeof value !== 'string') return [key, value];
 
-  // Remove potential XSS vectors
-  for (const key of Object.keys(sanitised)) {
-    if (typeof sanitised[key] === 'string') {
-      // Basic XSS prevention
-      sanitised[key] = sanitised[key]
-        .replace(/<script[^>]*>.*<\/script>/gi, '')
-        .replace(/<iframe[^>]*>.*<\/iframe>/gi, '')
-        .replace(/javascript:/gi, '')
-        .replace(/on\w+\s*=/gi, '');
-    }
-  }
+    const cleaned = value
+      .replace(/<script[^>]*>.*<\/script>/gi, '')
+      .replace(/<iframe[^>]*>.*<\/iframe>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '');
 
-  return sanitised;
+    return [key, cleaned];
+  });
+
+  return Object.fromEntries(sanitisedEntries) as T;
 }

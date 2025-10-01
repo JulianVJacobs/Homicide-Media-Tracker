@@ -20,7 +20,12 @@ interface MediaFormProps {
   item?: MediaItem;
 }
 
-const MediaForm: React.FC<MediaFormProps> = ({ show, onHide, onSave, item }) => {
+const MediaForm: React.FC<MediaFormProps> = ({
+  show,
+  onHide,
+  onSave,
+  item,
+}) => {
   const [formData, setFormData] = useState<MediaItem>(
     item || {
       title: '',
@@ -28,12 +33,12 @@ const MediaForm: React.FC<MediaFormProps> = ({ show, onHide, onSave, item }) => 
       year: new Date().getFullYear(),
       rating: 0,
       watched: false,
-    }
+    },
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       toast.error('Title is required');
       return;
@@ -44,8 +49,11 @@ const MediaForm: React.FC<MediaFormProps> = ({ show, onHide, onSave, item }) => 
     onHide();
   };
 
-  const handleChange = (field: keyof MediaItem, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = <K extends keyof MediaItem>(
+    field: K,
+    value: MediaItem[K],
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -53,7 +61,7 @@ const MediaForm: React.FC<MediaFormProps> = ({ show, onHide, onSave, item }) => 
       <Modal.Header closeButton>
         <Modal.Title>{item ? 'Edit' : 'Add New'} Media Item</Modal.Title>
       </Modal.Header>
-      
+
       <Form onSubmit={handleSubmit}>
         <Modal.Body>
           <Form.Group className="mb-3">
@@ -85,7 +93,9 @@ const MediaForm: React.FC<MediaFormProps> = ({ show, onHide, onSave, item }) => 
             <Form.Control
               type="number"
               value={formData.year}
-              onChange={(e) => handleChange('year', parseInt(e.target.value))}
+              onChange={(e) =>
+                handleChange('year', Number.parseInt(e.target.value, 10))
+              }
               min="1900"
               max={new Date().getFullYear() + 5}
             />
@@ -96,7 +106,9 @@ const MediaForm: React.FC<MediaFormProps> = ({ show, onHide, onSave, item }) => 
             <Form.Control
               type="number"
               value={formData.rating}
-              onChange={(e) => handleChange('rating', parseFloat(e.target.value))}
+              onChange={(e) =>
+                handleChange('rating', Number.parseFloat(e.target.value))
+              }
               min="0"
               max="10"
               step="0.1"
@@ -112,7 +124,7 @@ const MediaForm: React.FC<MediaFormProps> = ({ show, onHide, onSave, item }) => 
             />
           </Form.Group>
         </Modal.Body>
-        
+
         <Modal.Footer>
           <Button variant="secondary" onClick={onHide}>
             Cancel

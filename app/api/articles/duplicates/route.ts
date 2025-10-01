@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbm } from '../../../../lib/db/manager';
+import { dbm, DatabaseManagerServer } from '../../../../lib/db/server';
 import { detectDuplicates } from '../../../../lib/components/utils';
 import * as schema from '../../../../lib/db/schema';
 
@@ -24,7 +24,11 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
     // Get all existing articles for comparison
@@ -60,7 +64,11 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const threshold = parseFloat(url.searchParams.get('threshold') || '0.7');
-
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
     // Get all articles
@@ -91,7 +99,9 @@ export async function GET(request: NextRequest) {
         // Mark all articles in this group as processed
         processed.add(currentArticle.id);
         highConfidenceMatches.forEach((match) => {
-          const matchedArticle = articles.find((a: schema.Article) => a.id === match.id);
+          const matchedArticle = articles.find(
+            (a: schema.Article) => a.id === match.id,
+          );
           if (matchedArticle) {
             processed.add(matchedArticle.id);
           }

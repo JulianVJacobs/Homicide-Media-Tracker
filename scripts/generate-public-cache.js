@@ -1,3 +1,4 @@
+/* eslint-disable import/no-commonjs, @typescript-eslint/no-var-requires */
 // Node.js script to generate a list of all public files and API endpoints for service worker caching
 const fg = require('fast-glob');
 const fs = require('fs');
@@ -25,6 +26,9 @@ const OUTPUT_FILE = 'public/cache.json';
   }).filter(Boolean);
 
   // Write to output file
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(webPaths.concat(apiEndpoints), null, 2));
+  const cacheEntries = Array.from(
+    new Set(['/'].concat(webPaths, apiEndpoints)),
+  );
+  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(cacheEntries, null, 2));
   console.log(`Public file and API cache list written to ${OUTPUT_FILE}`);
 })();

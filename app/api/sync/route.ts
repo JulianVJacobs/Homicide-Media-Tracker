@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbm } from '../../../lib/db/manager';
-import { DatabaseManagerServer } from '../../../lib/db/server';
+import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
 
 /**
  * GET /api/sync - Get sync configuration and status
  */
 export async function GET() {
   try {
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const config = dbm.getConfig();
 
     return NextResponse.json({

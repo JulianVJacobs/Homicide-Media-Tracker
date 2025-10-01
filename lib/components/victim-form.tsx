@@ -10,14 +10,36 @@ import {
   Alert,
   ListGroup,
 } from 'react-bootstrap';
-import { VictimData } from '@/lib/types/homicide';
+import type { NewVictim } from '@/lib/db/schema';
 import { townsByProvince } from '@/lib/data/towns-by-province';
 
 interface VictimFormProps {
-  onSubmit: (data: VictimData) => void;
-  victims: VictimData[];
+  onSubmit: (data: VictimFormValues) => void;
+  victims: VictimFormValues[];
   onClearVictims: () => void;
 }
+
+type VictimFieldKeys = Extract<
+  keyof NewVictim,
+  | 'victimName'
+  | 'dateOfDeath'
+  | 'placeOfDeathProvince'
+  | 'placeOfDeathTown'
+  | 'typeOfLocation'
+  | 'sexualAssault'
+  | 'genderOfVictim'
+  | 'raceOfVictim'
+  | 'ageOfVictim'
+  | 'ageRangeOfVictim'
+  | 'modeOfDeathSpecific'
+  | 'modeOfDeathGeneral'
+  | 'policeStation'
+  | 'typeOfMurder'
+>;
+
+type VictimFormValues = Pick<NewVictim, VictimFieldKeys> & {
+  articleId?: string | null;
+};
 
 const VictimForm: React.FC<VictimFormProps> = ({
   onSubmit,
@@ -25,23 +47,24 @@ const VictimForm: React.FC<VictimFormProps> = ({
   onClearVictims,
 }) => {
   // Default data for dev/testing
-  const DEV_DEFAULT_DATA: VictimData = {
-    victimName: 'John Smith',
-    dateOfDeath: '2025-09-25',
-    province: 'Gauteng',
-    town: 'Johannesburg',
-    locationType: 'Residential',
-    sexualAssault: 'No',
-    genderOfVictim: 'Male',
-    race: 'African',
-    ageOfVictim: '35',
-    ageRangeOfVictim: '26-35',
-    modeOfDeathSpecific: 'Gunshot',
-    modeOfDeathGeneral: 'Homicide',
-    policeStation: 'Hillbrow',
+  const RESET_DATA: VictimFormValues = {
+    victimName: '',
+    dateOfDeath: '',
+    placeOfDeathProvince: '',
+    placeOfDeathTown: '',
+    typeOfLocation: '',
+    sexualAssault: '',
+    genderOfVictim: '',
+    raceOfVictim: '',
+    ageOfVictim: null,
+    ageRangeOfVictim: '',
+    modeOfDeathSpecific: '',
+    modeOfDeathGeneral: '',
+    policeStation: '',
+    typeOfMurder: '',
   };
   const [currentVictim, setCurrentVictim] =
-    useState<VictimData>(DEV_DEFAULT_DATA);
+    useState<VictimFormValues>(RESET_DATA);
 
   const [availableTowns, setAvailableTowns] = useState<string[]>([]);
   const [customTown, setCustomTown] = useState('');
@@ -49,59 +72,55 @@ const VictimForm: React.FC<VictimFormProps> = ({
 
   useEffect(() => {
     // Update available towns based on selected province
-    if (currentVictim.province && townsByProvince[currentVictim.province]) {
-      setAvailableTowns(townsByProvince[currentVictim.province]);
+    if (
+      currentVictim.placeOfDeathProvince &&
+      townsByProvince[currentVictim.placeOfDeathProvince]
+    ) {
+      setAvailableTowns(townsByProvince[currentVictim.placeOfDeathProvince]);
     } else {
       setAvailableTowns([]);
     }
-  }, [currentVictim.province]);
+  }, [currentVictim.placeOfDeathProvince]);
 
   useEffect(() => {
     // Validate required fields
     const required = [
       'victimName',
       'dateOfDeath',
-      'province',
+      'placeOfDeathProvince',
       'genderOfVictim',
     ];
-    const allRequiredFilled = required.every(
-      (field) =>
-        currentVictim[field as keyof VictimData].toString().trim() !== '',
-    );
+    const allRequiredFilled = required.every((field) => {
+      const value = currentVictim[field as keyof VictimFormValues];
+      if (value === null || value === undefined) return false;
+      if (typeof value === 'number') return true;
+      return value.toString().trim() !== '';
+    });
     setIsValid(allRequiredFilled);
   }, [currentVictim]);
 
-  const handleChange = (field: keyof VictimData, value: string) => {
+  const handleChange = <K extends keyof VictimFormValues>(
+    field: K,
+    value: VictimFormValues[K],
+  ) => {
     setCurrentVictim((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleAddVictim = () => {
     if (isValid) {
-      const victimToAdd = { ...currentVictim };
+      const victimToAdd: VictimFormValues = {
+        ...currentVictim,
+        placeOfDeathTown:
+          currentVictim.placeOfDeathTown === 'Other' && customTown.trim()
+            ? customTown.trim()
+            : currentVictim.placeOfDeathTown,
+      };
 
       // Use custom town if "Other" was selected
-      if (currentVictim.town === 'Other' && customTown.trim()) {
-        victimToAdd.town = customTown.trim();
-      }
-
       onSubmit(victimToAdd);
 
       // Reset form
-      setCurrentVictim({
-        victimName: '',
-        dateOfDeath: '',
-        province: '',
-        town: '',
-        locationType: '',
-        sexualAssault: '',
-        genderOfVictim: '',
-        race: '',
-        ageOfVictim: '',
-        ageRangeOfVictim: '',
-        modeOfDeathSpecific: '',
-        modeOfDeathGeneral: '',
-        policeStation: '',
-      });
+      setCurrentVictim(RESET_DATA);
       setCustomTown('');
     }
   };
@@ -188,8 +207,8 @@ const VictimForm: React.FC<VictimFormProps> = ({
               {victims.map((victim, index) => (
                 <ListGroup.Item key={index} className="px-0">
                   <strong>{victim.victimName}</strong> - {victim.genderOfVictim}
-                  , Age: {victim.ageOfVictim || victim.ageRangeOfVictim},{' '}
-                  {victim.province}
+                  , Age: {victim.ageOfVictim ?? victim.ageRangeOfVictim},{' '}
+                  {victim.placeOfDeathProvince}
                 </ListGroup.Item>
               ))}
             </ListGroup>
@@ -203,7 +222,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                 <Form.Label>Victim Name *</Form.Label>
                 <Form.Control
                   type="text"
-                  value={currentVictim.victimName}
+                  value={currentVictim.victimName ?? ''}
                   onChange={(e) => handleChange('victimName', e.target.value)}
                   placeholder="Full name of victim"
                   required
@@ -215,7 +234,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                 <Form.Label>Date of Death *</Form.Label>
                 <Form.Control
                   type="date"
-                  value={currentVictim.dateOfDeath}
+                  value={currentVictim.dateOfDeath ?? ''}
                   onChange={(e) => handleChange('dateOfDeath', e.target.value)}
                   required
                 />
@@ -228,8 +247,10 @@ const VictimForm: React.FC<VictimFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Province *</Form.Label>
                 <Form.Select
-                  value={currentVictim.province}
-                  onChange={(e) => handleChange('province', e.target.value)}
+                  value={currentVictim.placeOfDeathProvince ?? ''}
+                  onChange={(e) =>
+                    handleChange('placeOfDeathProvince', e.target.value)
+                  }
                   required
                 >
                   {provinceOptions.map((option) => (
@@ -244,9 +265,11 @@ const VictimForm: React.FC<VictimFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Town</Form.Label>
                 <Form.Select
-                  value={currentVictim.town}
-                  onChange={(e) => handleChange('town', e.target.value)}
-                  disabled={!currentVictim.province}
+                  value={currentVictim.placeOfDeathTown ?? ''}
+                  onChange={(e) =>
+                    handleChange('placeOfDeathTown', e.target.value)
+                  }
+                  disabled={!currentVictim.placeOfDeathProvince}
                 >
                   <option value="">Select Town</option>
                   {availableTowns.map((town) => (
@@ -255,7 +278,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                     </option>
                   ))}
                 </Form.Select>
-                {currentVictim.town === 'Other' && (
+                {currentVictim.placeOfDeathTown === 'Other' && (
                   <Form.Control
                     type="text"
                     className="mt-2"
@@ -273,7 +296,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Gender *</Form.Label>
                 <Form.Select
-                  value={currentVictim.genderOfVictim}
+                  value={currentVictim.genderOfVictim ?? ''}
                   onChange={(e) =>
                     handleChange('genderOfVictim', e.target.value)
                   }
@@ -291,8 +314,8 @@ const VictimForm: React.FC<VictimFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Race</Form.Label>
                 <Form.Select
-                  value={currentVictim.race}
-                  onChange={(e) => handleChange('race', e.target.value)}
+                  value={currentVictim.raceOfVictim ?? ''}
+                  onChange={(e) => handleChange('raceOfVictim', e.target.value)}
                 >
                   {raceOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -310,8 +333,20 @@ const VictimForm: React.FC<VictimFormProps> = ({
                 <Form.Label>Age</Form.Label>
                 <Form.Control
                   type="number"
-                  value={currentVictim.ageOfVictim}
-                  onChange={(e) => handleChange('ageOfVictim', e.target.value)}
+                  value={
+                    currentVictim.ageOfVictim !== null
+                      ? currentVictim.ageOfVictim
+                      : ''
+                  }
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const parsed = raw === '' ? null : Number(raw);
+                    const nextValue = Number.isNaN(parsed) ? null : parsed;
+                    handleChange(
+                      'ageOfVictim',
+                      nextValue as VictimFormValues['ageOfVictim'],
+                    );
+                  }}
                   placeholder="Exact age if known"
                   min="0"
                   max="120"
@@ -322,7 +357,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Age Range</Form.Label>
                 <Form.Select
-                  value={currentVictim.ageRangeOfVictim}
+                  value={currentVictim.ageRangeOfVictim ?? ''}
                   onChange={(e) =>
                     handleChange('ageRangeOfVictim', e.target.value)
                   }
@@ -342,8 +377,10 @@ const VictimForm: React.FC<VictimFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Location Type</Form.Label>
                 <Form.Select
-                  value={currentVictim.locationType}
-                  onChange={(e) => handleChange('locationType', e.target.value)}
+                  value={currentVictim.typeOfLocation ?? ''}
+                  onChange={(e) =>
+                    handleChange('typeOfLocation', e.target.value)
+                  }
                 >
                   {locationTypeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -358,7 +395,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                 <Form.Label>Police Station</Form.Label>
                 <Form.Control
                   type="text"
-                  value={currentVictim.policeStation}
+                  value={currentVictim.policeStation ?? ''}
                   onChange={(e) =>
                     handleChange('policeStation', e.target.value)
                   }
@@ -373,7 +410,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Sexual Assault</Form.Label>
                 <Form.Select
-                  value={currentVictim.sexualAssault}
+                  value={currentVictim.sexualAssault ?? ''}
                   onChange={(e) =>
                     handleChange('sexualAssault', e.target.value)
                   }
@@ -391,7 +428,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                 <Form.Label>Mode of Death (General)</Form.Label>
                 <Form.Control
                   type="text"
-                  value={currentVictim.modeOfDeathGeneral}
+                  value={currentVictim.modeOfDeathGeneral ?? ''}
                   onChange={(e) =>
                     handleChange('modeOfDeathGeneral', e.target.value)
                   }
@@ -404,7 +441,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                 <Form.Label>Mode of Death (Specific)</Form.Label>
                 <Form.Control
                   type="text"
-                  value={currentVictim.modeOfDeathSpecific}
+                  value={currentVictim.modeOfDeathSpecific ?? ''}
                   onChange={(e) =>
                     handleChange('modeOfDeathSpecific', e.target.value)
                   }
@@ -430,3 +467,5 @@ const VictimForm: React.FC<VictimFormProps> = ({
 };
 
 export default VictimForm;
+
+export type { VictimFormValues };

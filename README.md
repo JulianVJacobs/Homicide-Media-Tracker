@@ -11,11 +11,10 @@ This single README combines development guidance from the project and an older b
 **Current version: 1.1.0**
 
 - [ ] **1.x.x**
-  - [ ] **1.2.x**
-    - [ ] Make PWA offline compatible
-      - [ ] Implement service worker for asset caching
-      - [ ] Ensure IndexedDB sync for all CRUD operations
-      - [ ] Test offline/online transitions in browser and Electron
+  - [x] **1.2.x**
+    - [x] Make PWA offline-first
+      - [x] Implement service worker for asset caching
+      - [x] Use IndexedDB for storage
   - [ ] Combine victim and perpetrator steps into "participants" step
     - [ ] Add dropdown to switch between profiles
     - [ ] Refactor forms for participant type
@@ -41,9 +40,9 @@ This single README combines development guidance from the project and an older b
   - [ ] Change "type of murder" from dropdown to checklist
     - [ ] Refactor UI for multiple selections
     - [ ] Add custom "other" option
-  - [ ] Make participant entries editable after "add"
-    - [ ] Add edit button to participant list
-    - [ ] Implement edit modal
+  - [x] Make participant entries editable after "add"
+    - [x] Add edit button to participant list
+    - [x] Implement edit modal
   - [ ] Show detailed summary of participants after "add"
     - [ ] Display summary table
     - [ ] Highlight incomplete/invalid entries

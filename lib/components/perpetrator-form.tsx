@@ -10,13 +10,28 @@ import {
   Alert,
   ListGroup,
 } from 'react-bootstrap';
-import { PerpetratorData } from '@/lib/types/homicide';
+import type { NewPerpetrator } from '@/lib/db/schema';
 
 interface PerpetratorFormProps {
-  onSubmit: (data: PerpetratorData) => void;
-  perpetrators: PerpetratorData[];
+  onSubmit: (data: PerpetratorFormValues) => void;
+  perpetrators: PerpetratorFormValues[];
   onClearPerpetrators: () => void;
 }
+
+type PerpetratorFieldKeys = Extract<
+  keyof NewPerpetrator,
+  | 'perpetratorName'
+  | 'perpetratorRelationshipToVictim'
+  | 'suspectIdentified'
+  | 'suspectArrested'
+  | 'suspectCharged'
+  | 'conviction'
+  | 'sentence'
+>;
+
+type PerpetratorFormValues = Pick<NewPerpetrator, PerpetratorFieldKeys> & {
+  articleId?: string | null;
+};
 
 const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   onSubmit,
@@ -24,27 +39,30 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   onClearPerpetrators,
 }) => {
   // Default data for dev/testing
-  const DEV_DEFAULT_DATA: PerpetratorData = {
-    perpetratorName: 'Alex Brown',
-    relationshipToVictim: 'Acquaintance',
-    suspectIdentified: 'Yes',
-    suspectArrested: 'No',
-    suspectCharged: 'No',
-    conviction: 'Pending',
+  const RESET_DATA: PerpetratorFormValues = {
+    perpetratorName: '',
+    perpetratorRelationshipToVictim: '',
+    suspectIdentified: '',
+    suspectArrested: '',
+    suspectCharged: '',
+    conviction: '',
     sentence: '',
   };
   const [currentPerpetrator, setCurrentPerpetrator] =
-    useState<PerpetratorData>(DEV_DEFAULT_DATA);
+    useState<PerpetratorFormValues>(RESET_DATA);
 
   const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
     // Validate required fields - only perpetrator name is required
-    const allRequiredFilled = currentPerpetrator.perpetratorName.trim() !== '';
+    const allRequiredFilled = currentPerpetrator.perpetratorName?.trim() !== '';
     setIsValid(allRequiredFilled);
   }, [currentPerpetrator]);
 
-  const handleChange = (field: keyof PerpetratorData, value: string) => {
+  const handleChange = <K extends keyof PerpetratorFormValues>(
+    field: K,
+    value: PerpetratorFormValues[K],
+  ) => {
     setCurrentPerpetrator((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -53,15 +71,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
       onSubmit(currentPerpetrator);
 
       // Reset form
-      setCurrentPerpetrator({
-        perpetratorName: '',
-        relationshipToVictim: '',
-        suspectIdentified: '',
-        suspectArrested: '',
-        suspectCharged: '',
-        conviction: '',
-        sentence: '',
-      });
+      setCurrentPerpetrator(RESET_DATA);
     }
   };
 
@@ -117,8 +127,8 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
               {perpetrators.map((perpetrator, index) => (
                 <ListGroup.Item key={index} className="px-0">
                   <strong>{perpetrator.perpetratorName}</strong>
-                  {perpetrator.relationshipToVictim &&
-                    ` - ${perpetrator.relationshipToVictim}`}
+                  {perpetrator.perpetratorRelationshipToVictim &&
+                    ` - ${perpetrator.perpetratorRelationshipToVictim}`}
                   {perpetrator.suspectArrested &&
                     ` | Arrested: ${perpetrator.suspectArrested}`}
                   {perpetrator.conviction &&
@@ -136,7 +146,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
                 <Form.Label>Perpetrator Name *</Form.Label>
                 <Form.Control
                   type="text"
-                  value={currentPerpetrator.perpetratorName}
+                  value={currentPerpetrator.perpetratorName ?? ''}
                   onChange={(e) =>
                     handleChange('perpetratorName', e.target.value)
                   }
@@ -149,9 +159,14 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Relationship to Victim</Form.Label>
                 <Form.Select
-                  value={currentPerpetrator.relationshipToVictim}
+                  value={
+                    currentPerpetrator.perpetratorRelationshipToVictim ?? ''
+                  }
                   onChange={(e) =>
-                    handleChange('relationshipToVictim', e.target.value)
+                    handleChange(
+                      'perpetratorRelationshipToVictim',
+                      e.target.value,
+                    )
                   }
                 >
                   {relationshipOptions.map((option) => (
@@ -169,7 +184,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Suspect Identified</Form.Label>
                 <Form.Select
-                  value={currentPerpetrator.suspectIdentified}
+                  value={currentPerpetrator.suspectIdentified ?? ''}
                   onChange={(e) =>
                     handleChange('suspectIdentified', e.target.value)
                   }
@@ -186,7 +201,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Suspect Arrested</Form.Label>
                 <Form.Select
-                  value={currentPerpetrator.suspectArrested}
+                  value={currentPerpetrator.suspectArrested ?? ''}
                   onChange={(e) =>
                     handleChange('suspectArrested', e.target.value)
                   }
@@ -203,7 +218,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Suspect Charged</Form.Label>
                 <Form.Select
-                  value={currentPerpetrator.suspectCharged}
+                  value={currentPerpetrator.suspectCharged ?? ''}
                   onChange={(e) =>
                     handleChange('suspectCharged', e.target.value)
                   }
@@ -223,7 +238,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
               <Form.Group className="mb-3">
                 <Form.Label>Conviction</Form.Label>
                 <Form.Select
-                  value={currentPerpetrator.conviction}
+                  value={currentPerpetrator.conviction ?? ''}
                   onChange={(e) => handleChange('conviction', e.target.value)}
                 >
                   {convictionOptions.map((option) => (
@@ -239,7 +254,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
                 <Form.Label>Sentence</Form.Label>
                 <Form.Control
                   type="text"
-                  value={currentPerpetrator.sentence}
+                  value={currentPerpetrator.sentence ?? ''}
                   onChange={(e) => handleChange('sentence', e.target.value)}
                   placeholder="e.g., Life imprisonment, 15 years, etc."
                 />
@@ -263,3 +278,5 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
 };
 
 export default PerpetratorForm;
+
+export type { PerpetratorFormValues };

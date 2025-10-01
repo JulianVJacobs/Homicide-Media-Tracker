@@ -1,70 +1,71 @@
-import { dbm } from '../../../lib/db/manager';
-import { DatabaseManagerClient } from '../../../lib/db/client';
-import { articles } from '../../../lib/db/schema';
-import { eq, and, like, or } from 'drizzle-orm';
+'use client';
+
+import { dbm, DatabaseManagerClient } from '../../../lib/db/client';
+import type { Article } from '../../../lib/db/schema';
 import {
-  generateArticleId,
-  validateArticleData,
   detectDuplicates,
-  normaliseData,
-  sanitiseData,
+  generateArticleId,
 } from '../../../lib/components/utils';
+import { prepareArticlePayload } from '../../../lib/utils/transformers';
 import { getBaseUrl } from '../../../lib/platform';
+import { coerceArticle } from './utils';
 
 export async function get(req: Request) {
-  console.log('articles::GET');
+  console.log('api/articles:GET');
   const url = new URL(req.url, getBaseUrl());
   const id = url.searchParams.get('id');
-  const limit = parseInt(url.searchParams.get('limit') || '50');
-  const offset = parseInt(url.searchParams.get('offset') || '0');
+  const limit = Number.parseInt(url.searchParams.get('limit') || '50', 10);
+  const offset = Number.parseInt(url.searchParams.get('offset') || '0', 10);
   const search = url.searchParams.get('search') || '';
 
-  await dbm.ensureDatabaseInitialised();
-  const db = dbm.getLocal();
-
-  if (id) {
-    const result = await db.select().from(articles).where(eq(articles.id, id));
-    const article = result[0] || null;
-    console.log(article);
-    return { success: true, data: article };
-  }
-
-  let all;
-  if (search) {
-    const s = `%${search.toLowerCase()}%`;
-    all = await db
-      .select()
-      .from(articles)
-      .where(
-        or(
-          like(articles.newsReportHeadline, s),
-          like(articles.author, s),
-          like(articles.notes, s),
-        ),
+  try {
+    if (!(dbm instanceof DatabaseManagerClient))
+      throw new TypeError(
+        'Offline API called with non-local database manager. This endpoint must run in a browser context.',
       );
-  } else {
-    all = await db.select().from(articles);
+    await dbm.ensureDatabaseInitialised();
+    const db = dbm.getLocal();
+    if (id) {
+      const article = await db.articles.get(id);
+      return { success: true, data: article };
+    }
+    let all: Article[] = await db.articles.toArray();
+    if (search) {
+      const s = search.toLowerCase();
+      all = all.filter((a) => {
+        return (
+          (a.newsReportHeadline &&
+            a.newsReportHeadline.toLowerCase().includes(s)) ||
+          (a.author && a.author.toLowerCase().includes(s)) ||
+          (a.notes && a.notes.toLowerCase().includes(s))
+        );
+      });
+    }
+    const total = all.length;
+    const data = all.slice(offset, offset + limit);
+    return {
+      success: true,
+      data,
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
+      },
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : String(e),
+    };
   }
-  const total = all.length;
-  const data = all.slice(offset, offset + limit);
-  return {
-    success: true,
-    data,
-    pagination: {
-      total,
-      limit,
-      offset,
-      hasMore: offset + limit < total,
-    },
-  };
 }
 
 export async function post(req: Request) {
-  console.log('articles::post');
+  console.log('api/articles:POST');
   const body = await req.json();
-  const sanitisedData = sanitiseData(body);
-  const normalisedData = normaliseData(sanitisedData);
-  const validation = validateArticleData(normalisedData);
+  const { data: articlePayload, validation } = prepareArticlePayload(body);
   if (!validation.isValid) {
     return {
       success: false,
@@ -72,53 +73,70 @@ export async function post(req: Request) {
       details: validation.errors,
     };
   }
+
+  const coerced = coerceArticle(articlePayload);
   const id = generateArticleId(
-    normalisedData.newsReportUrl || '',
-    normalisedData.author || '',
-    normalisedData.newsReportHeadline || '',
+    coerced.newsReportUrl ?? '',
+    coerced.author ?? '',
+    coerced.newsReportHeadline ?? '',
   );
-  normalisedData.id = id;
-  // Check for duplicates
 
-  await dbm.ensureDatabaseInitialised();
-  const db = dbm.getLocal();
+  try {
+    if (!(dbm instanceof DatabaseManagerClient))
+      throw new TypeError(
+        'Offline API called with non-local database manager. This endpoint must run in a browser context.',
+      );
+    await dbm.ensureDatabaseInitialised();
+    const db = dbm.getLocal();
+    const existingArticles: Article[] = await db.articles.toArray();
+    const duplicates = detectDuplicates(coerced, existingArticles);
+    if (duplicates.length > 0 && duplicates[0].confidence === 'high') {
+      return {
+        success: false,
+        error: 'Potential duplicate article detected',
+        duplicates: duplicates.slice(0, 3),
+        id: duplicates[0].id,
+      };
+    }
 
-  const existingArticles = await db.select().from(articles);
-  const duplicates = detectDuplicates(normalisedData, existingArticles);
-  if (duplicates.length > 0 && duplicates[0].confidence === 'high') {
+    const now = new Date().toISOString();
+    const articleData: Article = {
+      id,
+      ...coerced,
+      createdAt: now,
+      updatedAt: now,
+      syncStatus: 'pending',
+      failureCount: 0,
+      lastSyncAt: null,
+    };
+
+    await db.articles.add(articleData);
+    await dbm.addToSyncQueue('POST', '/api/articles', articleData);
+    return {
+      success: true,
+      data: articleData,
+      warnings: validation.warnings,
+      duplicates: duplicates.length > 0 ? duplicates.slice(0, 3) : [],
+    };
+  } catch (e) {
+    console.error(e);
     return {
       success: false,
-      error: 'Potential duplicate article detected',
-      duplicates: duplicates.slice(0, 3),
-      id: duplicates[0].id,
+      message: e instanceof Error ? e.message : String(e),
     };
   }
-  const articleData = {
-    ...normalisedData,
-    id,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    syncStatus: 'pending',
-  };
-  await db.insert(articles).values(articleData);
-  if (dbm instanceof DatabaseManagerClient)
-    await dbm.addToSyncQueue('POST', '/api/articles', articleData);
-  return {
-    success: true,
-    data: articleData,
-    warnings: validation.warnings,
-    duplicates: duplicates.length > 0 ? duplicates.slice(0, 3) : [],
-  };
 }
 
 export async function put(req: Request) {
+  console.log('api/articles:PUT');
   const body = await req.json();
-  if (!body.articleId) {
+  const articleId = typeof body.articleId === 'string' ? body.articleId : '';
+
+  if (!articleId) {
     return { success: false, error: 'Article ID is required' };
   }
-  const sanitisedData = sanitiseData(body);
-  const normalisedData = normaliseData(sanitisedData);
-  const validation = validateArticleData(normalisedData);
+
+  const { data: articlePayload, validation } = prepareArticlePayload(body);
   if (!validation.isValid) {
     return {
       success: false,
@@ -127,62 +145,79 @@ export async function put(req: Request) {
     };
   }
 
-  await dbm.ensureDatabaseInitialised();
-  const db = dbm.getLocal();
+  try {
+    if (!(dbm instanceof DatabaseManagerClient))
+      throw new TypeError(
+        'Offline API called with non-local database manager. This endpoint must run in a browser context.',
+      );
 
-  const existingArr = await db
-    .select()
-    .from(articles)
-    .where(eq(articles.id, body.articleId));
-  const existing = existingArr[0];
-  if (!existing) {
-    return { success: false, error: 'Article not found' };
+    await dbm.ensureDatabaseInitialised();
+    const db = dbm.getLocal();
+    const existing = await db.articles.get(articleId);
+
+    if (!existing) {
+      return { success: false, error: 'Article not found' };
+    }
+
+    const coercedUpdate = coerceArticle(articlePayload, existing);
+    const now = new Date().toISOString();
+    const updatedArticle: Article = {
+      ...existing,
+      ...coercedUpdate,
+      updatedAt: now,
+      syncStatus: 'pending',
+      failureCount: 0,
+      lastSyncAt: null,
+    };
+
+    await db.articles.put(updatedArticle);
+    await dbm.addToSyncQueue('PUT', '/api/articles', updatedArticle);
+
+    return {
+      success: true,
+      data: updatedArticle,
+      warnings: validation.warnings,
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : String(e),
+    };
   }
-  const updateData = {
-    ...existing,
-    ...normalisedData,
-    updatedAt: new Date().toISOString(),
-    syncStatus: 'pending',
-  };
-  delete updateData.articleId;
-  delete updateData.createdAt;
-  await db
-    .update(articles)
-    .set(updateData)
-    .where(eq(articles.id, body.articleId));
-  if (dbm instanceof DatabaseManagerClient)
-    await dbm.addToSyncQueue('PUT', '/api/articles', updateData);
-  return {
-    success: true,
-    data: updateData,
-    warnings: validation.warnings,
-  };
 }
 
 export async function del(req: Request) {
+  console.log('api/articles:DEL');
   const url = new URL(req.url, getBaseUrl());
   const articleId = url.searchParams.get('articleId');
   if (!articleId) {
     return { success: false, error: 'Article ID is required' };
   }
 
-  await dbm.ensureDatabaseInitialised();
-  const db = dbm.getLocal();
-
-  const existingArr = await db
-    .select()
-    .from(articles)
-    .where(eq(articles.id, articleId));
-  const existing = existingArr[0];
-  if (!existing) {
-    return { success: false, error: 'Article not found' };
-  }
-  await db.delete(articles).where(eq(articles.id, articleId));
-  if (dbm instanceof DatabaseManagerClient)
+  try {
+    if (!(dbm instanceof DatabaseManagerClient))
+      throw new TypeError(
+        'Offline API called with non-local database manager. This endpoint must run in a browser context.',
+      );
+    await dbm.ensureDatabaseInitialised();
+    const db = dbm.getLocal();
+    const existing = await db.articles.get(articleId);
+    if (!existing) {
+      return { success: false, error: 'Article not found' };
+    }
+    await db.articles.delete(articleId);
     await dbm.addToSyncQueue('DELETE', `/api/articles?articleId=${articleId}`);
-  // Note: cascade delete for victims/perpetrators would require additional logic
-  return {
-    success: true,
-    message: 'Article deleted successfully',
-  };
+    // Note: cascade delete for victims/perpetrators would require additional logic
+    return {
+      success: true,
+      message: 'Article deleted successfully',
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : String(e),
+    };
+  }
 }

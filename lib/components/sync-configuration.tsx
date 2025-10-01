@@ -1,6 +1,6 @@
 /**
  * Sync Configuration Component for Homicide Media Tracker
- * 
+ *
  * This component allows users to configure remote LibSQL database
  * synchronization for when network connectivity is available.
  */
@@ -24,12 +24,14 @@ const SyncConfiguration: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  
+
   // Form state
   const [remoteUrl, setRemoteUrl] = useState('');
   const [authToken, setAuthToken] = useState('');
   const [syncInterval, setSyncInterval] = useState(15);
-  const [conflictResolution, setConflictResolution] = useState<'local' | 'remote' | 'manual'>('local');
+  const [conflictResolution, setConflictResolution] = useState<
+    'local' | 'remote' | 'manual'
+  >('local');
 
   const fetchConfig = async () => {
     try {
@@ -38,7 +40,7 @@ const SyncConfiguration: React.FC = () => {
         throw new Error('Failed to fetch sync configuration');
       }
       const data = await response.json();
-      
+
       if (data.success) {
         setConfig(data.data);
         // Update form state
@@ -73,7 +75,7 @@ const SyncConfiguration: React.FC = () => {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         toast.success('Sync configuration saved successfully');
         setShowModal(false);
@@ -97,7 +99,7 @@ const SyncConfiguration: React.FC = () => {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         toast.success('Sync disabled successfully');
         await fetchConfig(); // Refresh config
@@ -140,21 +142,24 @@ const SyncConfiguration: React.FC = () => {
           {config?.enabled ? (
             <div>
               <Alert variant="success">
-                <strong>Sync Enabled:</strong> This database is configured to sync with a remote server.
+                <strong>Sync Enabled:</strong> This database is configured to
+                sync with a remote server.
               </Alert>
-              
+
               <div className="row">
                 <div className="col-md-8">
                   <div className="mb-2">
-                    <strong>Remote URL:</strong>{' '}
-                    <code>{config.remoteUrl}</code>
+                    <strong>Remote URL:</strong> <code>{config.remoteUrl}</code>
                   </div>
                   <div className="mb-2">
-                    <strong>Sync Interval:</strong> {config.syncInterval} minutes
+                    <strong>Sync Interval:</strong> {config.syncInterval}{' '}
+                    minutes
                   </div>
                   <div className="mb-2">
                     <strong>Conflict Resolution:</strong>{' '}
-                    <span className="badge bg-info">{config.conflictResolution}</span>
+                    <span className="badge bg-info">
+                      {config.conflictResolution}
+                    </span>
                   </div>
                   {config.lastSync && (
                     <div className="mb-2">
@@ -165,16 +170,16 @@ const SyncConfiguration: React.FC = () => {
                 </div>
                 <div className="col-md-4">
                   <div className="d-grid gap-2">
-                    <Button 
-                      variant="outline-primary" 
+                    <Button
+                      variant="outline-primary"
                       size="sm"
                       onClick={() => setShowModal(true)}
                     >
                       <i className="bi bi-gear me-1"></i>
                       Configure
                     </Button>
-                    <Button 
-                      variant="outline-danger" 
+                    <Button
+                      variant="outline-danger"
                       size="sm"
                       onClick={handleDisableSync}
                       disabled={saving}
@@ -189,17 +194,16 @@ const SyncConfiguration: React.FC = () => {
           ) : (
             <div>
               <Alert variant="warning">
-                <strong>Sync Disabled:</strong> This database is operating in local-only mode.
+                <strong>Sync Disabled:</strong> This database is operating in
+                local-only mode.
               </Alert>
               <p className="text-muted">
-                Enable sync to connect with a remote LibSQL server for data sharing and backup.
-                This is useful when network connectivity is available and you want to share data
-                with other researchers or backup to a central server.
+                Enable sync to connect with a remote LibSQL server for data
+                sharing and backup. This is useful when network connectivity is
+                available and you want to share data with other researchers or
+                backup to a central server.
               </p>
-              <Button 
-                variant="primary"
-                onClick={() => setShowModal(true)}
-              >
+              <Button variant="primary" onClick={() => setShowModal(true)}>
                 <i className="bi bi-cloud-plus me-1"></i>
                 Configure Remote Sync
               </Button>
@@ -238,7 +242,8 @@ const SyncConfiguration: React.FC = () => {
                 placeholder="Optional authentication token"
               />
               <Form.Text className="text-muted">
-                Leave empty if your database doesn't require authentication
+                Leave empty if your database doesn&rsquo;t require
+                authentication
               </Form.Text>
             </Form.Group>
 
@@ -260,14 +265,21 @@ const SyncConfiguration: React.FC = () => {
               <Form.Label>Conflict Resolution</Form.Label>
               <Form.Select
                 value={conflictResolution}
-                onChange={(e) => setConflictResolution(e.target.value as 'local' | 'remote' | 'manual')}
+                onChange={(e) =>
+                  setConflictResolution(
+                    e.target.value as 'local' | 'remote' | 'manual',
+                  )
+                }
               >
                 <option value="local">Local wins (keep local changes)</option>
-                <option value="remote">Remote wins (accept remote changes)</option>
+                <option value="remote">
+                  Remote wins (accept remote changes)
+                </option>
                 <option value="manual">Manual resolution required</option>
               </Form.Select>
               <Form.Text className="text-muted">
-                How to handle conflicts when the same data is modified locally and remotely
+                How to handle conflicts when the same data is modified locally
+                and remotely
               </Form.Text>
             </Form.Group>
           </Modal.Body>

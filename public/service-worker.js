@@ -1,19 +1,24 @@
+const STATIC_CACHE = 'news-media-cache-v1';
+const API_CACHE = 'api-cache-v1';
+const RUNTIME_CACHE = 'runtime-cache-v1';
+
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open('news-media-cache-v1').then(async cache => {
-      // Fetch the list of files to cache, generated at build time
-      let filesToCache = [
-        '/',
-        '/offline.html',
-      ];
+    caches.open(STATIC_CACHE).then(async cache => {
+      const baseAssets = ['/', '/offline.html', '/manifest.webmanifest'];
+      let generatedAssets = [];
       try {
         const response = await fetch('/cache.json');
         if (response.ok) {
-          filesToCache = await response.json();
+          generatedAssets = await response.json();
         }
       } catch (err) {
         // Fallback: cache minimal assets if file missing
       }
+      const filesToCache = Array.from(
+        new Set([...baseAssets, ...generatedAssets]),
+      );
       return cache.addAll(filesToCache);
     })
   );
@@ -22,6 +27,41 @@ self.addEventListener('install', event => {
 // Runtime caching for API and other requests
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(event.request);
+          if (networkResponse && networkResponse.ok) {
+            const runtimeCache = await caches.open(RUNTIME_CACHE);
+            runtimeCache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (err) {
+          const matchOptions = { ignoreSearch: true };
+          const cachedHome = await caches.match(event.request, matchOptions);
+          if (cachedHome) return cachedHome;
+          const fallbackCandidates = ['/', '/index.html'];
+          const { pathname } = new URL(event.request.url);
+          if (pathname === '/.' || pathname === '') {
+            fallbackCandidates.unshift('/');
+          }
+          for (const candidate of fallbackCandidates) {
+            const cachedCandidate = await caches.match(candidate, matchOptions);
+            if (cachedCandidate) return cachedCandidate;
+          }
+          const offline = await caches.match('/offline.html');
+          if (offline) return offline;
+          return new Response('Offline', {
+            status: 504,
+            statusText: 'Gateway Timeout',
+          });
+        }
+      })(),
+    );
+    return;
+  }
   // Intercept all API POST requests
   if (event.request.method === 'POST' && url.pathname.startsWith('/api/')) {
     event.respondWith((async () => {
@@ -48,7 +88,7 @@ self.addEventListener('fetch', event => {
   // GET API requests: cache as before
   if (event.request.method === 'GET' && url.pathname.startsWith('/api/')) {
     event.respondWith(
-      caches.open('api-cache-v1').then(async cache => {
+      caches.open(API_CACHE).then(async cache => {
         try {
           const response = await fetch(event.request);
           cache.put(event.request, response.clone());
@@ -79,8 +119,17 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(async response => {
       if (response) return response;
+      if (event.request.method !== 'GET') {
+        return fetch(event.request);
+      }
       try {
-        return await fetch(event.request);
+        const networkResponse = await fetch(event.request);
+        const sameOrigin = event.request.url.startsWith(self.location.origin);
+        if (sameOrigin && networkResponse && networkResponse.ok) {
+          const runtimeCache = await caches.open(RUNTIME_CACHE);
+          runtimeCache.put(event.request, networkResponse.clone());
+        }
+        return networkResponse;
       } catch (err) {
         const offline = await caches.match('/offline.html');
         if (offline) return offline;
@@ -155,9 +204,11 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
-        keys.filter(key => key !== 'news-media-cache-v1')
+        keys
+          .filter(key => ![STATIC_CACHE, API_CACHE, RUNTIME_CACHE].includes(key))
           .map(key => caches.delete(key))
       );
     })
   );
+  self.clients.claim();
 });

@@ -1,4 +1,4 @@
-/* eslint global-require: off, no-console: off, promise/always-return: off */
+/* eslint global-require: off, no-console: off */
 
 /**
  * Homicide Media Tracker - Electron Main Process
@@ -15,7 +15,7 @@ import { spawn, ChildProcess } from 'child_process';
 import http from 'http';
 import net from 'net';
 import MenuBuilder from './menu';
-import { dbm } from '../../lib/database/connection';
+import { dbm } from '../../lib/db/server';
 
 class AppUpdater {
   constructor() {
@@ -253,36 +253,38 @@ ipcMain.handle('database-backup', async () => {
   }
 });
 
-ipcMain.handle('show-message-box', async (event, options) => {
-  const { dialog } = require('electron');
+ipcMain.handle('show-message-box', async (_event, options) => {
+  const { dialog } = await import('electron');
   if (mainWindow) {
     return dialog.showMessageBox(mainWindow, options);
   }
+  return dialog.showMessageBox(options);
 });
 
 if (process.env.NODE_ENV === 'production') {
-  const sourceMapSupport = require('source-map-support');
-  sourceMapSupport.install();
+  import('source-map-support').then((module) => module.install());
 }
 
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
-  require('electron-debug')();
+  import('electron-debug').then((module) => module.default());
 }
 
 const installExtensions = async () => {
-  const installer = require('electron-devtools-installer');
-  const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  const extensions = ['REACT_DEVELOPER_TOOLS'];
+  const { default: installExtension, REACT_DEVELOPER_TOOLS } = await import(
+    'electron-devtools-installer'
+  );
 
-  return installer
-    .default(
-      extensions.map((name) => installer[name]),
-      forceDownload,
-    )
-    .catch(console.log);
+  const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
+  const extensions = [REACT_DEVELOPER_TOOLS];
+
+  return Promise.all(
+    extensions.map((extension) => installExtension(extension, forceDownload)),
+  ).catch((error) => {
+    console.log('Failed to install devtools extensions:', error);
+  });
 };
 
 const createWindow = async (): Promise<void> => {
@@ -393,7 +395,7 @@ const createWindow = async (): Promise<void> => {
 app.on('window-all-closed', () => {
   // Cleanup: Close database connections (if initialised)
   try {
-    dbm.close().catch((error) => {
+    dbm.close().catch((error: unknown) => {
       log.error('Error closing database:', error);
     });
   } catch (error) {
@@ -426,7 +428,7 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   // Close database connections first (if initialised)
   try {
-    dbm.close().catch((error) => {
+    dbm.close().catch((error: unknown) => {
       log.error('Error closing database during quit:', error);
     });
   } catch (error) {

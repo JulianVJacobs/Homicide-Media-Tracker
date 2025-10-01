@@ -13,24 +13,20 @@ import {
 import { toast } from 'react-toastify';
 import { getBaseUrl } from '../platform';
 import { v4 as uuidv4 } from 'uuid';
-import ArticleForm from './article-form';
-import VictimForm from './victim-form';
-import PerpetratorForm from './perpetrator-form';
-import {
-  ArticleData,
-  VictimData,
-  PerpetratorData,
-  HomicideCase,
-} from '@/lib/types/homicide';
+import ArticleForm, { ArticleFormValues } from './article-form';
+import VictimForm, { VictimFormValues } from './victim-form';
+import PerpetratorForm, { PerpetratorFormValues } from './perpetrator-form';
 
 interface InputHomicideProps {
   onBack: () => void;
 }
 
 const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
-  const [articleData, setArticleData] = useState<ArticleData | null>(null);
-  const [victims, setVictims] = useState<VictimData[]>([]);
-  const [perpetrators, setPerpetrators] = useState<PerpetratorData[]>([]);
+  const [articleData, setArticleData] = useState<ArticleFormValues | null>(
+    null,
+  );
+  const [victims, setVictims] = useState<VictimFormValues[]>([]);
+  const [perpetrators, setPerpetrators] = useState<PerpetratorFormValues[]>([]);
   // Defensive: never set to undefined/null
   const [typeOfMurder, setTypeOfMurder] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,13 +42,13 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
     return completed;
   };
 
-  const handleSubmitArticleForm = (data: ArticleData) => {
+  const handleSubmitArticleForm = (data: ArticleFormValues) => {
     setArticleData(data);
     setCurrentStep(2);
     toast.success('Article information saved');
   };
 
-  const handleSubmitVictimForm = (data: VictimData) => {
+  const handleSubmitVictimForm = (data: VictimFormValues) => {
     setVictims((prev = []) => [...prev, data]);
     toast.success('Victim added successfully');
   };
@@ -62,7 +58,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
     toast.info('All victims cleared');
   };
 
-  const handleSubmitPerpetratorForm = (data: PerpetratorData) => {
+  const handleSubmitPerpetratorForm = (data: PerpetratorFormValues) => {
     setPerpetrators((prev = []) => [...prev, data]);
     toast.success('Perpetrator added successfully');
   };
@@ -105,25 +101,30 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
         '@/app/api/perpetrators/offline'
       );
       const { post: addEvent } = await import('@/app/api/events/offline');
-
       // 1. Add article
       const articleReq = new Request(getBaseUrl(), {
         method: 'POST',
         body: JSON.stringify(articleData),
       });
-      const articleResult = await addArticle(articleReq);
-      const articleId = articleResult?.data?.id;
-      console.log(articleResult);
+      const articleResponse = await addArticle(articleReq);
+      const articleId = articleResponse?.data?.id;
+
+      if (!articleId) {
+        throw new Error('Article creation failed: missing ID');
+      }
 
       // 2. Add victims and get their IDs
       const victimIds: string[] = [];
       for (const victim of victims) {
         const req = new Request(getBaseUrl(), {
           method: 'POST',
-          body: JSON.stringify({ ...victim, articleId }),
+          body: JSON.stringify({
+            ...victim,
+            articleId,
+          }),
         });
-        const result = await addVictim(req);
-        if (result?.data?.id) victimIds.push(result.data.id);
+        const victimResponse = await addVictim(req);
+        if (victimResponse?.data?.id) victimIds.push(victimResponse.data.id);
       }
 
       // 3. Add perpetrators and get their IDs
@@ -131,23 +132,26 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
       for (const perpetrator of perpetrators) {
         const req = new Request(getBaseUrl(), {
           method: 'POST',
-          body: JSON.stringify({ ...perpetrator, articleId }),
+          body: JSON.stringify({
+            ...perpetrator,
+            articleId,
+          }),
         });
-        const result = await addPerpetrator(req);
-        if (result?.data?.id) perpetratorIds.push(result.data.id);
+        const perpetratorResponse = await addPerpetrator(req);
+        if (perpetratorResponse?.data?.id)
+          perpetratorIds.push(perpetratorResponse.data.id);
       }
 
       // 4. Add event referencing article and participant IDs
       const eventPayload = {
         id: uuidv4(),
         eventTypes: ['homicide'],
-        articleId,
-        participants: {
-          victim: victimIds,
-          perpetrator: perpetratorIds,
-        },
+        articleIds: [articleId],
+        participantIds: [...victimIds, ...perpetratorIds],
         details: {
           ...articleData,
+          victims,
+          perpetrators,
           typeOfMurder,
           createdAt: new Date().toISOString(),
         },
@@ -184,11 +188,12 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
     { value: 'Unknown/Other', label: 'Unknown/Other' },
   ];
 
-  const isReadyToSubmit =
+  const isReadyToSubmit = Boolean(
     articleData &&
-    victims.length > 0 &&
-    perpetrators.length > 0 &&
-    typeOfMurder;
+      victims.length > 0 &&
+      perpetrators.length > 0 &&
+      typeOfMurder.trim(),
+  );
 
   return (
     <Container fluid className="py-4">
@@ -338,6 +343,12 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                       <strong>Perpetrators:</strong> {perpetrators.length}{' '}
                       perpetrator(s)
                     </p>
+                    {articleData?.newsReportPlatform && (
+                      <p>
+                        <strong>Platform:</strong>{' '}
+                        {articleData.newsReportPlatform}
+                      </p>
+                    )}
                     <p>
                       <strong>Type of Murder:</strong> {typeOfMurder}
                     </p>

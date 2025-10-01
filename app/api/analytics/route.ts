@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from 'drizzle-orm';
-import { dbm } from '../../../lib/db/manager';
+import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
 import * as schema from '../../../lib/db/schema';
 
 /**
@@ -10,8 +10,12 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const period = url.searchParams.get('period') || '30'; // days
-    const groupBy = url.searchParams.get('groupBy') || 'day';
 
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
     // Basic counts

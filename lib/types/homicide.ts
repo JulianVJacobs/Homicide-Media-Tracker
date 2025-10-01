@@ -1,47 +1,61 @@
-// Data interfaces for Homicide Media Tracker
+// Shared homicide types derived from the database schema
 
-export interface ArticleData {
-  newsReportUrl: string;
-  newsReportHeadline: string;
-  dateOfPublication: string;
-  author: string;
-  wireService: string;
-  language: string;
-  sourceType: string;
-  newsSource: string;
-}
+import type {
+  Article,
+  Victim,
+  Perpetrator,
+  NewArticle,
+  NewVictim,
+  NewPerpetrator,
+} from '@/lib/db/schema';
 
-export interface VictimData {
-  victimName: string;
-  dateOfDeath: string;
-  province: string;
-  town: string;
-  locationType: string;
-  sexualAssault: string;
-  genderOfVictim: string;
-  race: string;
-  ageOfVictim: string;
-  ageRangeOfVictim: string;
-  modeOfDeathSpecific: string;
-  modeOfDeathGeneral: string;
-  policeStation: string;
-}
+export type ArticleData = Pick<
+  NewArticle,
+  | 'newsReportUrl'
+  | 'newsReportHeadline'
+  | 'dateOfPublication'
+  | 'author'
+  | 'wireService'
+  | 'language'
+  | 'typeOfSource'
+  | 'newsReportPlatform'
+  | 'notes'
+>;
 
-export interface PerpetratorData {
-  perpetratorName: string;
-  relationshipToVictim: string;
-  suspectIdentified: string;
-  suspectArrested: string;
-  suspectCharged: string;
-  conviction: string;
-  sentence: string;
-}
+export type VictimData = Pick<
+  NewVictim,
+  | 'victimName'
+  | 'dateOfDeath'
+  | 'placeOfDeathProvince'
+  | 'placeOfDeathTown'
+  | 'typeOfLocation'
+  | 'sexualAssault'
+  | 'genderOfVictim'
+  | 'raceOfVictim'
+  | 'ageOfVictim'
+  | 'ageRangeOfVictim'
+  | 'modeOfDeathSpecific'
+  | 'modeOfDeathGeneral'
+  | 'policeStation'
+  | 'typeOfMurder'
+> & { articleId?: string | null };
+
+export type PerpetratorData = Pick<
+  NewPerpetrator,
+  | 'perpetratorName'
+  | 'perpetratorRelationshipToVictim'
+  | 'suspectIdentified'
+  | 'suspectArrested'
+  | 'suspectCharged'
+  | 'conviction'
+  | 'sentence'
+> & { articleId?: string | null };
 
 export interface HomicideCase {
   id?: string;
-  articleData: ArticleData;
-  victims: VictimData[];
-  perpetrators: PerpetratorData[];
+  articleData: Article;
+  victims: Victim[];
+  perpetrators: Perpetrator[];
   typeOfMurder: string;
   createdAt?: string;
   updatedAt?: string;
@@ -50,25 +64,21 @@ export interface HomicideCase {
   lastError?: string;
 }
 
-// Province and town data structure
 export interface TownsByProvince {
   [province: string]: string[];
 }
 
-// Form submission handlers
 export interface FormSubmissionHandlers {
   onSubmitArticleForm: (data: ArticleData) => void;
   onSubmitVictimForm: (data: VictimData) => void;
   onSubmitPerpetratorForm: (data: PerpetratorData) => void;
 }
 
-// Select options for dropdowns
 export interface SelectOption {
   value: string;
   label: string;
 }
 
-// API response types
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

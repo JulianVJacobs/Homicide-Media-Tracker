@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eq, like, or } from 'drizzle-orm';
-import { dbm } from '../../../lib/db/manager';
+import { eq, like, and, SQL, sql } from 'drizzle-orm';
+import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
 import { generateUserId, sanitiseData } from '../../../lib/components/utils';
 import * as schema from '../../../lib/db/schema';
 
 /**
  * Validate user data
  */
-function validateUserData(user: any) {
+function validateUserData(user: Partial<schema.User>) {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -46,31 +46,51 @@ function validateUserData(user: any) {
  */
 export async function GET(request: NextRequest) {
   try {
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
     // Get query parameters for filtering
     const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const parsedLimit = Number.parseInt(
+      url.searchParams.get('limit') || '50',
+      10,
+    );
+    const parsedOffset = Number.parseInt(
+      url.searchParams.get('offset') || '0',
+      10,
+    );
+    const limit = Number.isNaN(parsedLimit) ? 50 : parsedLimit;
+    const offset = Number.isNaN(parsedOffset) ? 0 : parsedOffset;
     const search = url.searchParams.get('search') || '';
     const role = url.searchParams.get('role') || '';
     const active = url.searchParams.get('active') || '';
 
     // Build query with filters
-    let users;
+    let users: schema.User[] = [];
     let total = 0;
 
     // Build where conditions
-    const whereConditions = [];
+    const whereConditions: SQL[] = [];
 
     if (search) {
-      whereConditions.push(
-        or(
-          like(schema.users.username, `%${search}%`),
-          like(schema.users.email, `%${search}%`),
-          like(schema.users.userId, `%${search}%`),
-        ),
-      );
+      const searchConditions = [
+        like(schema.users.username, `%${search}%`),
+        like(schema.users.userId, `%${search}%`),
+        like(schema.users.email, `%${search}%`),
+      ].filter((condition): condition is SQL => condition !== undefined);
+
+      if (searchConditions.length > 0) {
+        const [firstCondition, ...remainingConditions] = searchConditions;
+        const combinedCondition = remainingConditions.reduce<SQL>(
+          (accumulator, condition) => sql`${accumulator} OR ${condition}`,
+          firstCondition,
+        );
+        whereConditions.push(combinedCondition);
+      }
     }
 
     if (role) {
@@ -82,27 +102,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Execute query
-    if (whereConditions.length > 0) {
-      users = await db
-        .select()
-        .from(schema.users)
-        .where(whereConditions.length === 1 ? whereConditions[0] : undefined)
-        .limit(limit)
-        .offset(offset);
+    const condition = (() => {
+      if (whereConditions.length === 0) return undefined;
+      if (whereConditions.length === 1) return whereConditions[0];
+      return and(...whereConditions);
+    })();
 
-      const totalResult = await db
-        .select({ count: schema.users.id })
-        .from(schema.users)
-        .where(whereConditions.length === 1 ? whereConditions[0] : undefined);
-      total = totalResult.length;
-    } else {
-      users = await db.select().from(schema.users).limit(limit).offset(offset);
+    const baseQuery = db.select().from(schema.users);
+    users = condition
+      ? await baseQuery.where(condition).limit(limit).offset(offset)
+      : await baseQuery.limit(limit).offset(offset);
 
-      const totalResult = await db
-        .select({ count: schema.users.id })
-        .from(schema.users);
-      total = totalResult.length;
-    }
+    const countColumn = sql<number>`count(*)`.as('count');
+    const totalResult = condition
+      ? await db
+          .select({ count: countColumn })
+          .from(schema.users)
+          .where(condition)
+      : await db.select({ count: countColumn }).from(schema.users);
+    total = totalResult[0]?.count ?? 0;
 
     return NextResponse.json({
       success: true,
@@ -131,7 +149,16 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const userData = await request.json();
+    const userData = (await request.json()) as
+      | (Partial<schema.User> & Record<string, unknown>)
+      | undefined;
+
+    if (!userData) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid request payload' },
+        { status: 400 },
+      );
+    }
 
     // Validate user data
     const validation = validateUserData(userData);
@@ -149,26 +176,61 @@ export async function POST(request: NextRequest) {
 
     // Sanitize data
     const sanitisedData = sanitiseData(userData);
-
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
     // Generate unique user ID
     const userId = generateUserId();
 
+    const username =
+      typeof sanitisedData.username === 'string'
+        ? sanitisedData.username.trim()
+        : '';
+    if (!username) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Username is required',
+        },
+        { status: 400 },
+      );
+    }
+
+    const email =
+      typeof sanitisedData.email === 'string'
+        ? sanitisedData.email.trim() || null
+        : null;
+
+    const roleValue =
+      typeof sanitisedData.role === 'string' && sanitisedData.role.trim() !== ''
+        ? sanitisedData.role
+        : 'researcher';
+
+    const isActiveValue =
+      typeof sanitisedData.isActive === 'boolean'
+        ? sanitisedData.isActive
+        : sanitisedData.isActive !== undefined
+          ? Boolean(sanitisedData.isActive)
+          : true;
+
+    const newUserValues = {
+      userId,
+      username,
+      email,
+      role: roleValue,
+      isActive: isActiveValue,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: null,
+    } satisfies schema.NewUser;
+
     // Create user record
     const newUser = await db
       .insert(schema.users)
-      .values({
-        userId,
-        username: sanitisedData.username,
-        email: sanitisedData.email,
-        role: sanitisedData.role || 'researcher',
-        isActive:
-          sanitisedData.isActive !== undefined
-            ? Boolean(sanitisedData.isActive)
-            : true,
-        createdAt: new Date().toISOString(),
-      })
+      .values(newUserValues)
       .returning();
 
     return NextResponse.json(
@@ -212,9 +274,21 @@ export async function POST(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const { id, ...userData } = await request.json();
+    const payload = (await request.json()) as
+      | ({ id?: number } & Partial<schema.User> & Record<string, unknown>)
+      | undefined;
 
-    if (!id) {
+    if (!payload || typeof payload !== 'object') {
+      return NextResponse.json(
+        { success: false, error: 'Invalid request payload' },
+        { status: 400 },
+      );
+    }
+
+    const { id, ...userData } = payload;
+
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId)) {
       return NextResponse.json(
         { success: false, error: 'User ID is required' },
         { status: 400 },
@@ -237,22 +311,49 @@ export async function PUT(request: NextRequest) {
 
     // Sanitize data
     const sanitisedData = sanitiseData(userData);
-
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
+
+    const updateValues: Partial<schema.NewUser> = {};
+
+    if (typeof sanitisedData.username === 'string') {
+      const trimmedUsername = sanitisedData.username.trim();
+      if (!trimmedUsername) {
+        return NextResponse.json(
+          { success: false, error: 'Username is required' },
+          { status: 400 },
+        );
+      }
+      updateValues.username = trimmedUsername;
+    }
+
+    if ('email' in sanitisedData) {
+      updateValues.email =
+        typeof sanitisedData.email === 'string'
+          ? sanitisedData.email.trim() || null
+          : null;
+    }
+
+    if (typeof sanitisedData.role === 'string' && sanitisedData.role.trim()) {
+      updateValues.role = sanitisedData.role.trim();
+    }
+
+    if (sanitisedData.isActive !== undefined) {
+      updateValues.isActive =
+        typeof sanitisedData.isActive === 'boolean'
+          ? sanitisedData.isActive
+          : Boolean(sanitisedData.isActive);
+    }
 
     // Update user record
     const updatedUser = await db
       .update(schema.users)
-      .set({
-        username: sanitisedData.username,
-        email: sanitisedData.email,
-        role: sanitisedData.role,
-        isActive:
-          sanitisedData.isActive !== undefined
-            ? Boolean(sanitisedData.isActive)
-            : undefined,
-      })
-      .where(eq(schema.users.id, id))
+      .set(updateValues)
+      .where(eq(schema.users.id, numericId))
       .returning();
 
     if (updatedUser.length === 0) {
@@ -292,14 +393,18 @@ export async function DELETE(request: NextRequest) {
         { status: 400 },
       );
     }
-
+    if (!(dbm instanceof DatabaseManagerServer))
+      throw new TypeError(
+        'Online API called with local database manager. This endpoint must run in a server context.',
+      );
+    await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
     if (permanent) {
       // Permanently delete user record
       const deletedUser = await db
         .delete(schema.users)
-        .where(eq(schema.users.id, parseInt(id)))
+        .where(eq(schema.users.id, Number.parseInt(id, 10)))
         .returning();
 
       if (deletedUser.length === 0) {
@@ -318,7 +423,7 @@ export async function DELETE(request: NextRequest) {
       const deactivatedUser = await db
         .update(schema.users)
         .set({ isActive: false })
-        .where(eq(schema.users.id, parseInt(id)))
+        .where(eq(schema.users.id, Number.parseInt(id, 10)))
         .returning();
 
       if (deactivatedUser.length === 0) {

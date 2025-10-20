@@ -2,6 +2,14 @@ const STATIC_CACHE = 'news-media-cache-v1';
 const API_CACHE = 'api-cache-v1';
 const RUNTIME_CACHE = 'runtime-cache-v1';
 
+const supportsIndexedDB = () => {
+  try {
+    return typeof self !== 'undefined' && 'indexedDB' in self && self.indexedDB;
+  } catch (err) {
+    return false;
+  }
+};
+
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
@@ -142,6 +150,9 @@ self.addEventListener('fetch', event => {
 
 // IndexedDB helper for storing POST requests
 function storePostRequest(request) {
+  if (!supportsIndexedDB()) {
+    return Promise.resolve();
+  }
   return request.clone().json().then(body => {
     return new Promise((resolve, reject) => {
       const open = indexedDB.open('offline-post-queue', 1);
@@ -162,11 +173,16 @@ function storePostRequest(request) {
 
 self.addEventListener('sync', event => {
   if (event.tag === 'sync-api-posts') {
-    event.waitUntil(syncQueuedPosts());
+    if (supportsIndexedDB()) {
+      event.waitUntil(syncQueuedPosts());
+    }
   }
 });
 
 function syncQueuedPosts() {
+  if (!supportsIndexedDB()) {
+    return Promise.resolve();
+  }
   return new Promise((resolve, reject) => {
     const open = indexedDB.open('offline-post-queue', 1);
     open.onsuccess = () => {
@@ -197,7 +213,9 @@ function syncQueuedPosts() {
 }
 
 self.addEventListener('online', () => {
-  self.registration.sync.register('sync-api-posts');
+  if (supportsIndexedDB()) {
+    self.registration.sync.register('sync-api-posts');
+  }
 });
 
 self.addEventListener('activate', event => {

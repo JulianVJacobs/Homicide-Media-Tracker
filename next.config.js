@@ -8,7 +8,7 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['electron'],
   },
-  productionBrowserSourceMaps: true,
+  // productionBrowserSourceMaps: true,
 
   // Configure webpack for Electron compatibility
   webpack: (config, { isServer, dev }) => {

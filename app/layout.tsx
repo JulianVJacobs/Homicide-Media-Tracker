@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-toastify/dist/ReactToastify.css';
 import './globals.css';
 import { ToastContainer } from 'react-toastify';
-import RegisterServiceWorker from '@/lib/components/register-service-worker';
+import BootPWA from '@/lib/components/boot-pwa';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -65,8 +65,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        {/* Register service worker */}
-        <RegisterServiceWorker />
+        <BootPWA />
         {children}
         <ToastContainer
           position="top-right"

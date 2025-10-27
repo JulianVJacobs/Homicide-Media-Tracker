@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container,
   Card,
@@ -12,9 +12,9 @@ import {
 } from 'react-bootstrap';
 import InputHomicide from '@/lib/components/input-homicide';
 import ListHomicides from '@/lib/components/list-homicides';
-import SysInfo from '@/lib/components/system-information';
+import Settings from '@/lib/components/settings';
 
-type Views = 'home' | 'input' | 'list' | 'info';
+type Views = 'home' | 'input' | 'list' | 'settings';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<Views>('home');
@@ -69,10 +69,28 @@ export default function Home() {
       return <ListHomicides onBack={() => setCurrentView('home')} />;
     }
 
-    if (currentView === 'info') {
-      return <SysInfo onBack={() => setCurrentView('home')} />;
+    if (currentView === 'settings') {
+      return <Settings onBack={() => setCurrentView('home')} />;
     }
   };
+
+  useEffect(() => {
+    const onOpenSettings = () => setCurrentView('settings');
+    if (typeof window !== 'undefined') {
+      window.addEventListener(
+        'open-settings',
+        onOpenSettings as EventListener,
+      );
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener(
+          'open-settings',
+          onOpenSettings as EventListener,
+        );
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -107,10 +125,10 @@ export default function Home() {
               </Nav.Link>
               <Nav.Link
                 href="#"
-                onClick={() => setCurrentView('info')}
-                className={currentView === 'info' ? 'active' : ''}
+                onClick={() => setCurrentView('settings')}
+                className={currentView === 'settings' ? 'active' : ''}
               >
-                System Information
+                Settings
               </Nav.Link>
             </Nav>
           </Navbar.Collapse>

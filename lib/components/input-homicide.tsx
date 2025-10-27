@@ -11,7 +11,7 @@ import {
   ProgressBar,
 } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { getBaseUrl } from '../platform';
+import { getBaseUrl } from '../utils/platform';
 import { v4 as uuidv4 } from 'uuid';
 import ArticleForm, { ArticleFormValues } from './article-form';
 import VictimForm, { VictimFormValues } from './victim-form';

@@ -3,6 +3,11 @@ import { sql } from 'drizzle-orm';
 import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
 import * as schema from '../../../lib/db/schema';
 
+// This route relies on request URL parsing and server-only DB access.
+// Prevent Next.js from trying to statically prerender or inline this
+// route during the app build by forcing dynamic rendering.
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/analytics - Get database analytics and statistics
  */

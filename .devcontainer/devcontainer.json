@@ -43,7 +43,7 @@
       "label": "Electron Dev"
     }
   },
-  "postCreateCommand": "npm install --legacy-peer-deps",
+  // "postCreateCommand": "npm install --legacy-peer-deps",
   "remoteUser": "vscode",
   "customizations": {
     "vscode": {

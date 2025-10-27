@@ -10,6 +10,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import DbBackup from './db-backup';
 
 interface DatabaseStatus {
   isInitialised: boolean;
@@ -166,6 +167,7 @@ const DatabaseStatus: React.FC = () => {
         </h5>
       </Card.Header>
       <Card.Body>
+        <DbBackup />
         <div className="row">
           <div className="col-md-8">
             <div className="mb-3">

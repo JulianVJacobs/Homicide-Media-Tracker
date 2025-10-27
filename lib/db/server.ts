@@ -23,6 +23,12 @@ export interface DatabaseConfig {
     path: string;
     backupPath?: string;
   };
+  // Optional HTTP shim for a local helper process (optional)
+  localServer?: {
+    url?: string;
+    authToken?: string;
+    syncInterval?: number; // minutes
+  };
   remote?: {
     url: string;
     authToken?: string;
@@ -77,6 +83,7 @@ class DatabaseManagerServer {
         path: dbPath,
         backupPath: backupPath,
       },
+      localServer: undefined,
       sync: {
         enabled: false,
         conflictResolution: 'local',

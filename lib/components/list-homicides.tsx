@@ -13,8 +13,9 @@ import {
   Badge,
   Modal,
 } from 'react-bootstrap';
+import DbBackup from './db-backup';
 import { toast } from 'react-toastify';
-import { getBaseUrl } from '../platform';
+import { getBaseUrl } from '../utils/platform';
 import type { Article, Event, Victim, Perpetrator } from '../db/schema';
 
 interface ListHomicidesProps {
@@ -283,7 +284,10 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
   };
 
   const handleDeleteCase = async (caseId: string) => {
-    if (!window.confirm('Are you sure you want to delete this case?')) {
+    if (
+      typeof window === 'undefined' ||
+      !window.confirm('Are you sure you want to delete this case?')
+    ) {
       return;
     }
 
@@ -329,6 +333,12 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
             </Button>
           </div>
 
+          {/* Backup / Export tools moved onto this page for easier access while
+              viewing records. The full advanced tools remain behind the
+              component's details view. */}
+          <div className="mb-3">
+            <DbBackup />
+          </div>
           {/* Search and Stats */}
           <Card className="mb-4">
             <Card.Body>

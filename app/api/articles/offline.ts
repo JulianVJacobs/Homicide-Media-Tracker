@@ -7,7 +7,7 @@ import {
   generateArticleId,
 } from '../../../lib/components/utils';
 import { prepareArticlePayload } from '../../../lib/utils/transformers';
-import { getBaseUrl } from '../../../lib/platform';
+import { getBaseUrl } from '../../../lib/utils/platform';
 import { coerceArticle } from './utils';
 
 export async function get(req: Request) {

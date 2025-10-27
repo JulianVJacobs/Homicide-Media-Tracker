@@ -1,7 +1,7 @@
 // import { dbm } from '../../../lib/db/manager';
 import { dbm, DatabaseManagerClient } from '../../../lib/db/client';
 import { type Event } from '../../../lib/db/schema';
-import { getBaseUrl } from '../../../lib/platform';
+import { getBaseUrl } from '../../../lib/utils/platform';
 
 export async function get(req: Request) {
   const url = new URL(req.url, getBaseUrl());

@@ -1,7 +1,7 @@
 import { dbm, DatabaseManagerClient } from '../../../lib/db/client';
 import type { Victim } from '../../../lib/db/schema';
 import { prepareVictimPayload } from '../../../lib/utils/transformers';
-import { getBaseUrl } from '../../../lib/platform';
+import { getBaseUrl } from '../../../lib/utils/platform';
 import { coerceVictim } from './utils';
 
 export async function get(req: Request) {

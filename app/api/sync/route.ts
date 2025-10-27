@@ -13,13 +13,25 @@ export async function GET() {
     await dbm.ensureDatabaseInitialised();
     const config = dbm.getConfig();
 
+    const connectionType = config.remote?.url
+      ? 'remote'
+      : config.localServer?.url
+        ? 'local'
+        : 'none';
+    const remoteUrl = config.remote?.url || null;
+    const localUrl = config.localServer?.url || null;
+    const syncInterval =
+      config.remote?.syncInterval ?? config.localServer?.syncInterval ?? 15;
+
     return NextResponse.json({
       success: true,
       data: {
         enabled: config.sync.enabled,
-        remoteUrl: config.remote?.url || null,
+        connectionType,
+        remoteUrl,
+        localUrl,
         conflictResolution: config.sync.conflictResolution,
-        syncInterval: config.remote?.syncInterval || 15,
+        syncInterval,
         lastSync: null, // Would be populated from sync metadata
       },
     });
@@ -40,44 +52,79 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { remoteUrl, authToken, syncInterval = 15 } = await request.json();
+    const {
+      connectionType = 'none',
+      remoteUrl,
+      localUrl,
+      authToken,
+      syncInterval = 15,
+      conflictResolution = 'local',
+    } = await request.json();
 
-    if (!remoteUrl) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Remote URL is required',
-        },
-        { status: 400 },
-      );
+    // Handle remote configuration
+    if (connectionType === 'remote') {
+      if (!remoteUrl) {
+        return NextResponse.json(
+          { success: false, error: 'Remote URL is required for remote mode' },
+          { status: 400 },
+        );
+      }
+
+      if (dbm instanceof DatabaseManagerServer) {
+        // attempt to configure remote (will test access)
+        await dbm.configureRemote(remoteUrl, authToken);
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Remote sync configuration is only available on the server.',
+          },
+          { status: 400 },
+        );
+      }
+
+      dbm.updateConfig({
+        remote: { url: remoteUrl, authToken, syncInterval },
+        localServer: undefined,
+        sync: { enabled: true, conflictResolution },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Remote sync configuration updated successfully',
+      });
     }
 
-    // Only call configureRemote if running on server (type assertion)
-    if (dbm instanceof DatabaseManagerServer) {
-      await dbm.configureRemote(remoteUrl, authToken);
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Remote sync configuration is only available on the server.',
-        },
-        { status: 400 },
-      );
+    // Handle local configuration (HTTP shim)
+    if (connectionType === 'local') {
+      if (!localUrl) {
+        return NextResponse.json(
+          { success: false, error: 'Local URL is required for local mode' },
+          { status: 400 },
+        );
+      }
+
+      // Persist local server info; do not attempt heavy probing here
+      dbm.updateConfig({
+        localServer: { url: localUrl, authToken, syncInterval },
+        remote: undefined,
+        sync: { enabled: true, conflictResolution },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Local sync configuration saved',
+      });
     }
 
-    // Update sync interval
+    // connectionType === 'none' => disable sync and clear endpoints
     dbm.updateConfig({
-      remote: {
-        url: remoteUrl,
-        authToken,
-        syncInterval,
-      },
+      sync: { enabled: false, conflictResolution: 'local' },
+      remote: undefined,
+      localServer: undefined,
     });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Sync configuration updated successfully',
-    });
+    return NextResponse.json({ success: true, message: 'Sync disabled' });
   } catch (error) {
     console.error('Failed to configure sync:', error);
     return NextResponse.json(
@@ -99,6 +146,7 @@ export async function DELETE() {
     dbm.updateConfig({
       sync: { enabled: false, conflictResolution: 'local' },
       remote: undefined,
+      localServer: undefined,
     });
 
     return NextResponse.json({

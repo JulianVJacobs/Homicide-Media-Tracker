@@ -12,8 +12,16 @@ import {
   Col,
   Badge,
   Modal,
+  Dropdown,
+  ButtonGroup,
 } from 'react-bootstrap';
-import DbBackup from './db-backup';
+import { Download, Upload, Search } from 'lucide-react';
+import {
+  exportDbToBlob,
+  exportDbToCSVBlobs,
+  saveBlobToFile,
+  importDbFromFile,
+} from '../utils/db-io';
 import { toast } from 'react-toastify';
 import { getBaseUrl } from '../utils/platform';
 import type { Article, Event, Victim, Perpetrator } from '../db/schema';
@@ -69,25 +77,6 @@ const isEventsPayload = (value: unknown): value is EventsApiPayload => {
   return Array.isArray(data.events) && typeof data.total === 'number';
 };
 
-function toStringArray(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === 'string');
-  }
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) {
-        return parsed.filter(
-          (item): item is string => typeof item === 'string',
-        );
-      }
-    } catch {
-      // ignore parse errors
-    }
-  }
-  return [];
-}
-
 function toDetailsObject(value: unknown): Record<string, unknown> {
   if (!value) {
     return {};
@@ -105,6 +94,25 @@ function toDetailsObject(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null
     ? (value as Record<string, unknown>)
     : {};
+}
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string');
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item): item is string => typeof item === 'string',
+        );
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }
+  return [];
 }
 
 function extractArrayData<T>(payload: unknown): T[] {
@@ -322,62 +330,86 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
     setShowDetailModal(true);
   };
 
+  // Export / Import controls state
+  const [selectedFormat, setSelectedFormat] = useState<'json' | 'csv'>('json');
+  const [exporting, setExporting] = useState(false);
+  const importInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [showControls, setShowControls] = useState(false);
+
+  React.useEffect(() => {
+    try {
+      const last =
+        typeof window !== 'undefined' &&
+        localStorage.getItem('lastExportFormat');
+      if (last === 'csv' || last === 'json')
+        setSelectedFormat(last as 'csv' | 'json');
+    } catch (err) {
+      // ignore
+    }
+  }, []);
+
+  const handleExportClick = async (format?: 'json' | 'csv') => {
+    const fmt = format || selectedFormat || 'json';
+    setExporting(true);
+    try {
+      if (fmt === 'json') {
+        const blob = await exportDbToBlob();
+        await saveBlobToFile(blob, 'homicide-db.json');
+      } else {
+        const files = await exportDbToCSVBlobs();
+        for (const f of files) {
+          // eslint-disable-next-line no-await-in-loop
+          await saveBlobToFile(f.blob, f.fileName);
+        }
+      }
+      toast.success('Export completed');
+      try {
+        localStorage.setItem('lastExportFormat', fmt);
+      } catch (err) {
+        // ignore
+      }
+      setSelectedFormat(fmt);
+    } catch (err) {
+      console.error('Export failed', err);
+      toast.error('Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportClick = () => importInputRef.current?.click();
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    try {
+      setLoading(true);
+      await importDbFromFile(file);
+      toast.success('Import completed — reload to view changes');
+      // refresh list
+      await fetchCases();
+    } catch (err) {
+      console.error('Import failed', err);
+      toast.error('Import failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Container fluid className="py-4">
       <Row>
         <Col>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2>Homicide Records</h2>
-            <Button variant="outline-secondary" onClick={onBack}>
-              Back to Home
-            </Button>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <Button variant="outline-secondary" onClick={onBack}>
+                Back to Home
+              </Button>
+            </div>
           </div>
-
-          {/* Backup / Export tools moved onto this page for easier access while
-              viewing records. The full advanced tools remain behind the
-              component's details view. */}
-          <div className="mb-3">
-            <DbBackup />
-          </div>
-          {/* Search and Stats */}
-          <Card className="mb-4">
-            <Card.Body>
-              <Form onSubmit={handleSearch}>
-                <Row>
-                  <Col md={8}>
-                    <Form.Control
-                      type="text"
-                      placeholder="Search cases by headline, source, victim name, province, or murder type..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </Col>
-                  <Col md={4}>
-                    <Button type="submit" variant="primary" disabled={loading}>
-                      {loading ? 'Searching...' : 'Search'}
-                    </Button>
-                    <Button
-                      variant="outline-secondary"
-                      className="ms-2"
-                      onClick={() => {
-                        setSearchTerm('');
-                        setCurrentPage(1);
-                        fetchCases();
-                      }}
-                    >
-                      Clear
-                    </Button>
-                  </Col>
-                </Row>
-              </Form>
-              <div className="mt-3">
-                <small className="text-muted">
-                  Showing {Array.isArray(cases) ? cases.length : 0} of{' '}
-                  {totalCases} total cases
-                </small>
-              </div>
-            </Card.Body>
-          </Card>
+          {/* Search and Stats are shown inside the Cases card when toggled */}
 
           {/* Error Alert */}
           {error && (
@@ -397,9 +429,113 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
           {/* Cases Table */}
           <Card>
             <Card.Header>
-              <h5 className="mb-0">Homicide Cases</h5>
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">Homicide Cases</h5>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    className="me-1"
+                    onClick={() => setShowControls((s) => !s)}
+                    title={showControls ? 'Hide search' : 'Show search'}
+                  >
+                    <Search size={16} />
+                  </Button>
+
+                  <div
+                    className="export-controls"
+                    style={{ display: 'flex', gap: 8, alignItems: 'center' }}
+                  >
+                    <input
+                      ref={importInputRef}
+                      type="file"
+                      accept="application/json"
+                      style={{ display: 'none' }}
+                      onChange={handleImportFile}
+                    />
+                    <ButtonGroup>
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        onClick={() => handleExportClick()}
+                        disabled={exporting}
+                        title="Export (click to download using preferred format)"
+                      >
+                        <Upload size={16} />
+                      </Button>
+
+                      <Dropdown as={ButtonGroup} align="end">
+                        <Dropdown.Toggle
+                          split
+                          variant="outline-secondary"
+                          size="sm"
+                          id="export-format-toggle"
+                        />
+                        <Dropdown.Menu>
+                          <Dropdown.Item
+                            onClick={() => handleExportClick('json')}
+                          >
+                            JSON (full)
+                          </Dropdown.Item>
+                          <Dropdown.Item
+                            onClick={() => handleExportClick('csv')}
+                          >
+                            CSV (per-table)
+                          </Dropdown.Item>
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </ButtonGroup>
+
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={handleImportClick}
+                      title="Import JSON"
+                    >
+                      <Download size={16} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </Card.Header>
             <Card.Body>
+              {showControls && (
+                <div className="mb-3">
+                  <Form onSubmit={handleSearch}>
+                    <Row>
+                      <Col md={8}>
+                        <Form.Control
+                          type="text"
+                          placeholder="Search cases by headline, source, victim name, province, or murder type..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </Col>
+                      <Col md={4}>
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          disabled={loading}
+                        >
+                          {loading ? 'Searching...' : 'Search'}
+                        </Button>
+                        <Button
+                          variant="outline-secondary"
+                          className="ms-2"
+                          onClick={() => {
+                            setSearchTerm('');
+                            setCurrentPage(1);
+                            fetchCases();
+                          }}
+                        >
+                          Clear
+                        </Button>
+                      </Col>
+                    </Row>
+                  </Form>
+                </div>
+              )}
+
               {loading ? (
                 <div className="text-center py-4">
                   <div className="spinner-border" role="status">
@@ -560,6 +696,14 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                 </>
               )}
             </Card.Body>
+            <Card.Footer>
+              <div className="flex flex-col items-end">
+                <small className="text-muted">
+                  Showing {Array.isArray(cases) ? cases.length : 0} of{' '}
+                  {totalCases} total cases
+                </small>
+              </div>
+            </Card.Footer>
           </Card>
         </Col>
       </Row>

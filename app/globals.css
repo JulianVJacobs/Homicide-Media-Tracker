@@ -135,3 +135,24 @@ a {
         border-radius: 0.25rem;
     }
 }
+
+/* Make export/import button group visually consistent (matching heights and padding) */
+.export-controls .btn,
+.export-controls .dropdown-toggle,
+.export-controls .dropdown-toggle-split {
+    display: inline-flex;
+    align-items: center;
+    padding-top: 0.25rem;
+    /* match .btn-sm vertical padding */
+    padding-bottom: 0.25rem;
+    padding-left: 0.5rem;
+    /* match .btn-sm horizontal padding */
+    padding-right: 0.5rem;
+}
+
+/* Ensure the split toggle's extra padding matches the button when small */
+.export-controls .btn-sm+.dropdown-toggle-split,
+.export-controls .btn+.dropdown-toggle-split {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}

@@ -20,6 +20,49 @@ export async function exportDbToBlob(): Promise<Blob> {
   return new Blob([payload], { type: 'application/json' });
 }
 
+export async function exportDbToCSVBlobs(): Promise<
+  { fileName: string; blob: Blob }[]
+> {
+  await dbm.ensureDatabaseInitialised();
+  const db: Dexie = dbm.getLocal() as unknown as Dexie;
+  const results: { fileName: string; blob: Blob }[] = [];
+
+  for (const table of db.tables) {
+    const tableName = (table as any).name as string;
+    const rows = await (table as any).toArray();
+    if (!rows || rows.length === 0) continue;
+
+    // Build CSV header from union of keys in rows
+    const headersSet = new Set<string>();
+    for (const r of rows) {
+      Object.keys(r || {}).forEach((k) => headersSet.add(k));
+    }
+    const headers = Array.from(headersSet);
+
+    const lines: string[] = [];
+    // CSV header
+    lines.push(headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(','));
+
+    for (const r of rows) {
+      const cols = headers.map((h) => {
+        let v = (r as any)[h];
+        if (v === undefined || v === null) return '""';
+        if (typeof v === 'object') v = JSON.stringify(v);
+        const s = String(v);
+        // Escape double quotes
+        return `"${s.replace(/"/g, '""')}"`;
+      });
+      lines.push(cols.join(','));
+    }
+
+    const blob = new Blob([lines.join('\n') + '\n'], { type: 'text/csv' });
+    const fileName = `${tableName}.csv`;
+    results.push({ fileName, blob });
+  }
+
+  return results;
+}
+
 export async function importDbFromFile(file: File): Promise<void> {
   const text = await file.text();
   const payload = JSON.parse(text);

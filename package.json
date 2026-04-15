@@ -45,7 +45,7 @@
     "dev.electron": "cross-env NODE_ENV=development electron dist/main/main.js",
     "start.electron": "npm run dev.electron",
     "start": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && npm run dev.electron\"",
-    "start.web": "next start",
+    "start.web": "next start --port 3330",
     "lint": "next lint",
     "lint.fix": "cross-env NODE_ENV=development eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "package.all": "electron-builder build --win --mac --linux --publish never",
@@ -55,7 +55,7 @@
     "package.macos-dmg.": "electron-builder build --mac --publish never",
     "package.web": "npm run build",
     "rebuild": "electron-rebuild --parallel --types prod,dev,optional --module-dir release/app",
-    "tunnel": "lt --port 3000 --subdomain news-media-tracker-demo",
+    "tunnel": "lt --port 3330 --subdomain news-media-tracker-demo",
     "test": "jest"
   },
   "dependencies": {

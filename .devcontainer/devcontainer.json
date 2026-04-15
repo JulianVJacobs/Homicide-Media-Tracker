@@ -1,7 +1,7 @@
 {
   "name": "Homicide Media Tracker",
   "appPort": [
-    3000
+    3330
   ],
   "build": {
     "dockerfile": "Dockerfile",
@@ -32,14 +32,14 @@
     "/etc/timezone:/etc/timezone:ro"
   ],
   "forwardPorts": [
-    3000,
-    3001
+    3330,
+    3331
   ],
   "portsAttributes": {
-    "3000": {
+    "3330": {
       "label": "Next.js Dev Server"
     },
-    "3001": {
+    "3331": {
       "label": "Electron Dev"
     }
   },

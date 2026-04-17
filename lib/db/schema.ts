@@ -301,6 +301,8 @@ export const migrationIndexes = [
   `CREATE INDEX IF NOT EXISTS idx_victims_article_id ON victims(article_id)`,
   `CREATE INDEX IF NOT EXISTS idx_perpetrators_article_id ON perpetrators(article_id)`,
   `CREATE INDEX IF NOT EXISTS idx_articles_sync_status ON articles(sync_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_report_annotations_source_article_id ON report_annotations(source_article_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_report_annotations_target_article_id ON report_annotations(target_article_id)`,
 ];
 
 // --- Unified migration array ---

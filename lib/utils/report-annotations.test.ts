@@ -23,5 +23,22 @@ describe('normalizeReportAnnotationInput', () => {
         targetArticleId: 'target-2',
       }),
     ).toThrow('sourceArticleId and targetArticleId are required');
+
+    expect(() =>
+      normalizeReportAnnotationInput({
+        sourceArticleId: 'source-1',
+        targetArticleId: '',
+      }),
+    ).toThrow('sourceArticleId and targetArticleId are required');
+  });
+
+  it('throws when relationType is empty after trimming', () => {
+    expect(() =>
+      normalizeReportAnnotationInput({
+        sourceArticleId: 'source-1',
+        targetArticleId: 'target-2',
+        relationType: '   ',
+      }),
+    ).toThrow('relationType is required');
   });
 });

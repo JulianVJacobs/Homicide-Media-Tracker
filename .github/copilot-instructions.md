@@ -65,7 +65,12 @@ This file gives focused, actionable guidance for AI coding agents working in thi
 - Do not modify packaging `build` fields without human approval; signing and entitlements are platform-sensitive.
 - Avoid adding native binaries or large assets; use `assets/` and update `build.files`/`extraResources` accordingly.
 
-10. Further notes and maintainers
+10. Task completion protocol
+
+- After completing any task (code changes, research, or review), always update the active plan artifact before finalizing. Include: what was completed, what remains, and any new risks or follow-ups.
+- For implementation tasks that involve a pull request, update the plan twice: once immediately after creating the pull request, and again after the pull request is accepted/merged.
+
+11. Further notes and maintainers
 
 - Primary code authors: check `package.json` `author` and `contributors` for contacts.
 - Dev environment: Node >=14 and npm >=7 as declared in `devEngines`.

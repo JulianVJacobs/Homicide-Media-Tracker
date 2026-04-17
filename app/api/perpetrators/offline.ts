@@ -33,6 +33,8 @@ export async function get(req: Request) {
       all = all.filter((p) => {
         return (
           (p.perpetratorName && p.perpetratorName.toLowerCase().includes(s)) ||
+          (p.perpetratorAlias &&
+            p.perpetratorAlias.toLowerCase().includes(s)) ||
           (p.perpetratorRelationshipToVictim &&
             p.perpetratorRelationshipToVictim.toLowerCase().includes(s)) ||
           (p.sentence && p.sentence.toLowerCase().includes(s))

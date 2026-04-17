@@ -32,6 +32,7 @@ export async function get(req: Request) {
       all = all.filter((v) => {
         return (
           (v.victimName && v.victimName.toLowerCase().includes(s)) ||
+          (v.victimAlias && v.victimAlias.toLowerCase().includes(s)) ||
           (v.placeOfDeathProvince &&
             v.placeOfDeathProvince.toLowerCase().includes(s)) ||
           (v.placeOfDeathTown &&

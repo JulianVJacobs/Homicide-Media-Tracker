@@ -25,6 +25,7 @@ export type ArticleData = Pick<
 export type VictimData = Pick<
   NewVictim,
   | 'victimName'
+  | 'victimAlias'
   | 'dateOfDeath'
   | 'placeOfDeathProvince'
   | 'placeOfDeathTown'
@@ -43,6 +44,7 @@ export type VictimData = Pick<
 export type PerpetratorData = Pick<
   NewPerpetrator,
   | 'perpetratorName'
+  | 'perpetratorAlias'
   | 'perpetratorRelationshipToVictim'
   | 'suspectIdentified'
   | 'suspectArrested'

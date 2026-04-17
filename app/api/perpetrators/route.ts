@@ -57,6 +57,7 @@ export async function GET(request: Request) {
       const wildcard = `%${search}%`;
       const searchConditions = [
         like(perpetrators.perpetratorName, wildcard),
+        like(perpetrators.perpetratorAlias, wildcard),
         like(perpetrators.perpetratorRelationshipToVictim, wildcard),
         like(perpetrators.sentence, wildcard),
       ];

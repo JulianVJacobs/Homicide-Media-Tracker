@@ -124,7 +124,17 @@ class DatabaseManagerServer {
       },
     });
     for (const sql of migrations) {
-      await this.localClient.execute(sql);
+      try {
+        await this.localClient.execute(sql);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const isDuplicateColumnMigration =
+          sql.startsWith('ALTER TABLE') &&
+          message.toLowerCase().includes('duplicate column name');
+        if (!isDuplicateColumnMigration) {
+          throw error;
+        }
+      }
     }
   }
 

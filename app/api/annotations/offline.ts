@@ -24,12 +24,25 @@ export async function get(req: Request) {
     }
 
     const records = articleId
-      ? await db.reportAnnotations
-          .where('sourceArticleId')
-          .equals(articleId)
-          .or('targetArticleId')
-          .equals(articleId)
-          .toArray()
+      ? await (async () => {
+          const [sourceMatches, targetMatches] = await Promise.all([
+            db.reportAnnotations
+              .where('sourceArticleId')
+              .equals(articleId)
+              .toArray(),
+            db.reportAnnotations
+              .where('targetArticleId')
+              .equals(articleId)
+              .toArray(),
+          ]);
+          const deduplicated = new Map(
+            [...sourceMatches, ...targetMatches].map((record) => [
+              record.id,
+              record,
+            ]),
+          );
+          return Array.from(deduplicated.values());
+        })()
       : await db.reportAnnotations.toArray();
 
     return { success: true, data: records };

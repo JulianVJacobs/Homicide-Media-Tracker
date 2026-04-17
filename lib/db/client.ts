@@ -96,7 +96,7 @@ class NewsReportTrackerDexie extends Dexie {
         stores[camelTableName] = schema;
       }
     }
-    this.version(1).stores(stores);
+    this.version(2).stores(stores);
   }
 }
 

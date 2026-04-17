@@ -21,6 +21,7 @@ interface PerpetratorFormProps {
 type PerpetratorFieldKeys = Extract<
   keyof NewPerpetrator,
   | 'perpetratorName'
+  | 'perpetratorAlias'
   | 'perpetratorRelationshipToVictim'
   | 'suspectIdentified'
   | 'suspectArrested'
@@ -41,6 +42,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   // Default data for dev/testing
   const RESET_DATA: PerpetratorFormValues = {
     perpetratorName: '',
+    perpetratorAlias: '',
     perpetratorRelationshipToVictim: '',
     suspectIdentified: '',
     suspectArrested: '',
@@ -155,6 +157,22 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
                 />
               </Form.Group>
             </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Alias</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={currentPerpetrator.perpetratorAlias ?? ''}
+                  onChange={(e) =>
+                    handleChange('perpetratorAlias', e.target.value)
+                  }
+                  placeholder="Known alias/nickname"
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
                 <Form.Label>Relationship to Victim</Form.Label>

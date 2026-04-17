@@ -20,6 +20,7 @@ export type ArticleInput = UnknownRecord & {
 
 export type VictimInput = UnknownRecord & {
   articleId?: NullableString;
+  victimAlias?: NullableString;
   ageOfVictim?: number | string | null;
   dateOfDeath?: NullableString | Date;
   placeOfDeathProvince?: NullableString;
@@ -29,6 +30,7 @@ export type VictimInput = UnknownRecord & {
 export type PerpetratorInput = UnknownRecord & {
   articleId?: NullableString;
   perpetratorName?: NullableString;
+  perpetratorAlias?: NullableString;
   suspectIdentified?: NullableString;
   suspectArrested?: NullableString;
   suspectCharged?: NullableString;

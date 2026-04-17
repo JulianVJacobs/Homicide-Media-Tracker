@@ -22,6 +22,7 @@ interface VictimFormProps {
 type VictimFieldKeys = Extract<
   keyof NewVictim,
   | 'victimName'
+  | 'victimAlias'
   | 'dateOfDeath'
   | 'placeOfDeathProvince'
   | 'placeOfDeathTown'
@@ -49,6 +50,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
   // Default data for dev/testing
   const RESET_DATA: VictimFormValues = {
     victimName: '',
+    victimAlias: '',
     dateOfDeath: '',
     placeOfDeathProvince: '',
     placeOfDeathTown: '',
@@ -229,6 +231,20 @@ const VictimForm: React.FC<VictimFormProps> = ({
                 />
               </Form.Group>
             </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Alias</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={currentVictim.victimAlias ?? ''}
+                  onChange={(e) => handleChange('victimAlias', e.target.value)}
+                  placeholder="Known alias/nickname"
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
                 <Form.Label>Date of Death *</Form.Label>

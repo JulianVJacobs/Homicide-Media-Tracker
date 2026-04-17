@@ -8,6 +8,7 @@ import {
 type VictimCoreFields =
   | 'articleId'
   | 'victimName'
+  | 'victimAlias'
   | 'dateOfDeath'
   | 'placeOfDeathProvince'
   | 'placeOfDeathTown'
@@ -32,6 +33,10 @@ export const coerceVictim = (
   victimName: toNullableString(
     victimData.victimName,
     current?.victimName ?? null,
+  ),
+  victimAlias: toNullableString(
+    victimData.victimAlias,
+    current?.victimAlias ?? null,
   ),
   dateOfDeath: toNullableString(
     victimData.dateOfDeath,

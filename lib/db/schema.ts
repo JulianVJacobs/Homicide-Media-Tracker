@@ -60,6 +60,7 @@ export const victims = sqliteTable('victims', {
   id: text('id').primaryKey(),
   articleId: text('article_id').notNull(),
   victimName: text('victim_name'),
+  victimAlias: text('victim_alias'),
   dateOfDeath: text('date_of_death'),
   placeOfDeathProvince: text('place_of_death_province'),
   placeOfDeathTown: text('place_of_death_town'),
@@ -84,6 +85,7 @@ export const migrationVictims = `CREATE TABLE IF NOT EXISTS victims (
   id TEXT PRIMARY KEY,
   article_id TEXT NOT NULL,
   victim_name TEXT,
+  victim_alias TEXT,
   date_of_death TEXT,
   place_of_death_province TEXT,
   place_of_death_town TEXT,
@@ -112,6 +114,7 @@ export const perpetrators = sqliteTable('perpetrators', {
   id: text('id').primaryKey(),
   articleId: text('article_id').notNull(),
   perpetratorName: text('perpetrator_name'),
+  perpetratorAlias: text('perpetrator_alias'),
   perpetratorRelationshipToVictim: text('perpetrator_relationship_to_victim'),
   suspectIdentified: text('suspect_identified'),
   suspectArrested: text('suspect_arrested'),
@@ -129,6 +132,7 @@ export const migrationPerpetrators = `CREATE TABLE IF NOT EXISTS perpetrators (
   id TEXT PRIMARY KEY,
   article_id TEXT NOT NULL,
   perpetrator_name TEXT,
+  perpetrator_alias TEXT,
   perpetrator_relationship_to_victim TEXT,
   suspect_identified TEXT,
   suspect_arrested TEXT,
@@ -305,6 +309,9 @@ export const migrationIndexes = [
   `CREATE INDEX IF NOT EXISTS idx_report_annotations_target_article_id ON report_annotations(target_article_id)`,
 ];
 
+export const migrationVictimAliasColumn = `ALTER TABLE victims ADD COLUMN victim_alias TEXT`;
+export const migrationPerpetratorAliasColumn = `ALTER TABLE perpetrators ADD COLUMN perpetrator_alias TEXT`;
+
 // --- Unified migration array ---
 export const migrations = [
   migrationParticipants,
@@ -313,6 +320,8 @@ export const migrations = [
   migrationReportAnnotations,
   migrationVictims,
   migrationPerpetrators,
+  migrationVictimAliasColumn,
+  migrationPerpetratorAliasColumn,
   migrationUsers,
   migrationSyncQueue,
   migrationAppConfig,

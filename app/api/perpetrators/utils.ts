@@ -7,6 +7,7 @@ import {
 type PerpetratorCoreFields =
   | 'articleId'
   | 'perpetratorName'
+  | 'perpetratorAlias'
   | 'perpetratorRelationshipToVictim'
   | 'suspectIdentified'
   | 'suspectArrested'
@@ -24,6 +25,10 @@ export const coercePerpetrator = (
   perpetratorName: toNullableString(
     data.perpetratorName,
     current?.perpetratorName ?? null,
+  ),
+  perpetratorAlias: toNullableString(
+    data.perpetratorAlias,
+    current?.perpetratorAlias ?? null,
   ),
   perpetratorRelationshipToVictim: toNullableString(
     data.perpetratorRelationshipToVictim,

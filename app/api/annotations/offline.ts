@@ -1,6 +1,7 @@
 import { dbm, DatabaseManagerClient } from '../../../lib/db/client';
 import { getBaseUrl } from '../../../lib/platform';
 import { normalizeReportAnnotationInput } from '../../../lib/utils/report-annotations';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function get(req: Request) {
   const url = new URL(req.url, getBaseUrl());
@@ -22,14 +23,14 @@ export async function get(req: Request) {
       return { success: true, data: annotation ?? null };
     }
 
-    let records = await db.reportAnnotations.toArray();
-    if (articleId) {
-      records = records.filter(
-        (record) =>
-          record.sourceArticleId === articleId ||
-          record.targetArticleId === articleId,
-      );
-    }
+    const records = articleId
+      ? await db.reportAnnotations
+          .where('sourceArticleId')
+          .equals(articleId)
+          .or('targetArticleId')
+          .equals(articleId)
+          .toArray()
+      : await db.reportAnnotations.toArray();
 
     return { success: true, data: records };
   } catch (error) {
@@ -46,7 +47,6 @@ export async function post(req: Request) {
 
   try {
     const normalized = normalizeReportAnnotationInput(body);
-    const { v4: uuidv4 } = await import('uuid');
     const id = typeof body.id === 'string' && body.id ? body.id : uuidv4();
 
     if (!(dbm instanceof DatabaseManagerClient)) {

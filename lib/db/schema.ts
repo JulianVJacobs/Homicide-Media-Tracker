@@ -199,6 +199,34 @@ export const migrationEvents = `CREATE TABLE IF NOT EXISTS events (
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 
+// --- Report Annotations ---
+export const reportAnnotations = sqliteTable('report_annotations', {
+  id: text('id').primaryKey(),
+  sourceArticleId: text('source_article_id').notNull(),
+  targetArticleId: text('target_article_id').notNull(),
+  relationType: text('relation_type').notNull(),
+  notes: text('notes'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+  syncStatus: text('sync_status').default('pending'),
+  failureCount: integer('failure_count').default(0),
+});
+
+export const migrationReportAnnotations = `CREATE TABLE IF NOT EXISTS report_annotations (
+  id TEXT PRIMARY KEY,
+  source_article_id TEXT NOT NULL,
+  target_article_id TEXT NOT NULL,
+  relation_type TEXT NOT NULL,
+  notes TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  sync_status TEXT DEFAULT 'pending',
+  failure_count INTEGER DEFAULT 0
+)`;
+
+export type ReportAnnotation = typeof reportAnnotations.$inferSelect;
+export type NewReportAnnotation = typeof reportAnnotations.$inferInsert;
+
 // --- Participants ---
 export const participants = sqliteTable('participants', {
   id: text('id').primaryKey(),
@@ -280,6 +308,7 @@ export const migrations = [
   migrationParticipants,
   migrationArticles,
   migrationEvents,
+  migrationReportAnnotations,
   migrationVictims,
   migrationPerpetrators,
   migrationUsers,

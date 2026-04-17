@@ -5,6 +5,7 @@ import {
   Perpetrator,
   User,
   Event,
+  ReportAnnotation,
   Participant,
   SyncQueue,
   NewSyncQueue,
@@ -19,6 +20,7 @@ class NewsReportTrackerDexie extends Dexie {
   perpetrators!: Table<Perpetrator, string>;
   users!: Table<User, string>;
   events!: Table<Event, string>;
+  reportAnnotations!: Table<ReportAnnotation, string>;
   participants!: Table<Participant, string>;
   syncQueue!: Table<SyncQueue, number>;
   appConfig!: Table<AppConfig, number>;

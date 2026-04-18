@@ -52,4 +52,3 @@ export const mergeAliasValues = (
 
   return joinAliases(combined);
 };
-

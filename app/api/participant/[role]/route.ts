@@ -193,8 +193,8 @@ export async function PUT(
           [nameField]: candidateAlias,
           [aliasField]: updatedAlias,
           updatedAt: now,
-          syncStatus: 'synced',
-          lastSyncAt: now,
+          syncStatus: 'pending',
+          lastSyncAt: null,
           promotionAudit,
         } as Record<string, unknown>)
         .where(eq(table.id, id))
@@ -269,8 +269,8 @@ export async function PUT(
         .set({
           [aliasField]: mergedAlias,
           updatedAt: now,
-          syncStatus: 'synced',
-          lastSyncAt: now,
+          syncStatus: 'pending',
+          lastSyncAt: null,
           mergeAudit,
         } as Record<string, unknown>)
         .where(eq(table.id, targetId));
@@ -281,8 +281,8 @@ export async function PUT(
           mergedIntoId: targetId,
           mergedAt: now,
           updatedAt: now,
-          syncStatus: 'synced',
-          lastSyncAt: now,
+          syncStatus: 'pending',
+          lastSyncAt: null,
           mergeAudit,
         } as Record<string, unknown>)
         .where(eq(table.id, sourceId));

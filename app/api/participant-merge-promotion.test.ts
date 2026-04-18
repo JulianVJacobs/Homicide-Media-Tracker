@@ -34,4 +34,3 @@ describe('participant merge and promotion alias utilities', () => {
     expect(mergedAlias).toBe('Target Alias | Source Primary | Source Alias');
   });
 });
-

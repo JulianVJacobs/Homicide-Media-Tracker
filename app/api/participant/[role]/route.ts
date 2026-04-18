@@ -159,6 +159,7 @@ export async function PUT(
     const explicitAlias =
       typeof payload.alias === 'string' ? payload.alias.trim() : '';
     const existingAliases = splitAliases((existing[aliasField] as string) ?? null);
+    // If caller does not provide an explicit alias, promote the first stored alias.
     const candidateAlias = explicitAlias || (existingAliases[0] ?? '');
 
     if (!candidateAlias) {
@@ -199,6 +200,12 @@ export async function PUT(
       .where(eq(table.id, id))
       .returning();
     const updated = updatedRows[0];
+    if (!updated) {
+      return NextResponse.json(
+        { success: false, error: 'Participant promotion failed' },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -247,6 +254,7 @@ export async function PUT(
     const mergedAlias = mergeAliasValues(
       (target[aliasField] as string | null | undefined) ?? null,
       [sourcePrimary, sourceAlias],
+      // Exclude target primary name so the primary does not duplicate in aliases.
       [targetPrimary],
     );
 

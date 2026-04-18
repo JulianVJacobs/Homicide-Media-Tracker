@@ -31,6 +31,11 @@ describe('participant merge contract', () => {
       'targetRole',
       'reason',
     ]);
+    expect(PARTICIPANT_MERGE_CONTRACT.operations.merge.resultFields).toEqual([
+      'mergedParticipantId',
+      'removedParticipantId',
+      'aliasesAdded',
+    ]);
     expect(PARTICIPANT_MERGE_CONTRACT.operations.aliasPromotion.requestFields).toEqual(
       ['participantId', 'role', 'aliasToPromote'],
     );
@@ -39,4 +44,3 @@ describe('participant merge contract', () => {
     );
   });
 });
-

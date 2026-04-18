@@ -159,7 +159,7 @@ export async function PUT(
     const explicitAlias =
       typeof payload.alias === 'string' ? payload.alias.trim() : '';
     const existingAliases = splitAliases((existing[aliasField] as string) ?? null);
-    const candidateAlias = explicitAlias || existingAliases[0] || '';
+    const candidateAlias = explicitAlias || (existingAliases[0] ?? '');
 
     if (!candidateAlias) {
       return NextResponse.json(
@@ -186,21 +186,19 @@ export async function PUT(
       reason: typeof payload.reason === 'string' ? payload.reason.trim() : null,
     };
 
-    const updated = await db.transaction(async (tx) => {
-      const [row] = await tx
-        .update(table)
-        .set({
-          [nameField]: candidateAlias,
-          [aliasField]: updatedAlias,
-          updatedAt: now,
-          syncStatus: 'pending',
-          lastSyncAt: null,
-          promotionAudit,
-        } as Record<string, unknown>)
-        .where(eq(table.id, id))
-        .returning();
-      return row;
-    });
+    const updatedRows = await db
+      .update(table)
+      .set({
+        [nameField]: candidateAlias,
+        [aliasField]: updatedAlias,
+        updatedAt: now,
+        syncStatus: 'pending',
+        lastSyncAt: null,
+        promotionAudit,
+      } as Record<string, unknown>)
+      .where(eq(table.id, id))
+      .returning();
+    const updated = updatedRows[0];
 
     return NextResponse.json({
       success: true,

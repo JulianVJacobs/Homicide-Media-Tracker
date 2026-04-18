@@ -64,10 +64,14 @@ export const buildMergeQueueCandidates = (
   participants: MergeParticipantRecord[],
 ): MergeQueueCandidate[] => {
   const candidates: MergeQueueCandidate[] = [];
-  for (let i = 0; i < participants.length; i += 1) {
-    for (let j = i + 1; j < participants.length; j += 1) {
-      const left = participants[i];
-      const right = participants[j];
+  for (let leftIndex = 0; leftIndex < participants.length; leftIndex += 1) {
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < participants.length;
+      rightIndex += 1
+    ) {
+      const left = participants[leftIndex];
+      const right = participants[rightIndex];
       if (left.role !== right.role) continue;
       const sharedValue = sharedName(left, right);
       if (!sharedValue) continue;

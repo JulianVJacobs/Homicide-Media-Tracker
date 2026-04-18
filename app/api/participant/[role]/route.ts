@@ -160,6 +160,7 @@ export async function PUT(
       typeof payload.alias === 'string' ? payload.alias.trim() : '';
     const existingAliases = splitAliases((existing[aliasField] as string) ?? null);
     // If caller does not provide an explicit alias, promote the first stored alias.
+    // When no stored alias exists, candidateAlias becomes empty and is rejected below.
     const candidateAlias = explicitAlias || (existingAliases[0] ?? '');
 
     if (!candidateAlias) {
@@ -254,7 +255,7 @@ export async function PUT(
     const mergedAlias = mergeAliasValues(
       (target[aliasField] as string | null | undefined) ?? null,
       [sourcePrimary, sourceAlias],
-      // Exclude target primary name so the primary does not duplicate in aliases.
+      // Exclude target primary name so it does not appear in the merged alias list.
       [targetPrimary],
     );
 

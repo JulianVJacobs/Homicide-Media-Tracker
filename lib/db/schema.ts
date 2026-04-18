@@ -335,7 +335,7 @@ export const migrationVictimMergeAuditColumn = `ALTER TABLE victims ADD COLUMN m
 export const migrationPerpetratorMergeAuditColumn = `ALTER TABLE perpetrators ADD COLUMN merge_audit TEXT`;
 export const migrationVictimPromotionAuditColumn = `ALTER TABLE victims ADD COLUMN promotion_audit TEXT`;
 export const migrationPerpetratorPromotionAuditColumn = `ALTER TABLE perpetrators ADD COLUMN promotion_audit TEXT`;
-// NOTE: merge_audit and promotion_audit are JSON-serialised payloads stored as TEXT.
+// NOTE: merge_audit and promotion_audit are JSON-serialized payloads stored as TEXT.
 
 // --- Unified migration array ---
 export const migrations = [

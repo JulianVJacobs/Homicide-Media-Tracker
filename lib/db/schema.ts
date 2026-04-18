@@ -61,6 +61,10 @@ export const victims = sqliteTable('victims', {
   articleId: text('article_id').notNull(),
   victimName: text('victim_name'),
   victimAlias: text('victim_alias'),
+  mergedIntoId: text('merged_into_id'),
+  mergedAt: text('merged_at'),
+  mergeAudit: text('merge_audit', { mode: 'json' }),
+  promotionAudit: text('promotion_audit', { mode: 'json' }),
   dateOfDeath: text('date_of_death'),
   placeOfDeathProvince: text('place_of_death_province'),
   placeOfDeathTown: text('place_of_death_town'),
@@ -86,6 +90,10 @@ export const migrationVictims = `CREATE TABLE IF NOT EXISTS victims (
   article_id TEXT NOT NULL,
   victim_name TEXT,
   victim_alias TEXT,
+  merged_into_id TEXT,
+  merged_at TEXT,
+  merge_audit TEXT,
+  promotion_audit TEXT,
   date_of_death TEXT,
   place_of_death_province TEXT,
   place_of_death_town TEXT,
@@ -115,6 +123,10 @@ export const perpetrators = sqliteTable('perpetrators', {
   articleId: text('article_id').notNull(),
   perpetratorName: text('perpetrator_name'),
   perpetratorAlias: text('perpetrator_alias'),
+  mergedIntoId: text('merged_into_id'),
+  mergedAt: text('merged_at'),
+  mergeAudit: text('merge_audit', { mode: 'json' }),
+  promotionAudit: text('promotion_audit', { mode: 'json' }),
   perpetratorRelationshipToVictim: text('perpetrator_relationship_to_victim'),
   suspectIdentified: text('suspect_identified'),
   suspectArrested: text('suspect_arrested'),
@@ -133,6 +145,10 @@ export const migrationPerpetrators = `CREATE TABLE IF NOT EXISTS perpetrators (
   article_id TEXT NOT NULL,
   perpetrator_name TEXT,
   perpetrator_alias TEXT,
+  merged_into_id TEXT,
+  merged_at TEXT,
+  merge_audit TEXT,
+  promotion_audit TEXT,
   perpetrator_relationship_to_victim TEXT,
   suspect_identified TEXT,
   suspect_arrested TEXT,
@@ -311,6 +327,14 @@ export const migrationIndexes = [
 
 export const migrationVictimAliasColumn = `ALTER TABLE victims ADD COLUMN victim_alias TEXT`;
 export const migrationPerpetratorAliasColumn = `ALTER TABLE perpetrators ADD COLUMN perpetrator_alias TEXT`;
+export const migrationVictimMergedIntoColumn = `ALTER TABLE victims ADD COLUMN merged_into_id TEXT`;
+export const migrationPerpetratorMergedIntoColumn = `ALTER TABLE perpetrators ADD COLUMN merged_into_id TEXT`;
+export const migrationVictimMergedAtColumn = `ALTER TABLE victims ADD COLUMN merged_at TEXT`;
+export const migrationPerpetratorMergedAtColumn = `ALTER TABLE perpetrators ADD COLUMN merged_at TEXT`;
+export const migrationVictimMergeAuditColumn = `ALTER TABLE victims ADD COLUMN merge_audit TEXT`;
+export const migrationPerpetratorMergeAuditColumn = `ALTER TABLE perpetrators ADD COLUMN merge_audit TEXT`;
+export const migrationVictimPromotionAuditColumn = `ALTER TABLE victims ADD COLUMN promotion_audit TEXT`;
+export const migrationPerpetratorPromotionAuditColumn = `ALTER TABLE perpetrators ADD COLUMN promotion_audit TEXT`;
 
 // --- Unified migration array ---
 export const migrations = [
@@ -322,6 +346,14 @@ export const migrations = [
   migrationPerpetrators,
   migrationVictimAliasColumn,
   migrationPerpetratorAliasColumn,
+  migrationVictimMergedIntoColumn,
+  migrationPerpetratorMergedIntoColumn,
+  migrationVictimMergedAtColumn,
+  migrationPerpetratorMergedAtColumn,
+  migrationVictimMergeAuditColumn,
+  migrationPerpetratorMergeAuditColumn,
+  migrationVictimPromotionAuditColumn,
+  migrationPerpetratorPromotionAuditColumn,
   migrationUsers,
   migrationSyncQueue,
   migrationAppConfig,

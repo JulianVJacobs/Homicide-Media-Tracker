@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { and, eq, like, sql, type SQL } from 'drizzle-orm';
+import { and, eq, isNull, like, sql, type SQL } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
 import {
@@ -48,6 +48,10 @@ export async function GET(request: Request) {
     }
 
     const whereConditions: SQL[] = [];
+
+    if (url.searchParams.get('includeMerged') !== 'true') {
+      whereConditions.push(isNull(perpetrators.mergedIntoId));
+    }
 
     if (articleId) {
       whereConditions.push(eq(perpetrators.articleId, articleId));

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { eq } from 'drizzle-orm';
 import { dbm, DatabaseManagerServer } from '../../../../lib/db/server';
 import * as schema from '../../../../lib/db/schema';
+import { mergeAliasValues, splitAliases } from './utils';
 
 type ParticipantTable =
   | typeof schema.victims
@@ -79,4 +81,229 @@ export async function POST(
     : null;
   // Always include id and role in response
   return NextResponse.json({ success: true, data: inserted });
+}
+
+type SupportedRole = 'victim' | 'perpetrator';
+
+type RoleConfig = {
+  table: typeof schema.victims | typeof schema.perpetrators;
+  nameField: 'victimName' | 'perpetratorName';
+  aliasField: 'victimAlias' | 'perpetratorAlias';
+};
+
+const roleConfigMap: Record<SupportedRole, RoleConfig> = {
+  victim: {
+    table: schema.victims,
+    nameField: 'victimName',
+    aliasField: 'victimAlias',
+  },
+  perpetrator: {
+    table: schema.perpetrators,
+    nameField: 'perpetratorName',
+    aliasField: 'perpetratorAlias',
+  },
+};
+
+const resolveRoleConfig = (role: string): RoleConfig | null =>
+  role === 'victim' || role === 'perpetrator' ? roleConfigMap[role] : null;
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { role: string } },
+) {
+  if (!(dbm instanceof DatabaseManagerServer))
+    throw new TypeError(
+      'Online API called with local database manager. This endpoint must run in a server context.',
+    );
+  await dbm.ensureDatabaseInitialised();
+  const db = dbm.getLocal();
+  const roleConfig = resolveRoleConfig(params.role);
+
+  if (!roleConfig) {
+    return NextResponse.json(
+      { success: false, error: 'Unsupported participant role' },
+      { status: 400 },
+    );
+  }
+
+  const payload = (await request.json()) as Record<string, unknown>;
+  const action = payload.action;
+  const now = new Date().toISOString();
+  const table = roleConfig.table as typeof schema.victims;
+  const nameField = roleConfig.nameField;
+  const aliasField = roleConfig.aliasField;
+
+  if (action === 'promote-alias') {
+    const id = typeof payload.id === 'string' ? payload.id : '';
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: 'Participant ID is required' },
+        { status: 400 },
+      );
+    }
+
+    const existingRows = await db
+      .select()
+      .from(table)
+      .where(eq(table.id, id))
+      .limit(1);
+    const existing = existingRows[0] as Record<string, unknown> | undefined;
+
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: 'Participant not found' },
+        { status: 404 },
+      );
+    }
+
+    const explicitAlias =
+      typeof payload.alias === 'string' ? payload.alias.trim() : '';
+    const candidateAlias =
+      explicitAlias || splitAliases((existing[aliasField] as string) ?? null)[0];
+
+    if (!candidateAlias) {
+      return NextResponse.json(
+        { success: false, error: 'Alias is required for promotion' },
+        { status: 400 },
+      );
+    }
+
+    const currentPrimary =
+      typeof existing[nameField] === 'string' ? (existing[nameField] as string) : null;
+
+    const updatedAlias = mergeAliasValues(
+      (existing[aliasField] as string | null | undefined) ?? null,
+      currentPrimary ? [currentPrimary] : [],
+      [candidateAlias],
+    );
+
+    const promotionAudit = {
+      action: 'promote-alias',
+      promotedAt: now,
+      previousPrimaryName: currentPrimary,
+      promotedAlias: candidateAlias,
+      previousAlias: existing[aliasField] ?? null,
+      reason: typeof payload.reason === 'string' ? payload.reason.trim() : null,
+    };
+
+    const updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(table)
+        .set({
+          [nameField]: candidateAlias,
+          [aliasField]: updatedAlias,
+          updatedAt: now,
+          syncStatus: 'synced',
+          lastSyncAt: now,
+          promotionAudit,
+        } as Record<string, unknown>)
+        .where(eq(table.id, id))
+        .returning();
+      return row;
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: updated ?? null,
+      audit: promotionAudit,
+    });
+  }
+
+  if (action === 'merge') {
+    const sourceId = typeof payload.sourceId === 'string' ? payload.sourceId : '';
+    const targetId = typeof payload.targetId === 'string' ? payload.targetId : '';
+
+    if (!sourceId || !targetId) {
+      return NextResponse.json(
+        { success: false, error: 'sourceId and targetId are required' },
+        { status: 400 },
+      );
+    }
+    if (sourceId === targetId) {
+      return NextResponse.json(
+        { success: false, error: 'sourceId and targetId must be different' },
+        { status: 400 },
+      );
+    }
+
+    const [sourceRows, targetRows] = await Promise.all([
+      db.select().from(table).where(eq(table.id, sourceId)).limit(1),
+      db.select().from(table).where(eq(table.id, targetId)).limit(1),
+    ]);
+    const source = sourceRows[0] as Record<string, unknown> | undefined;
+    const target = targetRows[0] as Record<string, unknown> | undefined;
+
+    if (!source || !target) {
+      return NextResponse.json(
+        { success: false, error: 'Source or target participant not found' },
+        { status: 404 },
+      );
+    }
+
+    const sourcePrimary =
+      typeof source[nameField] === 'string' ? (source[nameField] as string) : null;
+    const sourceAlias = (source[aliasField] as string | null | undefined) ?? null;
+    const targetPrimary =
+      typeof target[nameField] === 'string' ? (target[nameField] as string) : null;
+
+    const mergedAlias = mergeAliasValues(
+      (target[aliasField] as string | null | undefined) ?? null,
+      [sourcePrimary, sourceAlias],
+      [targetPrimary],
+    );
+
+    const mergeAudit = {
+      action: 'merge',
+      mergedAt: now,
+      sourceId,
+      targetId,
+      sourcePrimaryName: sourcePrimary,
+      sourceAlias,
+      targetAliasBefore: target[aliasField] ?? null,
+      reason: typeof payload.reason === 'string' ? payload.reason.trim() : null,
+    };
+
+    const mergedTarget = await db.transaction(async (tx) => {
+      await tx
+        .update(table)
+        .set({
+          [aliasField]: mergedAlias,
+          updatedAt: now,
+          syncStatus: 'synced',
+          lastSyncAt: now,
+          mergeAudit,
+        } as Record<string, unknown>)
+        .where(eq(table.id, targetId));
+
+      await tx
+        .update(table)
+        .set({
+          mergedIntoId: targetId,
+          mergedAt: now,
+          updatedAt: now,
+          syncStatus: 'synced',
+          lastSyncAt: now,
+          mergeAudit,
+        } as Record<string, unknown>)
+        .where(eq(table.id, sourceId));
+
+      const [targetRow] = await tx
+        .select()
+        .from(table)
+        .where(eq(table.id, targetId))
+        .limit(1);
+      return targetRow;
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: mergedTarget ?? null,
+      audit: mergeAudit,
+    });
+  }
+
+  return NextResponse.json(
+    { success: false, error: 'Unsupported action' },
+    { status: 400 },
+  );
 }

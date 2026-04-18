@@ -1,4 +1,6 @@
 const ALIAS_SEPARATOR = '|';
+const ALIAS_SPLIT_PATTERN = /\s*\|\s*/;
+const ALIAS_JOIN_SEPARATOR = ` ${ALIAS_SEPARATOR} `;
 
 const normaliseAliasToken = (value: string): string => value.trim();
 
@@ -8,7 +10,7 @@ export const splitAliases = (value: string | null | undefined): string[] => {
   }
 
   return value
-    .split(ALIAS_SEPARATOR)
+    .split(ALIAS_SPLIT_PATTERN)
     .map(normaliseAliasToken)
     .filter((token) => token.length > 0);
 };
@@ -30,7 +32,7 @@ export const joinAliases = (aliases: string[]): string | null => {
     ordered.push(normalised);
   }
 
-  return ordered.length > 0 ? ordered.join(` ${ALIAS_SEPARATOR} `) : null;
+  return ordered.length > 0 ? ordered.join(ALIAS_JOIN_SEPARATOR) : null;
 };
 
 export const mergeAliasValues = (

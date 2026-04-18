@@ -129,7 +129,7 @@ export async function PUT(
   const payload = (await request.json()) as Record<string, unknown>;
   const action = payload.action;
   const now = new Date().toISOString();
-  const table = roleConfig.table as typeof schema.victims;
+  const table = roleConfig.table;
   const nameField = roleConfig.nameField;
   const aliasField = roleConfig.aliasField;
 
@@ -158,8 +158,8 @@ export async function PUT(
 
     const explicitAlias =
       typeof payload.alias === 'string' ? payload.alias.trim() : '';
-    const candidateAlias =
-      explicitAlias || splitAliases((existing[aliasField] as string) ?? null)[0];
+    const existingAliases = splitAliases((existing[aliasField] as string) ?? null);
+    const candidateAlias = explicitAlias || existingAliases[0] || '';
 
     if (!candidateAlias) {
       return NextResponse.json(

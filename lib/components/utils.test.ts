@@ -23,7 +23,9 @@ describe('detectDuplicates', () => {
       matchReason: 'exact_url_match',
       matchedFields: ['newsReportUrl'],
     });
-    expect(matches[0].explainability).toContain('exact match');
+    expect(matches[0].explainability).toBe(
+      'The newsReportUrl values are an exact match.',
+    );
   });
 
   it('matches primary name against aliases and returns reason fields', () => {

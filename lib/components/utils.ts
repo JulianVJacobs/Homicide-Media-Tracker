@@ -313,7 +313,10 @@ export function detectDuplicates(
     }
 
     const nameAliasMatch = getBestNameAliasMatch(newArticle, existing);
-    if (nameAliasMatch && nameAliasMatch.similarity >= 0.9) {
+    if (
+      nameAliasMatch &&
+      nameAliasMatch.similarity >= NAME_ALIAS_MATCH_THRESHOLD
+    ) {
       matches.push({
         id: existing.id,
         similarity: nameAliasMatch.similarity,
@@ -356,6 +359,10 @@ type CandidateName = {
   isAlias: boolean;
 };
 
+const NAME_ALIAS_MATCH_THRESHOLD = 0.9;
+const ALIAS_EXACT_MATCH_SCORE = 0.95;
+const NAME_EXACT_MATCH_SCORE = 0.98;
+
 const normaliseName = (value: NullableString): string => {
   if (typeof value !== 'string') {
     return '';
@@ -366,22 +373,23 @@ const normaliseName = (value: NullableString): string => {
 const collectAliasValues = (
   value: NullableString | NullableString[] | undefined,
 ): string[] => {
+  const splitAndNormalise = (entry: string): string[] =>
+    entry
+      .split(',')
+      .map((item) => normaliseName(item))
+      .filter(Boolean);
+
   if (!value) {
     return [];
   }
   if (Array.isArray(value)) {
-    return value
-      .filter((item): item is string => typeof item === 'string')
-      .flatMap((item) => item.split(','))
-      .map((item) => normaliseName(item))
-      .filter(Boolean);
+    return value.flatMap((item) =>
+      typeof item === 'string' ? splitAndNormalise(item) : [],
+    );
   }
 
   if (typeof value === 'string') {
-    return value
-      .split(',')
-      .map((item) => normaliseName(item))
-      .filter(Boolean);
+    return splitAndNormalise(value);
   }
 
   return [];
@@ -389,18 +397,19 @@ const collectAliasValues = (
 
 const collectCandidateNames = (candidate: DuplicateCandidate): CandidateName[] => {
   const names: CandidateName[] = [];
-  const seen = new Set<string>();
+  const seenByField = new Map<string, Set<string>>();
 
   const addName = (value: NullableString, field: string, isAlias: boolean) => {
     const normalised = normaliseName(value);
     if (!normalised) {
       return;
     }
-    const key = `${field}:${normalised}`;
-    if (seen.has(key)) {
+    const seenForField = seenByField.get(field) ?? new Set<string>();
+    if (seenForField.has(normalised)) {
       return;
     }
-    seen.add(key);
+    seenForField.add(normalised);
+    seenByField.set(field, seenForField);
     names.push({
       value: normalised,
       field,
@@ -456,12 +465,7 @@ const getBestNameAliasMatch = (
 
   for (const source of currentNames) {
     for (const target of existingNames) {
-      const similarity =
-        source.value === target.value
-          ? source.isAlias || target.isAlias
-            ? 0.95
-            : 0.98
-          : calculateSimilarity(source.value, target.value);
+      const similarity = calculateNameSimilarity(source, target);
 
       if (!best || similarity > best.similarity) {
         best = {
@@ -476,6 +480,21 @@ const getBestNameAliasMatch = (
   }
 
   return best;
+};
+
+const calculateNameSimilarity = (
+  source: CandidateName,
+  target: CandidateName,
+): number => {
+  if (source.value === target.value) {
+    // Keep exact name/alias matches below URL certainty (1.0) so URL matches stay
+    // the strongest signal while still returning high-confidence merge candidates.
+    if (source.isAlias || target.isAlias) {
+      return ALIAS_EXACT_MATCH_SCORE;
+    }
+    return NAME_EXACT_MATCH_SCORE;
+  }
+  return calculateSimilarity(source.value, target.value);
 };
 
 /**

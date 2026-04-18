@@ -12,9 +12,10 @@ import {
 } from 'react-bootstrap';
 import InputHomicide from '@/lib/components/input-homicide';
 import ListHomicides from '@/lib/components/list-homicides';
+import ParticipantMergeQueue from '@/lib/components/participant-merge-queue';
 import SysInfo from '@/lib/components/system-information';
 
-type Views = 'home' | 'input' | 'list' | 'info';
+type Views = 'home' | 'input' | 'list' | 'merge' | 'info';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<Views>('home');
@@ -52,6 +53,13 @@ export default function Home() {
                     >
                       View Events
                     </Button>
+                    <Button
+                      variant="outline-secondary"
+                      size="lg"
+                      onClick={() => setCurrentView('merge')}
+                    >
+                      Manage Participant Merge Queue
+                    </Button>
                   </div>
                 </Card.Body>
               </Card>
@@ -67,6 +75,10 @@ export default function Home() {
 
     if (currentView === 'list') {
       return <ListHomicides onBack={() => setCurrentView('home')} />;
+    }
+
+    if (currentView === 'merge') {
+      return <ParticipantMergeQueue onBack={() => setCurrentView('home')} />;
     }
 
     if (currentView === 'info') {
@@ -104,6 +116,13 @@ export default function Home() {
                 className={currentView === 'list' ? 'active' : ''}
               >
                 View All Events
+              </Nav.Link>
+              <Nav.Link
+                href="#"
+                onClick={() => setCurrentView('merge')}
+                className={currentView === 'merge' ? 'active' : ''}
+              >
+                Merge Queue
               </Nav.Link>
               <Nav.Link
                 href="#"

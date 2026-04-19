@@ -77,6 +77,7 @@ const buildVictimActor = (victim: Victim): EventActor => {
   return {
     actor_id: victim.id,
     canonical_label: canonicalLabel,
+    // Keep canonical label as the single primary value and retain only distinct alternates.
     aliases: aliases.filter((alias) => alias.toLowerCase() !== canonicalLabel.toLowerCase()),
     identifiers: [{ kind: 'legacy_record_id', value: victim.id }],
     legacy: {
@@ -94,6 +95,7 @@ const buildPerpetratorActor = (perpetrator: Perpetrator): EventActor => {
   return {
     actor_id: perpetrator.id,
     canonical_label: canonicalLabel,
+    // Keep canonical label as the single primary value and retain only distinct alternates.
     aliases: aliases.filter((alias) => alias.toLowerCase() !== canonicalLabel.toLowerCase()),
     identifiers: [{ kind: 'legacy_record_id', value: perpetrator.id }],
     legacy: {
@@ -188,6 +190,7 @@ export const buildIntegratedEventPayload = (
   ];
   const actorIds = new Set(actors.map((actor) => actor.actor_id));
   const details = asObject(event.details);
+  // Accept both contract (`event_actor_roles`) and prior camelCase payloads.
   const rawRoles = asArray(details.event_actor_roles ?? details.eventActorRoles);
   const explicitRoles = rawRoles
     .map((role) => normaliseRole(event.id, role))

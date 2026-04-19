@@ -89,6 +89,37 @@ This single README combines development guidance from the project and an older b
 
 ---
 
+## Participant Merge & Alias Promotion Contract (frozen)
+
+Contract version: `2026-04-18`
+
+- Contract source: `lib/contracts/participant-merge.ts`
+- Published endpoint: `GET /api/participants/contract`
+- Frozen operation endpoints:
+  - `POST /api/participants/merge`
+  - `POST /api/participants/alias-promotion`
+
+### Merge request fields
+
+- `sourceParticipantId`
+- `targetParticipantId`
+- `sourceRole` (`participant | victim | perpetrator`)
+- `targetRole` (`participant | victim | perpetrator`)
+- `reason` (optional)
+
+### Alias promotion request fields
+
+- `participantId`
+- `role` (`participant | victim | perpetrator`)
+- `aliasToPromote`
+
+### Alias promotion result fields
+
+- `participantId`
+- `role`
+- `newPrimaryName`
+- `demotedPrimaryAlias`
+
 The Homicide Media Tracker is designed for research teams to:
 
 - Collect structured homicide data from media articles

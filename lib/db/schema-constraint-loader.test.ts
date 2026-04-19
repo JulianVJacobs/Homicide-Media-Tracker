@@ -81,4 +81,16 @@ describe('loadSchemaConstraints', () => {
       requiredFields: ['perpetratorName'],
     });
   });
+
+  it('supports event constraint defaults for event-level profiles', async () => {
+    const db = createMockDb([[], []]);
+
+    const loaded = await loadSchemaConstraints(db, 'unknown', 'event');
+
+    expect(loaded).toEqual({
+      profileId: 'default',
+      type: 'event',
+      requiredFields: ['datetimeMode'],
+    });
+  });
 });

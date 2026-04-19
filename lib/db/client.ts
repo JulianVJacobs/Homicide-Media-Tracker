@@ -29,12 +29,12 @@ class NewsReportTrackerDexie extends Dexie {
   events!: Table<Event, string>;
   reportAnnotations!: Table<ReportAnnotation, string>;
   participants!: Table<Participant, string>;
-  schemaField!: Table<SchemaField, string>;
-  schemaVocabTerm!: Table<SchemaVocabTerm, number>;
-  annotationEvent!: Table<AnnotationEvent, string>;
-  actor!: Table<Actor, string>;
-  eventActorRole!: Table<EventActorRole, string>;
-  claim!: Table<Claim, string>;
+  schemaFields!: Table<SchemaField, string>;
+  schemaVocabTerms!: Table<SchemaVocabTerm, number>;
+  annotationEvents!: Table<AnnotationEvent, string>;
+  actors!: Table<Actor, string>;
+  eventActorRoles!: Table<EventActorRole, string>;
+  claims!: Table<Claim, string>;
   claimEvidence!: Table<ClaimEvidence, string>;
   syncQueue!: Table<SyncQueue, number>;
   appConfig!: Table<AppConfig, number>;

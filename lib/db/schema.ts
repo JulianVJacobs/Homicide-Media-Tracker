@@ -342,7 +342,7 @@ export const eventActorRoles = sqliteTable('event_actor_role', {
     .references(() => actors.id, { onDelete: 'cascade' }),
   roleTermId: integer('role_term_id')
     .notNull()
-    .references(() => schemaVocabTerms.id),
+    .references(() => schemaVocabTerms.id, { onDelete: 'restrict' }),
   roleScope: text('role_scope'),
   confidence: integer('confidence'),
   certainty: text('certainty').default('unknown'),
@@ -358,7 +358,7 @@ export const migrationEventActorRoles = `CREATE TABLE IF NOT EXISTS event_actor_
   id TEXT PRIMARY KEY,
   event_id TEXT NOT NULL REFERENCES annotation_event(id) ON DELETE CASCADE,
   actor_id TEXT NOT NULL REFERENCES actor(id) ON DELETE CASCADE,
-  role_term_id INTEGER NOT NULL REFERENCES schema_vocab_term(id),
+  role_term_id INTEGER NOT NULL REFERENCES schema_vocab_term(id) ON DELETE RESTRICT,
   role_scope TEXT,
   confidence INTEGER ${confidenceCheckConstraint},
   certainty TEXT DEFAULT 'unknown' ${eventActorRoleCertaintyCheckConstraint},
@@ -411,7 +411,9 @@ export const claimEvidence = sqliteTable('claim_evidence', {
   claimId: text('claim_id')
     .notNull()
     .references(() => claims.id, { onDelete: 'cascade' }),
-  sourceRecordId: text('source_record_id').references(() => articles.id),
+  sourceRecordId: text('source_record_id').references(() => articles.id, {
+    onDelete: 'set null',
+  }),
   excerptText: text('excerpt_text').notNull(),
   selectorJson: text('selector_json', { mode: 'json' }),
   coderNote: text('coder_note'),
@@ -425,7 +427,7 @@ const claimEvidenceStrengthConstraint = `CHECK (evidence_strength IN (${buildEsc
 export const migrationClaimEvidence = `CREATE TABLE IF NOT EXISTS claim_evidence (
   id TEXT PRIMARY KEY,
   claim_id TEXT NOT NULL REFERENCES claim(id) ON DELETE CASCADE,
-  source_record_id TEXT REFERENCES articles(id),
+  source_record_id TEXT REFERENCES articles(id) ON DELETE SET NULL,
   excerpt_text TEXT NOT NULL,
   selector_json TEXT,
   coder_note TEXT,

@@ -13,6 +13,13 @@ import {
   reportAnnotations,
   participants,
   schemaConstraints,
+  schemaFields,
+  schemaVocabTerms,
+  annotationEvents,
+  actors,
+  eventActorRoles,
+  claims,
+  claimEvidence,
   appConfig,
   syncQueue,
   migrations,
@@ -21,6 +28,10 @@ import {
   SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
   SCHEMA_CONSTRAINT_REQUIRED_FIELDS,
 } from '../contracts/schema-constraints';
+import {
+  DEFAULT_EVENT_ACTOR_ROLE_TERMS,
+  EVENT_ACTOR_ROLE_VOCAB_KEY,
+} from './role-vocabulary';
 
 type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
 
@@ -125,6 +136,13 @@ class DatabaseManagerServer {
         reportAnnotations,
         participants,
         schemaConstraints,
+        schemaFields,
+        schemaVocabTerms,
+        annotationEvents,
+        actors,
+        eventActorRoles,
+        claims,
+        claimEvidence,
         appConfig,
         syncQueue,
       },
@@ -143,6 +161,7 @@ class DatabaseManagerServer {
       }
     }
     await this.seedDefaultSchemaConstraints();
+    await this.seedDefaultRoleVocabulary();
   }
 
   private async seedDefaultSchemaConstraints(): Promise<void> {
@@ -181,6 +200,32 @@ class DatabaseManagerServer {
     });
   }
 
+  private async seedDefaultRoleVocabulary(): Promise<void> {
+    if (!this.localClient) {
+      return;
+    }
+
+    for (const role of DEFAULT_EVENT_ACTOR_ROLE_TERMS) {
+      await this.localClient.execute({
+        sql: `INSERT OR IGNORE INTO schema_vocab_term (
+          vocab_key,
+          term_key,
+          label,
+          description,
+          is_system,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        args: [
+          EVENT_ACTOR_ROLE_VOCAB_KEY,
+          role.termKey,
+          role.label,
+          null,
+        ],
+      });
+    }
+  }
+
   getLocal() {
     if (!this.localDb) {
       throw new Error(
@@ -203,6 +248,13 @@ class DatabaseManagerServer {
           reportAnnotations,
           participants,
           schemaConstraints,
+          schemaFields,
+          schemaVocabTerms,
+          annotationEvents,
+          actors,
+          eventActorRoles,
+          claims,
+          claimEvidence,
           appConfig,
           syncQueue,
         },

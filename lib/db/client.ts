@@ -7,6 +7,13 @@ import {
   Event,
   ReportAnnotation,
   Participant,
+  SchemaField,
+  SchemaVocabTerm,
+  AnnotationEvent,
+  Actor,
+  EventActorRole,
+  Claim,
+  ClaimEvidence,
   SyncQueue,
   NewSyncQueue,
   AppConfig,
@@ -22,6 +29,13 @@ class NewsReportTrackerDexie extends Dexie {
   events!: Table<Event, string>;
   reportAnnotations!: Table<ReportAnnotation, string>;
   participants!: Table<Participant, string>;
+  schemaField!: Table<SchemaField, string>;
+  schemaVocabTerm!: Table<SchemaVocabTerm, number>;
+  annotationEvent!: Table<AnnotationEvent, string>;
+  actor!: Table<Actor, string>;
+  eventActorRole!: Table<EventActorRole, string>;
+  claim!: Table<Claim, string>;
+  claimEvidence!: Table<ClaimEvidence, string>;
   syncQueue!: Table<SyncQueue, number>;
   appConfig!: Table<AppConfig, number>;
 

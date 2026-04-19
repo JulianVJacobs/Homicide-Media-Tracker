@@ -10,8 +10,11 @@ import {
   perpetrators,
   users,
   events,
+  annotationEvents,
   reportAnnotations,
   participants,
+  schemaProfiles,
+  schemaFields,
   schemaConstraints,
   appConfig,
   syncQueue,
@@ -21,6 +24,10 @@ import {
   SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
   SCHEMA_CONSTRAINT_REQUIRED_FIELDS,
 } from '../contracts/schema-constraints';
+import {
+  HOMICIDE_EVENT_PROFILE,
+  HOMICIDE_EVENT_PROFILE_FIELDS,
+} from '../contracts/schema-profile';
 
 type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
 
@@ -122,8 +129,11 @@ class DatabaseManagerServer {
         perpetrators,
         users,
         events,
+        annotationEvents,
         reportAnnotations,
         participants,
+        schemaProfiles,
+        schemaFields,
         schemaConstraints,
         appConfig,
         syncQueue,
@@ -142,43 +152,70 @@ class DatabaseManagerServer {
         }
       }
     }
-    await this.seedDefaultSchemaConstraints();
+    await this.seedDefaultSchemaRegistry();
   }
 
-  private async seedDefaultSchemaConstraints(): Promise<void> {
+  private async seedDefaultSchemaRegistry(): Promise<void> {
     if (!this.localClient) {
       return;
     }
 
     await this.localClient.execute({
-      sql: `INSERT OR IGNORE INTO schema_constraint (
-        profile_id,
-        type,
-        required_fields,
+      sql: `INSERT OR IGNORE INTO schema_profile (
+        id,
+        name,
+        entity_level,
+        description,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       args: [
-        SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
-        'victim',
-        JSON.stringify(SCHEMA_CONSTRAINT_REQUIRED_FIELDS.victim),
+        HOMICIDE_EVENT_PROFILE.id,
+        HOMICIDE_EVENT_PROFILE.name,
+        HOMICIDE_EVENT_PROFILE.entityLevel,
+        HOMICIDE_EVENT_PROFILE.description,
       ],
     });
 
-    await this.localClient.execute({
-      sql: `INSERT OR IGNORE INTO schema_constraint (
-        profile_id,
-        type,
-        required_fields,
-        created_at,
-        updated_at
-      ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      args: [
-        SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
-        'perpetrator',
-        JSON.stringify(SCHEMA_CONSTRAINT_REQUIRED_FIELDS.perpetrator),
-      ],
-    });
+    for (const field of HOMICIDE_EVENT_PROFILE_FIELDS) {
+      await this.localClient.execute({
+        sql: `INSERT OR IGNORE INTO schema_field (
+          profile_id,
+          entity_type,
+          field_key,
+          field_type,
+          field_config,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        args: [
+          HOMICIDE_EVENT_PROFILE.id,
+          field.entityType,
+          field.fieldKey,
+          field.fieldType,
+          JSON.stringify(field.fieldConfig),
+        ],
+      });
+    }
+
+    for (const [type, requiredFields] of Object.entries(
+      SCHEMA_CONSTRAINT_REQUIRED_FIELDS,
+    )) {
+      await this.localClient.execute({
+        sql: `INSERT OR IGNORE INTO schema_constraint (
+          profile_id,
+          type,
+          required_fields,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        args: [
+          SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
+          type,
+          JSON.stringify(requiredFields),
+        ],
+      });
+    }
   }
 
   getLocal() {
@@ -200,8 +237,11 @@ class DatabaseManagerServer {
           perpetrators,
           users,
           events,
+          annotationEvents,
           reportAnnotations,
           participants,
+          schemaProfiles,
+          schemaFields,
           schemaConstraints,
           appConfig,
           syncQueue,

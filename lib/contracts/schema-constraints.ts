@@ -1,4 +1,6 @@
-export const SCHEMA_CONSTRAINT_PROFILE_DEFAULT = 'default';
+import { SCHEMA_PROFILE_DEFAULT } from './schema-profile';
+
+export const SCHEMA_CONSTRAINT_PROFILE_DEFAULT = SCHEMA_PROFILE_DEFAULT;
 
 export const SCHEMA_CONSTRAINT_REQUIRED_FIELDS = {
   victim: [
@@ -8,6 +10,7 @@ export const SCHEMA_CONSTRAINT_REQUIRED_FIELDS = {
     'genderOfVictim',
   ],
   perpetrator: ['perpetratorName'],
+  event: ['datetimeMode'],
 } as const;
 
 export type ConstraintType = keyof typeof SCHEMA_CONSTRAINT_REQUIRED_FIELDS;

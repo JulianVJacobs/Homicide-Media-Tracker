@@ -79,9 +79,20 @@ const filterCanonicalAlias = (
   return aliases.filter((alias) => alias.toLowerCase() !== canonicalKey);
 };
 
+const pickCanonicalLabel = (
+  primaryName: string | null,
+  aliases: string[],
+): string => {
+  const trimmed = primaryName?.trim();
+  if (trimmed && trimmed.length > 0) {
+    return trimmed;
+  }
+  return aliases[0] || 'Unknown';
+};
+
 const buildVictimActor = (victim: Victim): EventActor => {
   const aliases = splitAliases(victim.victimAlias ?? null);
-  const canonicalLabel = victim.victimName?.trim() || aliases[0] || 'Unknown';
+  const canonicalLabel = pickCanonicalLabel(victim.victimName ?? null, aliases);
   return {
     actor_id: victim.id,
     canonical_label: canonicalLabel,
@@ -98,8 +109,10 @@ const buildVictimActor = (victim: Victim): EventActor => {
 
 const buildPerpetratorActor = (perpetrator: Perpetrator): EventActor => {
   const aliases = splitAliases(perpetrator.perpetratorAlias ?? null);
-  const canonicalLabel =
-    perpetrator.perpetratorName?.trim() || aliases[0] || 'Unknown';
+  const canonicalLabel = pickCanonicalLabel(
+    perpetrator.perpetratorName ?? null,
+    aliases,
+  );
   return {
     actor_id: perpetrator.id,
     canonical_label: canonicalLabel,

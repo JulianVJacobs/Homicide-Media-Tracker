@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { dbm, DatabaseManagerServer } from '../../../../lib/db/server';
 import {
   actors,
@@ -117,14 +117,32 @@ export async function PUT(
         .returning();
 
       if (canonicalLabel !== null) {
-        await tx
+        const updatedPrimaryIdentifiers = await tx
           .update(actorIdentifiers)
           .set({
             value: canonicalLabel,
             isPrimary: true,
             updatedAt: now,
           })
-          .where(eq(actorIdentifiers.id, `primary_name:${id}`));
+          .where(
+            and(
+              eq(actorIdentifiers.actorId, id),
+              eq(actorIdentifiers.namespace, 'primary_name'),
+            ),
+          )
+          .returning();
+
+        if (updatedPrimaryIdentifiers.length === 0) {
+          await tx.insert(actorIdentifiers).values({
+            id: `primary_name:${id}`,
+            actorId: id,
+            namespace: 'primary_name',
+            value: canonicalLabel,
+            isPrimary: true,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
       }
 
       return updated ?? current;

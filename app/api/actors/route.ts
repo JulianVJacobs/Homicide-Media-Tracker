@@ -206,7 +206,7 @@ export async function POST(request: Request) {
     }));
     const identifierRows: NewActorIdentifier[] = [
       {
-        id: uuidv4(),
+        id: `primary_name:${id}`,
         actorId: id,
         namespace: 'primary_name',
         value: canonicalLabel,
@@ -231,7 +231,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        data: toActorResponse(createdActor, aliasRows as ActorAlias[], identifierRows),
+        data: {
+          ...createdActor,
+          aliases: aliasRows.map((alias) => alias.aliasValue),
+          identifiers: identifierRows.map((identifier) => ({
+            namespace: identifier.namespace,
+            value: identifier.value,
+            isPrimary: identifier.isPrimary ?? false,
+          })),
+        },
       },
       { status: 201 },
     );

@@ -426,7 +426,7 @@ export const migrationIndexes = [
   `CREATE INDEX IF NOT EXISTS idx_actor_canonical_label ON actor(canonical_label)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_actor_alias_actor_normalized ON actor_alias(actor_id, alias_normalized)`,
   `CREATE INDEX IF NOT EXISTS idx_actor_alias_value ON actor_alias(alias_value)`,
-  `CREATE UNIQUE INDEX IF NOT EXISTS idx_actor_identifier_namespace_value ON actor_identifier(namespace, value)`,
+  `CREATE INDEX IF NOT EXISTS idx_actor_identifier_namespace_value ON actor_identifier(namespace, value)`,
   `CREATE INDEX IF NOT EXISTS idx_actor_identifier_actor_id ON actor_identifier(actor_id)`,
 ];
 
@@ -452,7 +452,7 @@ export const migrationBackfillVictimsToActors = `INSERT OR IGNORE INTO actor (
 )
 SELECT
   id,
-  COALESCE(NULLIF(TRIM(victim_name), ''), id),
+  NULLIF(TRIM(victim_name), ''),
   'person',
   CASE WHEN merged_into_id IS NOT NULL THEN 'merged' ELSE 'active' END,
   COALESCE(created_at, CURRENT_TIMESTAMP),
@@ -469,7 +469,7 @@ export const migrationBackfillPerpetratorsToActors = `INSERT OR IGNORE INTO acto
 )
 SELECT
   id,
-  COALESCE(NULLIF(TRIM(perpetrator_name), ''), id),
+  NULLIF(TRIM(perpetrator_name), ''),
   'person',
   CASE WHEN merged_into_id IS NOT NULL THEN 'merged' ELSE 'active' END,
   COALESCE(created_at, CURRENT_TIMESTAMP),
@@ -527,11 +527,12 @@ SELECT
   'primary_name:' || id,
   id,
   'primary_name',
-  COALESCE(NULLIF(TRIM(canonical_label), ''), id),
-  0,
+  COALESCE(TRIM(canonical_label), ''),
+  1,
   COALESCE(created_at, CURRENT_TIMESTAMP),
   COALESCE(updated_at, CURRENT_TIMESTAMP)
-FROM actor`;
+FROM actor
+WHERE canonical_label IS NOT NULL AND TRIM(canonical_label) != ''`;
 
 export const migrationBackfillVictimAliases = `WITH RECURSIVE split(actor_id, alias, rest, created_at, updated_at) AS (
   SELECT
@@ -545,7 +546,7 @@ export const migrationBackfillVictimAliases = `WITH RECURSIVE split(actor_id, al
   UNION ALL
   SELECT
     actor_id,
-    TRIM(substr(rest, 0, instr(rest, '|'))),
+    TRIM(substr(rest, 1, instr(rest, '|') - 1)),
     substr(rest, instr(rest, '|') + 1),
     created_at,
     updated_at
@@ -584,7 +585,7 @@ export const migrationBackfillPerpAliases = `WITH RECURSIVE split(actor_id, alia
   UNION ALL
   SELECT
     actor_id,
-    TRIM(substr(rest, 0, instr(rest, '|'))),
+    TRIM(substr(rest, 1, instr(rest, '|') - 1)),
     substr(rest, instr(rest, '|') + 1),
     created_at,
     updated_at

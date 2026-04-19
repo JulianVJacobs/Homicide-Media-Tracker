@@ -12,13 +12,15 @@
   - `perpetrator`
   - `participant` (display label: `Other`)
 - Default type for new rows: `victim`
+- New-entry behavior: selecting `Other` (`participant`) is allowed during create flow in this phase.
 - Backward compatibility mapping:
   - Existing `victims` records load as `participantType = victim`
   - Existing `perpetrators` records load as `participantType = perpetrator`
 - Persistence method:
   - `victim` rows continue using victim payload shape and victim persistence route(s)
   - `perpetrator` rows continue using perpetrator payload shape and perpetrator persistence route(s)
-  - `participant` rows persist only shared identity fields in this phase; no merge/alias plumbing changes
+  - `participant` rows persist only shared identity fields in this phase
+  - Existing merge/alias plumbing remains unchanged and continues to apply to current victim/perpetrator merge flows
 
 ### 2) Field visibility contract by type
 - Shared fields (all types):
@@ -42,6 +44,7 @@
 - Wire unified participant form submission to validation endpoints.
 - Verify list UI renders participant type labels correctly.
 - Verify backward compatibility for legacy victim/perpetrator records.
+- Verify all lanes use the exact `participantType` key (`victim` | `perpetrator` | `participant`) with no naming drift.
 - Run end-to-end scenario:
   1. Create participant as victim
   2. Change type to perpetrator

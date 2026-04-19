@@ -74,11 +74,12 @@ const splitAliases = (value: string | null): string[] => {
 const buildVictimActor = (victim: Victim): EventActor => {
   const aliases = splitAliases(victim.victimAlias ?? null);
   const canonicalLabel = victim.victimName?.trim() || aliases[0] || 'Unknown';
+  const canonicalKey = canonicalLabel.toLowerCase();
   return {
     actor_id: victim.id,
     canonical_label: canonicalLabel,
     // Keep canonical label as the single primary value and retain only distinct alternates.
-    aliases: aliases.filter((alias) => alias.toLowerCase() !== canonicalLabel.toLowerCase()),
+    aliases: aliases.filter((alias) => alias.toLowerCase() !== canonicalKey),
     identifiers: [{ kind: 'legacy_record_id', value: victim.id }],
     legacy: {
       source_table: 'victims',
@@ -92,11 +93,12 @@ const buildPerpetratorActor = (perpetrator: Perpetrator): EventActor => {
   const aliases = splitAliases(perpetrator.perpetratorAlias ?? null);
   const canonicalLabel =
     perpetrator.perpetratorName?.trim() || aliases[0] || 'Unknown';
+  const canonicalKey = canonicalLabel.toLowerCase();
   return {
     actor_id: perpetrator.id,
     canonical_label: canonicalLabel,
     // Keep canonical label as the single primary value and retain only distinct alternates.
-    aliases: aliases.filter((alias) => alias.toLowerCase() !== canonicalLabel.toLowerCase()),
+    aliases: aliases.filter((alias) => alias.toLowerCase() !== canonicalKey),
     identifiers: [{ kind: 'legacy_record_id', value: perpetrator.id }],
     legacy: {
       source_table: 'perpetrators',

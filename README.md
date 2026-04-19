@@ -22,11 +22,11 @@ This single README combines development guidance from the project and an older b
   - [x] Add "alias" field to every participant
     - [x] Update schema to include alias
     - [x] Add input field to participant form
-  - [ ] Add participant alias management and promotion
-    - [ ] Add participant merge management UI
-    - [ ] Allow promoting an alias to primary name
-    - [ ] Preserve old primary name as alias after promotion
-    - [ ] Update duplicate matching to use primary + aliases
+  - [x] Add participant alias management and promotion
+    - [x] Add participant merge management UI
+    - [x] Allow promoting an alias to primary name
+    - [x] Preserve old primary name as alias after promotion
+    - [x] Update duplicate matching to use primary + aliases
   - [ ] Perpetrator "unknown" input as checkbox
     - [ ] Replace text input with checkbox
     - [ ] Update validation logic

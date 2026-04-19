@@ -42,6 +42,14 @@ interface DuplicateCandidate {
   id?: string;
   newsReportUrl?: NullableString;
   newsReportHeadline?: NullableString;
+  primaryName?: NullableString;
+  aliases?: NullableString | NullableString[];
+  participantName?: NullableString;
+  participantAlias?: NullableString | NullableString[];
+  victimName?: NullableString;
+  victimAlias?: NullableString | NullableString[];
+  perpetratorName?: NullableString;
+  perpetratorAlias?: NullableString | NullableString[];
 }
 
 interface ExportArticleRecord extends UnknownRecord {
@@ -265,8 +273,11 @@ export function validatePerpetratorData(
 export interface DuplicateMatch {
   id: string;
   similarity: number;
-  matchType: 'url' | 'title' | 'content';
+  matchType: 'url' | 'title' | 'content' | 'name';
   confidence: 'high' | 'medium' | 'low';
+  matchReason: string;
+  explainability: string;
+  matchedFields: string[];
 }
 
 export function detectDuplicates(
@@ -294,6 +305,26 @@ export function detectDuplicates(
         similarity: 1.0,
         matchType: 'url',
         confidence: 'high',
+        matchReason: 'exact_url_match',
+        explainability: 'The newsReportUrl values are an exact match.',
+        matchedFields: ['newsReportUrl'],
+      });
+      continue;
+    }
+
+    const nameAliasMatch = getBestNameAliasMatch(newArticle, existing);
+    if (
+      nameAliasMatch &&
+      nameAliasMatch.similarity >= NAME_ALIAS_MATCH_THRESHOLD
+    ) {
+      matches.push({
+        id: existing.id,
+        similarity: nameAliasMatch.similarity,
+        matchType: 'name',
+        confidence: nameAliasMatch.similarity > 0.95 ? 'high' : 'medium',
+        matchReason: 'name_alias_overlap',
+        explainability: `Matched "${nameAliasMatch.newValue}" (${nameAliasMatch.newField}) with "${nameAliasMatch.existingValue}" (${nameAliasMatch.existingField}).`,
+        matchedFields: [nameAliasMatch.newField, nameAliasMatch.existingField],
       });
       continue;
     }
@@ -310,12 +341,161 @@ export function detectDuplicates(
         similarity: titleSimilarity,
         matchType: 'title',
         confidence: titleSimilarity > 0.95 ? 'high' : 'medium',
+        matchReason: 'headline_similarity',
+        explainability: `The newsReportHeadline values are similar (${(
+          titleSimilarity * 100
+        ).toFixed(1)}%).`,
+        matchedFields: ['newsReportHeadline'],
       });
     }
   }
 
   return matches.sort((a, b) => b.similarity - a.similarity);
 }
+
+type CandidateName = {
+  value: string;
+  field: string;
+  isAlias: boolean;
+};
+
+const NAME_ALIAS_MATCH_THRESHOLD = 0.9;
+const ALIAS_EXACT_MATCH_SCORE = 0.95;
+const NAME_EXACT_MATCH_SCORE = 0.98;
+
+const normaliseName = (value: NullableString): string => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+};
+
+const collectAliasValues = (
+  value: NullableString | NullableString[] | undefined,
+): string[] => {
+  const splitAndNormalise = (entry: string): string[] =>
+    entry
+      .split(',')
+      .map((item) => normaliseName(item))
+      .filter(Boolean);
+
+  if (!value) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((item) =>
+      typeof item === 'string' ? splitAndNormalise(item) : [],
+    );
+  }
+
+  if (typeof value === 'string') {
+    return splitAndNormalise(value);
+  }
+
+  return [];
+};
+
+const collectCandidateNames = (candidate: DuplicateCandidate): CandidateName[] => {
+  const names: CandidateName[] = [];
+  const seenByField = new Map<string, Set<string>>();
+
+  const addName = (value: NullableString, field: string, isAlias: boolean) => {
+    const normalised = normaliseName(value);
+    if (!normalised) {
+      return;
+    }
+    const seenForField = seenByField.get(field) ?? new Set<string>();
+    if (seenForField.has(normalised)) {
+      return;
+    }
+    seenForField.add(normalised);
+    seenByField.set(field, seenForField);
+    names.push({
+      value: normalised,
+      field,
+      isAlias,
+    });
+  };
+
+  addName(candidate.primaryName, 'primaryName', false);
+  addName(candidate.participantName, 'participantName', false);
+  addName(candidate.victimName, 'victimName', false);
+  addName(candidate.perpetratorName, 'perpetratorName', false);
+
+  collectAliasValues(candidate.aliases).forEach((alias) => {
+    addName(alias, 'aliases', true);
+  });
+  collectAliasValues(candidate.participantAlias).forEach((alias) => {
+    addName(alias, 'participantAlias', true);
+  });
+  collectAliasValues(candidate.victimAlias).forEach((alias) => {
+    addName(alias, 'victimAlias', true);
+  });
+  collectAliasValues(candidate.perpetratorAlias).forEach((alias) => {
+    addName(alias, 'perpetratorAlias', true);
+  });
+
+  return names;
+};
+
+const getBestNameAliasMatch = (
+  current: DuplicateCandidate,
+  existing: DuplicateCandidate,
+):
+  | {
+      similarity: number;
+      newValue: string;
+      existingValue: string;
+      newField: string;
+      existingField: string;
+    }
+  | undefined => {
+  const currentNames = collectCandidateNames(current);
+  const existingNames = collectCandidateNames(existing);
+
+  let best:
+    | {
+        similarity: number;
+        newValue: string;
+        existingValue: string;
+        newField: string;
+        existingField: string;
+      }
+    | undefined;
+
+  for (const source of currentNames) {
+    for (const target of existingNames) {
+      const similarity = calculateNameSimilarity(source, target);
+
+      if (!best || similarity > best.similarity) {
+        best = {
+          similarity,
+          newValue: source.value,
+          existingValue: target.value,
+          newField: source.field,
+          existingField: target.field,
+        };
+      }
+    }
+  }
+
+  return best;
+};
+
+const calculateNameSimilarity = (
+  source: CandidateName,
+  target: CandidateName,
+): number => {
+  if (source.value === target.value) {
+    // Keep exact name/alias matches below URL certainty (1.0) so URL matches stay
+    // the strongest signal while still returning high-confidence merge candidates.
+    if (source.isAlias || target.isAlias) {
+      return ALIAS_EXACT_MATCH_SCORE;
+    }
+    return NAME_EXACT_MATCH_SCORE;
+  }
+  return calculateSimilarity(source.value, target.value);
+};
 
 /**
  * Calculate similarity between two strings using Levenshtein distance

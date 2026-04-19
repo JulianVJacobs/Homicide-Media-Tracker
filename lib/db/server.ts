@@ -220,7 +220,7 @@ class DatabaseManagerServer {
           EVENT_ACTOR_ROLE_VOCAB_KEY,
           role.termKey,
           role.label,
-          null,
+          role.description ?? null,
         ],
       });
     }

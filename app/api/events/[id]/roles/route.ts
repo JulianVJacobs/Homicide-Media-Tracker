@@ -8,9 +8,14 @@ import {
   eventActorRoles,
   schemaVocabTerms,
 } from '../../../../../lib/db/schema';
+import {
+  CONFIDENCE_MAX,
+  CONFIDENCE_MIN,
+  EVENT_ACTOR_ROLE_CERTAINTY_VALUES,
+} from '../../../../../lib/db/domain-constants';
 import { EVENT_ACTOR_ROLE_VOCAB_KEY } from '../../../../../lib/db/role-vocabulary';
 
-const CERTAINTY_VALUES = new Set(['known', 'suspected', 'unknown']);
+const CERTAINTY_VALUES = new Set(EVENT_ACTOR_ROLE_CERTAINTY_VALUES);
 
 const ensureServerDatabase = async () => {
   if (!(dbm instanceof DatabaseManagerServer)) {
@@ -89,17 +94,25 @@ export async function POST(
 
     if (!CERTAINTY_VALUES.has(certainty)) {
       return NextResponse.json(
-        { success: false, error: 'certainty must be known, suspected, or unknown' },
+        {
+          success: false,
+          error: `certainty must be one of: ${EVENT_ACTOR_ROLE_CERTAINTY_VALUES.join(', ')}`,
+        },
         { status: 400 },
       );
     }
 
     if (
       confidence !== null &&
-      (!Number.isInteger(confidence) || confidence < 0 || confidence > 100)
+      (!Number.isInteger(confidence) ||
+        confidence < CONFIDENCE_MIN ||
+        confidence > CONFIDENCE_MAX)
     ) {
       return NextResponse.json(
-        { success: false, error: 'confidence must be an integer between 0 and 100' },
+        {
+          success: false,
+          error: `confidence must be an integer between ${CONFIDENCE_MIN} and ${CONFIDENCE_MAX}`,
+        },
         { status: 400 },
       );
     }

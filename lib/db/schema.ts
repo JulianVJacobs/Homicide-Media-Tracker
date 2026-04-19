@@ -7,6 +7,14 @@ import {
   // type SQLiteTableWithColumns
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+import {
+  buildConfidenceCheck,
+  CLAIM_EVIDENCE_STRENGTH_VALUES,
+  CLAIM_SUBJECT_TYPES,
+  CLAIM_VALUE_TYPES,
+  EVENT_ACTOR_ROLE_CERTAINTY_VALUES,
+  toSqlQuotedList,
+} from './domain-constants';
 
 // interface DBTable {
 //   table: SQLiteTable<T>,
@@ -349,8 +357,8 @@ export const migrationEventActorRoles = `CREATE TABLE IF NOT EXISTS event_actor_
   actor_id TEXT NOT NULL REFERENCES actor(id) ON DELETE CASCADE,
   role_term_id INTEGER NOT NULL REFERENCES schema_vocab_term(id),
   role_scope TEXT,
-  confidence INTEGER CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 100)),
-  certainty TEXT DEFAULT 'unknown' CHECK (certainty IN ('known', 'suspected', 'unknown')),
+  confidence INTEGER ${buildConfidenceCheck('confidence')},
+  certainty TEXT DEFAULT 'unknown' CHECK (certainty IN (${toSqlQuotedList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)})),
   is_primary_role INTEGER DEFAULT 0,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -376,12 +384,12 @@ export const claims = sqliteTable('claim', {
 
 export const migrationClaims = `CREATE TABLE IF NOT EXISTS claim (
   id TEXT PRIMARY KEY,
-  subject_type TEXT NOT NULL CHECK (subject_type IN ('actor', 'event_actor_role')),
+  subject_type TEXT NOT NULL CHECK (subject_type IN (${toSqlQuotedList(CLAIM_SUBJECT_TYPES)})),
   subject_id TEXT NOT NULL,
   predicate_key TEXT NOT NULL,
   value_json TEXT,
-  value_type TEXT NOT NULL CHECK (value_type IN ('string', 'boolean', 'date', 'integer')),
-  confidence INTEGER CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 100)),
+  value_type TEXT NOT NULL CHECK (value_type IN (${toSqlQuotedList(CLAIM_VALUE_TYPES)})),
+  confidence INTEGER ${buildConfidenceCheck('confidence')},
   asserted_by TEXT,
   asserted_at TEXT DEFAULT CURRENT_TIMESTAMP,
   schema_field_id TEXT REFERENCES schema_field(id),
@@ -413,7 +421,7 @@ export const migrationClaimEvidence = `CREATE TABLE IF NOT EXISTS claim_evidence
   excerpt_text TEXT NOT NULL,
   selector_json TEXT,
   coder_note TEXT,
-  evidence_strength TEXT NOT NULL CHECK (evidence_strength IN ('strong', 'moderate', 'weak')),
+  evidence_strength TEXT NOT NULL CHECK (evidence_strength IN (${toSqlQuotedList(CLAIM_EVIDENCE_STRENGTH_VALUES)})),
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 )`;

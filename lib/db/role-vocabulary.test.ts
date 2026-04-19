@@ -8,6 +8,7 @@ import {
   migrationEventActorRoles,
   migrations,
 } from './schema';
+import { toSqlQuotedList } from './domain-constants';
 
 describe('event actor role vocabulary and migrations', () => {
   it('includes the default homicide role vocabulary terms', () => {
@@ -37,5 +38,9 @@ describe('event actor role vocabulary and migrations', () => {
     expect(migrationEventActorRoles).toContain(
       "CHECK (certainty IN ('known', 'suspected', 'unknown'))",
     );
+  });
+
+  it('escapes SQL list values safely', () => {
+    expect(toSqlQuotedList(["o'clock", 'safe'])).toBe("'o''clock', 'safe'");
   });
 });

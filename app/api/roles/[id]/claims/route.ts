@@ -3,8 +3,13 @@ import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { dbm, DatabaseManagerServer } from '../../../../../lib/db/server';
 import { claims, eventActorRoles, schemaFields } from '../../../../../lib/db/schema';
+import {
+  CLAIM_VALUE_TYPES,
+  CONFIDENCE_MAX,
+  CONFIDENCE_MIN,
+} from '../../../../../lib/db/domain-constants';
 
-const VALUE_TYPES = new Set(['string', 'boolean', 'date', 'integer']);
+const VALUE_TYPES = new Set(CLAIM_VALUE_TYPES);
 
 const ensureServerDatabase = async () => {
   if (!(dbm instanceof DatabaseManagerServer)) {
@@ -65,7 +70,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: 'predicateKey and valid valueType are required',
+          error: `predicateKey and valueType are required. valueType must be one of: ${CLAIM_VALUE_TYPES.join(', ')}`,
         },
         { status: 400 },
       );
@@ -73,10 +78,15 @@ export async function POST(
 
     if (
       confidence !== null &&
-      (!Number.isInteger(confidence) || confidence < 0 || confidence > 100)
+      (!Number.isInteger(confidence) ||
+        confidence < CONFIDENCE_MIN ||
+        confidence > CONFIDENCE_MAX)
     ) {
       return NextResponse.json(
-        { success: false, error: 'confidence must be an integer between 0 and 100' },
+        {
+          success: false,
+          error: `confidence must be an integer between ${CONFIDENCE_MIN} and ${CONFIDENCE_MAX}`,
+        },
         { status: 400 },
       );
     }

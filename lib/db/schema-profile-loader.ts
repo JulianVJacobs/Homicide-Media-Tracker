@@ -18,7 +18,7 @@ export type SchemaProfileDb = {
   select: (...args: unknown[]) => {
     from: (...fromArgs: unknown[]) => {
       where: (...whereArgs: unknown[]) => {
-        limit: (count: number) => Promise<Array<any>>;
+        limit: (count: number) => Promise<Array<unknown>>;
       };
     };
   };
@@ -51,7 +51,7 @@ export const loadSchemaProfile = async (
   profileId: string,
   entityLevel: string,
 ): Promise<LoadedSchemaProfile | null> => {
-  const requested = await db
+  const requested = (await db
     .select()
     .from(schemaProfiles)
     .where(
@@ -60,10 +60,15 @@ export const loadSchemaProfile = async (
         eq(schemaProfiles.entityLevel, entityLevel),
       ),
     )
-    .limit(1);
+    .limit(1)) as Array<{
+    id: string;
+    name: string;
+    entityLevel: string;
+    description: string | null;
+  }>;
   const profile = mapProfile(requested[0]);
 
-  const fallback = await db
+  const fallback = (await db
     .select()
     .from(schemaProfiles)
     .where(
@@ -72,7 +77,12 @@ export const loadSchemaProfile = async (
         eq(schemaProfiles.entityLevel, entityLevel),
       ),
     )
-    .limit(1);
+    .limit(1)) as Array<{
+    id: string;
+    name: string;
+    entityLevel: string;
+    description: string | null;
+  }>;
   const defaultProfile = mapProfile(fallback[0]);
 
   const resolved = profile ?? defaultProfile;
@@ -80,7 +90,7 @@ export const loadSchemaProfile = async (
     return null;
   }
 
-  const fields = await db
+  const fields = (await db
     .select({
       fieldKey: schemaFields.fieldKey,
       fieldType: schemaFields.fieldType,
@@ -88,7 +98,11 @@ export const loadSchemaProfile = async (
     })
     .from(schemaFields)
     .where(eq(schemaFields.profileId, resolved.id))
-    .limit(1000);
+    .limit(1000)) as Array<{
+    fieldKey: string;
+    fieldType: string;
+    fieldConfig: unknown;
+  }>;
 
   return {
     ...resolved,

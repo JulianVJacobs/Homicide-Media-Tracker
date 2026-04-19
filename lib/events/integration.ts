@@ -87,7 +87,8 @@ const pickCanonicalLabel = (
   if (trimmed && trimmed.length > 0) {
     return trimmed;
   }
-  return aliases[0] || 'Unknown';
+  const aliasLabel = aliases[0]?.trim();
+  return aliasLabel && aliasLabel.length > 0 ? aliasLabel : 'Unknown';
 };
 
 const buildVictimActor = (victim: Victim): EventActor => {
@@ -97,6 +98,7 @@ const buildVictimActor = (victim: Victim): EventActor => {
     actor_id: victim.id,
     canonical_label: canonicalLabel,
     // Keep canonical label as the single primary value and retain only distinct alternates.
+    // If canonical_label came from aliases[0], this intentionally removes that alias duplicate.
     aliases: filterCanonicalAlias(aliases, canonicalLabel),
     identifiers: [{ kind: 'legacy_record_id', value: victim.id }],
     legacy: {
@@ -117,6 +119,7 @@ const buildPerpetratorActor = (perpetrator: Perpetrator): EventActor => {
     actor_id: perpetrator.id,
     canonical_label: canonicalLabel,
     // Keep canonical label as the single primary value and retain only distinct alternates.
+    // If canonical_label came from aliases[0], this intentionally removes that alias duplicate.
     aliases: filterCanonicalAlias(aliases, canonicalLabel),
     identifiers: [{ kind: 'legacy_record_id', value: perpetrator.id }],
     legacy: {

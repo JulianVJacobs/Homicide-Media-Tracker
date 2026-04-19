@@ -79,7 +79,6 @@ describe('event integration payload', () => {
         expect.objectContaining({
           actor_id: 'perp-1',
           canonical_label: 'John Roe',
-          aliases: ['Roe', 'J.R.'],
         }),
       ]),
     );

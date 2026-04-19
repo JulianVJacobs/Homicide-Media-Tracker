@@ -84,6 +84,17 @@ export async function POST(
 
     const actorId = payload.actorId.trim();
     const roleTermId = Number(payload.roleTermId);
+    if (
+      payload.certainty !== undefined &&
+      payload.certainty !== null &&
+      typeof payload.certainty !== 'string'
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'certainty must be a string when provided' },
+        { status: 400 },
+      );
+    }
+
     const certainty =
       typeof payload.certainty === 'string' ? payload.certainty : 'unknown';
     const confidence =

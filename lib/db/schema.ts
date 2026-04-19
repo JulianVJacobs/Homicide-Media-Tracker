@@ -13,7 +13,7 @@ import {
   CLAIM_SUBJECT_TYPES,
   CLAIM_VALUE_TYPES,
   EVENT_ACTOR_ROLE_CERTAINTY_VALUES,
-  buildSqlInList,
+  buildEscapedSqlInList,
 } from './domain-constants';
 
 // interface DBTable {
@@ -352,7 +352,7 @@ export const eventActorRoles = sqliteTable('event_actor_role', {
 });
 
 const confidenceCheckConstraint = buildConfidenceCheck('confidence');
-const certaintyCheckConstraint = `CHECK (certainty IN (${buildSqlInList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)}))`;
+const certaintyCheckConstraint = `CHECK (certainty IN (${buildEscapedSqlInList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)}))`;
 
 export const migrationEventActorRoles = `CREATE TABLE IF NOT EXISTS event_actor_role (
   id TEXT PRIMARY KEY,
@@ -385,8 +385,8 @@ export const claims = sqliteTable('claim', {
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
-const claimSubjectTypeConstraint = `CHECK (subject_type IN (${buildSqlInList(CLAIM_SUBJECT_TYPES)}))`;
-const claimValueTypeConstraint = `CHECK (value_type IN (${buildSqlInList(CLAIM_VALUE_TYPES)}))`;
+const claimSubjectTypeConstraint = `CHECK (subject_type IN (${buildEscapedSqlInList(CLAIM_SUBJECT_TYPES)}))`;
+const claimValueTypeConstraint = `CHECK (value_type IN (${buildEscapedSqlInList(CLAIM_VALUE_TYPES)}))`;
 
 export const migrationClaims = `CREATE TABLE IF NOT EXISTS claim (
   id TEXT PRIMARY KEY,
@@ -420,7 +420,7 @@ export const claimEvidence = sqliteTable('claim_evidence', {
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
-const claimEvidenceStrengthConstraint = `CHECK (evidence_strength IN (${buildSqlInList(CLAIM_EVIDENCE_STRENGTH_VALUES)}))`;
+const claimEvidenceStrengthConstraint = `CHECK (evidence_strength IN (${buildEscapedSqlInList(CLAIM_EVIDENCE_STRENGTH_VALUES)}))`;
 
 export const migrationClaimEvidence = `CREATE TABLE IF NOT EXISTS claim_evidence (
   id TEXT PRIMARY KEY,

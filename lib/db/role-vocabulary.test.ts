@@ -8,7 +8,7 @@ import {
   migrationEventActorRoles,
   migrations,
 } from './schema';
-import { buildSqlInList } from './domain-constants';
+import { buildEscapedSqlInList } from './domain-constants';
 
 describe('event actor role vocabulary and migrations', () => {
   it('includes the default homicide role vocabulary terms', () => {
@@ -41,6 +41,6 @@ describe('event actor role vocabulary and migrations', () => {
   });
 
   it('escapes SQL list values safely', () => {
-    expect(buildSqlInList(["o'clock", 'safe'])).toBe("'o''clock', 'safe'");
+    expect(buildEscapedSqlInList(["o'clock", 'safe'])).toBe("'o''clock', 'safe'");
   });
 });

@@ -76,7 +76,9 @@ export async function POST(
         ? null
         : Number(payload.confidence);
     const schemaFieldId =
-      typeof payload.schemaFieldId === 'string' ? payload.schemaFieldId.trim() : '';
+      typeof payload.schemaFieldId === 'string'
+        ? payload.schemaFieldId.trim()
+        : null;
 
     if (!predicateKey || !VALUE_TYPES.has(valueType)) {
       return NextResponse.json(
@@ -145,7 +147,7 @@ export async function POST(
           typeof payload.assertedBy === 'string' ? payload.assertedBy.trim() : null,
         assertedAt:
           typeof payload.assertedAt === 'string' ? payload.assertedAt : now,
-        schemaFieldId: schemaFieldId || null,
+        schemaFieldId,
         createdAt: now,
         updatedAt: now,
       })

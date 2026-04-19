@@ -65,11 +65,15 @@ export const compareCasesByParticipantType = (
   if (participantTypeSort === 'none') {
     return 0;
   }
-  const aOrder = Math.min(
-    ...getCaseParticipantTypes(a).map((type) => participantTypeOrder[type]),
-  );
-  const bOrder = Math.min(
-    ...getCaseParticipantTypes(b).map((type) => participantTypeOrder[type]),
-  );
+  const aTypes = getCaseParticipantTypes(a);
+  const bTypes = getCaseParticipantTypes(b);
+  const aOrder =
+    aTypes.length > 0
+      ? Math.min(...aTypes.map((type) => participantTypeOrder[type]))
+      : participantTypeOrder.other;
+  const bOrder =
+    bTypes.length > 0
+      ? Math.min(...bTypes.map((type) => participantTypeOrder[type]))
+      : participantTypeOrder.other;
   return participantTypeSort === 'asc' ? aOrder - bOrder : bOrder - aOrder;
 };

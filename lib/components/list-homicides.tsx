@@ -342,6 +342,18 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
       compareCasesByParticipantType(a, b, participantTypeSort),
     );
   }, [cases, participantTypeFilter, participantTypeSort]);
+  const isParticipantTypeFilterActive = participantTypeFilter !== 'all';
+  const hasActiveFilters = Boolean(searchTerm) || isParticipantTypeFilterActive;
+  const listCountSummaryParts = [
+    `Showing ${visibleCases.length} of ${cases.length} loaded cases`,
+  ];
+  if (isParticipantTypeFilterActive) {
+    listCountSummaryParts.push('with participant type filter applied');
+  }
+  if (totalCases > cases.length) {
+    listCountSummaryParts.push(`(${totalCases} total cases)`);
+  }
+  const listCountSummary = listCountSummaryParts.join(' ');
 
   return (
     <Container fluid className="py-4">
@@ -421,9 +433,11 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                         }}
                       >
                         <option value="none">Default Order</option>
-                        <option value="asc">Type (Victim → Perpetrator → Other)</option>
+                        <option value="asc">
+                          Type (Victim to Perpetrator to Other)
+                        </option>
                         <option value="desc">
-                          Type (Other → Perpetrator → Victim)
+                          Type (Other to Perpetrator to Victim)
                         </option>
                       </Form.Select>
                     </Form.Group>
@@ -431,9 +445,7 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                 </Row>
               </Form>
               <div className="mt-3">
-                <small className="text-muted">
-                  Showing {visibleCases.length} of {totalCases} total cases
-                </small>
+                <small className="text-muted">{listCountSummary}</small>
               </div>
             </Card.Body>
           </Card>
@@ -469,7 +481,7 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
               ) : visibleCases.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-muted">
-                    {searchTerm || participantTypeFilter !== 'all'
+                    {hasActiveFilters
                       ? 'No cases found matching your filters.'
                       : 'No homicide cases recorded yet.'}
                   </p>

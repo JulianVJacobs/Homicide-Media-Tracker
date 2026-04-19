@@ -12,10 +12,15 @@ import {
   events,
   reportAnnotations,
   participants,
+  schemaConstraints,
   appConfig,
   syncQueue,
   migrations,
 } from './schema';
+import {
+  SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
+  SCHEMA_CONSTRAINT_REQUIRED_FIELDS,
+} from '../contracts/schema-constraints';
 
 type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
 
@@ -119,6 +124,7 @@ class DatabaseManagerServer {
         events,
         reportAnnotations,
         participants,
+        schemaConstraints,
         appConfig,
         syncQueue,
       },
@@ -136,6 +142,43 @@ class DatabaseManagerServer {
         }
       }
     }
+    await this.seedDefaultSchemaConstraints();
+  }
+
+  private async seedDefaultSchemaConstraints(): Promise<void> {
+    if (!this.localClient) {
+      return;
+    }
+
+    await this.localClient.execute({
+      sql: `INSERT OR IGNORE INTO schema_constraint (
+        profile_id,
+        type,
+        required_fields,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      args: [
+        SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
+        'victim',
+        JSON.stringify(SCHEMA_CONSTRAINT_REQUIRED_FIELDS.victim),
+      ],
+    });
+
+    await this.localClient.execute({
+      sql: `INSERT OR IGNORE INTO schema_constraint (
+        profile_id,
+        type,
+        required_fields,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      args: [
+        SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
+        'perpetrator',
+        JSON.stringify(SCHEMA_CONSTRAINT_REQUIRED_FIELDS.perpetrator),
+      ],
+    });
   }
 
   getLocal() {
@@ -159,6 +202,7 @@ class DatabaseManagerServer {
           events,
           reportAnnotations,
           participants,
+          schemaConstraints,
           appConfig,
           syncQueue,
         },

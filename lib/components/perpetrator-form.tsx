@@ -11,6 +11,7 @@ import {
   ListGroup,
 } from 'react-bootstrap';
 import type { NewPerpetrator } from '@/lib/db/schema';
+import { SCHEMA_CONSTRAINT_REQUIRED_FIELDS } from '@/lib/contracts/schema-constraints';
 
 interface PerpetratorFormProps {
   onSubmit: (data: PerpetratorFormValues) => void;
@@ -56,8 +57,21 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
-    // Validate required fields - only perpetrator name is required
-    const allRequiredFilled = currentPerpetrator.perpetratorName?.trim() !== '';
+    // Validate required fields
+    const allRequiredFilled = SCHEMA_CONSTRAINT_REQUIRED_FIELDS.perpetrator.every(
+      (field) => {
+        const value = currentPerpetrator[field as keyof PerpetratorFormValues];
+        if (value === null || value === undefined) return false;
+        if (
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean'
+        ) {
+          return value.toString().trim() !== '';
+        }
+        return false;
+      },
+    );
     setIsValid(allRequiredFilled);
   }, [currentPerpetrator]);
 

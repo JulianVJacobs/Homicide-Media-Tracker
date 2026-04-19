@@ -12,6 +12,7 @@ import {
 } from 'react-bootstrap';
 import type { NewVictim } from '@/lib/db/schema';
 import { townsByProvince } from '@/lib/data/towns-by-province';
+import { SCHEMA_CONSTRAINT_REQUIRED_FIELDS } from '@/lib/contracts/schema-constraints';
 
 interface VictimFormProps {
   onSubmit: (data: VictimFormValues) => void;
@@ -86,12 +87,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
 
   useEffect(() => {
     // Validate required fields
-    const required = [
-      'victimName',
-      'dateOfDeath',
-      'placeOfDeathProvince',
-      'genderOfVictim',
-    ];
+    const required = SCHEMA_CONSTRAINT_REQUIRED_FIELDS.victim;
     const allRequiredFilled = required.every((field) => {
       const value = currentVictim[field as keyof VictimFormValues];
       if (value === null || value === undefined) return false;

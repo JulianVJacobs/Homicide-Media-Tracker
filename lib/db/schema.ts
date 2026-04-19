@@ -3,6 +3,7 @@ import {
   sqliteTable,
   text,
   integer,
+  uniqueIndex,
   // type SQLiteTableWithColumns
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
@@ -165,6 +166,34 @@ export const migrationPerpetrators = `CREATE TABLE IF NOT EXISTS perpetrators (
 export type Perpetrator = typeof perpetrators.$inferSelect;
 export type NewPerpetrator = typeof perpetrators.$inferInsert;
 
+// --- Schema constraints ---
+export const schemaConstraints = sqliteTable('schema_constraint', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: text('profile_id').notNull(),
+  type: text('type').notNull(),
+  requiredFields: text('required_fields', { mode: 'json' }).notNull(),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  profileTypeUnique: uniqueIndex('schema_constraint_profile_type_unique').on(
+    table.profileId,
+    table.type,
+  ),
+}));
+
+export const migrationSchemaConstraints = `CREATE TABLE IF NOT EXISTS schema_constraint (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  profile_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  required_fields TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(profile_id, type)
+)`;
+
+export type SchemaConstraint = typeof schemaConstraints.$inferSelect;
+export type NewSchemaConstraint = typeof schemaConstraints.$inferInsert;
+
 // --- Users ---
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -323,6 +352,7 @@ export const migrationIndexes = [
   `CREATE INDEX IF NOT EXISTS idx_articles_sync_status ON articles(sync_status)`,
   `CREATE INDEX IF NOT EXISTS idx_report_annotations_source_article_id ON report_annotations(source_article_id)`,
   `CREATE INDEX IF NOT EXISTS idx_report_annotations_target_article_id ON report_annotations(target_article_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_schema_constraint_profile_type ON schema_constraint(profile_id, type)`,
 ];
 
 export const migrationVictimAliasColumn = `ALTER TABLE victims ADD COLUMN victim_alias TEXT`;
@@ -355,6 +385,7 @@ export const migrations = [
   migrationPerpetratorMergeAuditColumn,
   migrationVictimPromotionAuditColumn,
   migrationPerpetratorPromotionAuditColumn,
+  migrationSchemaConstraints,
   migrationUsers,
   migrationSyncQueue,
   migrationAppConfig,

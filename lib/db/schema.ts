@@ -13,7 +13,7 @@ import {
   CLAIM_SUBJECT_TYPES,
   CLAIM_VALUE_TYPES,
   EVENT_ACTOR_ROLE_CERTAINTY_VALUES,
-  toSqlQuotedList,
+  buildSqlInList,
 } from './domain-constants';
 
 // interface DBTable {
@@ -351,14 +351,17 @@ export const eventActorRoles = sqliteTable('event_actor_role', {
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
+const confidenceCheckConstraint = buildConfidenceCheck('confidence');
+const certaintyCheckConstraint = `CHECK (certainty IN (${buildSqlInList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)}))`;
+
 export const migrationEventActorRoles = `CREATE TABLE IF NOT EXISTS event_actor_role (
   id TEXT PRIMARY KEY,
   event_id TEXT NOT NULL REFERENCES annotation_event(id) ON DELETE CASCADE,
   actor_id TEXT NOT NULL REFERENCES actor(id) ON DELETE CASCADE,
   role_term_id INTEGER NOT NULL REFERENCES schema_vocab_term(id),
   role_scope TEXT,
-  confidence INTEGER ${buildConfidenceCheck('confidence')},
-  certainty TEXT DEFAULT 'unknown' CHECK (certainty IN (${toSqlQuotedList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)})),
+  confidence INTEGER ${confidenceCheckConstraint},
+  certainty TEXT DEFAULT 'unknown' ${certaintyCheckConstraint},
   is_primary_role INTEGER DEFAULT 0,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -382,14 +385,17 @@ export const claims = sqliteTable('claim', {
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
+const claimSubjectTypeConstraint = `CHECK (subject_type IN (${buildSqlInList(CLAIM_SUBJECT_TYPES)}))`;
+const claimValueTypeConstraint = `CHECK (value_type IN (${buildSqlInList(CLAIM_VALUE_TYPES)}))`;
+
 export const migrationClaims = `CREATE TABLE IF NOT EXISTS claim (
   id TEXT PRIMARY KEY,
-  subject_type TEXT NOT NULL CHECK (subject_type IN (${toSqlQuotedList(CLAIM_SUBJECT_TYPES)})),
+  subject_type TEXT NOT NULL ${claimSubjectTypeConstraint},
   subject_id TEXT NOT NULL,
   predicate_key TEXT NOT NULL,
   value_json TEXT,
-  value_type TEXT NOT NULL CHECK (value_type IN (${toSqlQuotedList(CLAIM_VALUE_TYPES)})),
-  confidence INTEGER ${buildConfidenceCheck('confidence')},
+  value_type TEXT NOT NULL ${claimValueTypeConstraint},
+  confidence INTEGER ${confidenceCheckConstraint},
   asserted_by TEXT,
   asserted_at TEXT DEFAULT CURRENT_TIMESTAMP,
   schema_field_id TEXT REFERENCES schema_field(id),
@@ -414,6 +420,8 @@ export const claimEvidence = sqliteTable('claim_evidence', {
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
 });
 
+const claimEvidenceStrengthConstraint = `CHECK (evidence_strength IN (${buildSqlInList(CLAIM_EVIDENCE_STRENGTH_VALUES)}))`;
+
 export const migrationClaimEvidence = `CREATE TABLE IF NOT EXISTS claim_evidence (
   id TEXT PRIMARY KEY,
   claim_id TEXT NOT NULL REFERENCES claim(id) ON DELETE CASCADE,
@@ -421,7 +429,7 @@ export const migrationClaimEvidence = `CREATE TABLE IF NOT EXISTS claim_evidence
   excerpt_text TEXT NOT NULL,
   selector_json TEXT,
   coder_note TEXT,
-  evidence_strength TEXT NOT NULL CHECK (evidence_strength IN (${toSqlQuotedList(CLAIM_EVIDENCE_STRENGTH_VALUES)})),
+  evidence_strength TEXT NOT NULL ${claimEvidenceStrengthConstraint},
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 )`;

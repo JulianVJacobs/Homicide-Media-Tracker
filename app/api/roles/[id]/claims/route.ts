@@ -55,10 +55,22 @@ export async function POST(
     const roleId = params.id;
     const payload = (await request.json()) as Record<string, unknown>;
 
-    const predicateKey =
-      typeof payload.predicateKey === 'string' ? payload.predicateKey.trim() : '';
-    const valueType =
-      typeof payload.valueType === 'string' ? payload.valueType.trim() : '';
+    if (typeof payload.predicateKey !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'predicateKey must be a string' },
+        { status: 400 },
+      );
+    }
+
+    if (typeof payload.valueType !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'valueType must be a string' },
+        { status: 400 },
+      );
+    }
+
+    const predicateKey = payload.predicateKey.trim();
+    const valueType = payload.valueType.trim();
     const confidence =
       payload.confidence === null || payload.confidence === undefined
         ? null

@@ -15,7 +15,7 @@ export const CLAIM_EVIDENCE_STRENGTH_VALUES = [
   'weak',
 ] as const;
 
-export const toSqlQuotedList = (values: readonly string[]): string =>
+export const buildSqlInList = (values: readonly string[]): string =>
   values
     .map((value) => `'${value.replaceAll("'", "''")}'`)
     .join(', ');

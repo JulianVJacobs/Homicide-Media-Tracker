@@ -1,11 +1,5 @@
 export const EVENT_ACTOR_ROLE_VOCAB_KEY = 'event_actor_role';
 
-export type RoleVocabularyTermSeed = {
-  termKey: string;
-  label: string;
-  description?: string;
-};
-
 export const DEFAULT_EVENT_ACTOR_ROLE_TERMS = [
   { termKey: 'victim', label: 'Victim' },
   { termKey: 'perpetrator', label: 'Perpetrator' },
@@ -18,4 +12,4 @@ export const DEFAULT_EVENT_ACTOR_ROLE_TERMS = [
   { termKey: 'police_officer', label: 'Police officer' },
   { termKey: 'security_guard', label: 'Security guard' },
   { termKey: 'unknown_person', label: 'Unknown person' },
-] as const satisfies readonly RoleVocabularyTermSeed[];
+] as const;

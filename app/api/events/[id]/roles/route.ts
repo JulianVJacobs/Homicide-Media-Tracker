@@ -75,8 +75,14 @@ export async function POST(
     const eventId = params.id;
     const payload = (await request.json()) as Record<string, unknown>;
 
-    const actorId =
-      typeof payload.actorId === 'string' ? payload.actorId.trim() : '';
+    if (typeof payload.actorId !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'actorId must be a string' },
+        { status: 400 },
+      );
+    }
+
+    const actorId = payload.actorId.trim();
     const roleTermId = Number(payload.roleTermId);
     const certainty =
       typeof payload.certainty === 'string' ? payload.certainty : 'unknown';

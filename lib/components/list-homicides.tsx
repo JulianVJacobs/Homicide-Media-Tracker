@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Container,
   Card,
@@ -16,6 +16,15 @@ import {
 import { toast } from 'react-toastify';
 import { getBaseUrl } from '../platform';
 import type { Article, Event, Victim, Perpetrator } from '../db/schema';
+import {
+  compareCasesByParticipantType,
+  getCaseParticipantTypes,
+  matchesParticipantTypeFilter,
+  participantTypeBadge,
+  participantTypeLabel,
+  type ParticipantTypeFilter,
+  type ParticipantTypeSort,
+} from './list-homicides.utils';
 
 interface ListHomicidesProps {
   onBack: () => void;
@@ -185,6 +194,10 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [participantTypeFilter, setParticipantTypeFilter] =
+    useState<ParticipantTypeFilter>('all');
+  const [participantTypeSort, setParticipantTypeSort] =
+    useState<ParticipantTypeSort>('none');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCases, setTotalCases] = useState(0);
@@ -318,6 +331,30 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
     setShowDetailModal(true);
   };
 
+  const visibleCases = useMemo(() => {
+    const filtered = cases.filter((case_) =>
+      matchesParticipantTypeFilter(case_, participantTypeFilter),
+    );
+    if (participantTypeSort === 'none') {
+      return filtered;
+    }
+    return [...filtered].sort((a, b) =>
+      compareCasesByParticipantType(a, b, participantTypeSort),
+    );
+  }, [cases, participantTypeFilter, participantTypeSort]);
+  const isParticipantTypeFilterActive = participantTypeFilter !== 'all';
+  const hasActiveFilters = Boolean(searchTerm) || isParticipantTypeFilterActive;
+  const listCountSummaryParts = [
+    `Showing ${visibleCases.length} of ${cases.length} loaded cases`,
+  ];
+  if (isParticipantTypeFilterActive) {
+    listCountSummaryParts.push('with participant type filter applied');
+  }
+  if (totalCases > cases.length) {
+    listCountSummaryParts.push(`(${totalCases} total cases)`);
+  }
+  const listCountSummary = listCountSummaryParts.join(' ');
+
   return (
     <Container fluid className="py-4">
       <Row>
@@ -333,7 +370,7 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
           <Card className="mb-4">
             <Card.Body>
               <Form onSubmit={handleSearch}>
-                <Row>
+                <Row className="g-2">
                   <Col md={8}>
                     <Form.Control
                       type="text"
@@ -359,12 +396,56 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                     </Button>
                   </Col>
                 </Row>
+                <Row className="g-2 mt-2">
+                  <Col md={6}>
+                    <Form.Group controlId="participantTypeFilter">
+                      <Form.Label className="small mb-1">
+                        Participant Type Filter
+                      </Form.Label>
+                      <Form.Select
+                        size="sm"
+                        value={participantTypeFilter}
+                        onChange={(event) => {
+                          setParticipantTypeFilter(
+                            event.target.value as ParticipantTypeFilter,
+                          );
+                        }}
+                      >
+                        <option value="all">All Types</option>
+                        <option value="victim">Victim</option>
+                        <option value="perpetrator">Perpetrator</option>
+                        <option value="other">Other</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group controlId="participantTypeSort">
+                      <Form.Label className="small mb-1">
+                        Participant Type Sort
+                      </Form.Label>
+                      <Form.Select
+                        size="sm"
+                        value={participantTypeSort}
+                        onChange={(event) => {
+                          setParticipantTypeSort(
+                            event.target.value as ParticipantTypeSort,
+                          );
+                        }}
+                      >
+                        <option value="none">Default Order</option>
+                        <option value="asc">
+                          Type (Victim to Perpetrator to Other)
+                        </option>
+                        <option value="desc">
+                          Type (Other to Perpetrator to Victim)
+                        </option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
               </Form>
               <div className="mt-3">
-                <small className="text-muted">
-                  Showing {Array.isArray(cases) ? cases.length : 0} of{' '}
-                  {totalCases} total cases
-                </small>
+                <small className="text-muted">{listCountSummary}</small>
               </div>
             </Card.Body>
           </Card>
@@ -397,11 +478,11 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                   </div>
                   <p className="mt-2">Loading cases...</p>
                 </div>
-              ) : cases.length === 0 ? (
+              ) : visibleCases.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-muted">
-                    {searchTerm
-                      ? 'No cases found matching your search.'
+                    {hasActiveFilters
+                      ? 'No cases found matching your filters.'
                       : 'No homicide cases recorded yet.'}
                   </p>
                 </div>
@@ -415,6 +496,7 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                           <th>Headline</th>
                           <th>Source</th>
                           <th>Victims</th>
+                          <th>Participant Types</th>
                           <th>Murder Type</th>
                           <th>Province</th>
                           <th>Sync Status</th>
@@ -422,8 +504,8 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {Array.isArray(cases) &&
-                          cases.map((case_) => (
+                        {Array.isArray(visibleCases) &&
+                          visibleCases.map((case_) => (
                             <tr key={case_.id}>
                               <td>
                                 {case_.articleData &&
@@ -466,6 +548,17 @@ const ListHomicides: React.FC<ListHomicidesProps> = ({ onBack }) => {
                                       {case_.victims[0]?.victimName}
                                     </div>
                                   )}
+                              </td>
+                              <td>
+                                {getCaseParticipantTypes(case_).map((type) => (
+                                  <Badge
+                                    key={`${case_.id}-${type}`}
+                                    bg={participantTypeBadge[type]}
+                                    className="me-1"
+                                  >
+                                    {participantTypeLabel[type]}
+                                  </Badge>
+                                ))}
                               </td>
                               <td>
                                 <Badge bg="secondary" className="small">

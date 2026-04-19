@@ -7,7 +7,8 @@ import { mergeAliasValues, splitAliases } from './utils';
 type ParticipantTable =
   | typeof schema.victims
   | typeof schema.perpetrators
-  | typeof schema.participants;
+  | typeof schema.participants
+  | typeof schema.actors;
 
 // Dynamic participant API route by role
 export async function GET(
@@ -26,11 +27,11 @@ export async function GET(
   const roleTableMap: Record<string, ParticipantTable> = {
     victim: schema.victims,
     perpetrator: schema.perpetrators,
-    participant: schema.participants,
+    participant: schema.actors,
   };
   const table: ParticipantTable = roleTableMap[role] || schema.participants;
   const participants = (await db.select().from(table)) as Array<
-    schema.Participant | schema.Victim | schema.Perpetrator
+    schema.Participant | schema.Victim | schema.Perpetrator | schema.Actor
   >;
   // Always include id and role in response
   return NextResponse.json({
@@ -61,11 +62,11 @@ export async function POST(
   const roleTableMap: Record<string, ParticipantTable> = {
     victim: schema.victims,
     perpetrator: schema.perpetrators,
-    participant: schema.participants,
+    participant: schema.actors,
   };
   const table: ParticipantTable = roleTableMap[role] || schema.participants;
   const result = (await db.insert(table).values(body).returning()) as Array<
-    schema.Participant | schema.Victim | schema.Perpetrator
+    schema.Participant | schema.Victim | schema.Perpetrator | schema.Actor
   >;
   // Handle both array and ResultSet cases
   const participantRecord = Array.isArray(result) ? result[0] : null;

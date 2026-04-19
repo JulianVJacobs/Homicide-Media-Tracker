@@ -83,6 +83,10 @@ describe('event integration payload', () => {
         }),
       ]),
     );
+    const perpetratorActor = payload.actors.find(
+      (actor) => actor.actor_id === 'perp-1',
+    );
+    expect(perpetratorActor?.aliases).toEqual(['Roe', 'J.R.']);
 
     expect(payload.event_actor_roles).toEqual(
       expect.arrayContaining([

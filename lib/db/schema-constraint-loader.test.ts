@@ -8,7 +8,13 @@ const createMockDb = (responses: ConstraintRow[][]) => {
     select: () => ({
       from: () => ({
         where: () => ({
-          limit: async () => queue.shift() ?? [],
+          limit: async () => {
+            const next = queue.shift();
+            if (!next) {
+              throw new Error('Unexpected extra schema constraint query');
+            }
+            return next;
+          },
         }),
       }),
     }),

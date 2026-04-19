@@ -61,7 +61,15 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
     const allRequiredFilled = SCHEMA_CONSTRAINT_REQUIRED_FIELDS.perpetrator.every(
       (field) => {
         const value = currentPerpetrator[field as keyof PerpetratorFormValues];
-        return typeof value === 'string' ? value.trim() !== '' : Boolean(value);
+        if (value === null || value === undefined) return false;
+        if (
+          typeof value === 'string' ||
+          typeof value === 'number' ||
+          typeof value === 'boolean'
+        ) {
+          return value.toString().trim() !== '';
+        }
+        return false;
       },
     );
     setIsValid(allRequiredFilled);

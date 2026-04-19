@@ -12,7 +12,19 @@ type LoadedSchemaConstraint = {
   requiredFields: string[];
 };
 
-const sanitiseRequiredFields = (
+export type SchemaConstraintDb = {
+  select: (...args: unknown[]) => {
+    from: (...fromArgs: unknown[]) => {
+      where: (...whereArgs: unknown[]) => {
+        limit: (
+          count: number,
+        ) => Promise<Array<{ profileId: string; requiredFields: unknown }>>;
+      };
+    };
+  };
+};
+
+const sanitizeRequiredFields = (
   fields: unknown,
   fallbackType: ConstraintType,
 ): string[] => {
@@ -20,9 +32,16 @@ const sanitiseRequiredFields = (
     return getDefaultRequiredFields(fallbackType);
   }
 
-  const normalised = fields.filter(
-    (field): field is string => typeof field === 'string' && field.trim() !== '',
-  );
+  const normalised = fields.reduce<string[]>((acc, field) => {
+    if (typeof field !== 'string') {
+      return acc;
+    }
+    const trimmed = field.trim();
+    if (trimmed) {
+      acc.push(trimmed);
+    }
+    return acc;
+  }, []);
 
   if (normalised.length === 0) {
     return getDefaultRequiredFields(fallbackType);
@@ -42,7 +61,7 @@ const mapConstraint = (
   return {
     profileId: constraint.profileId,
     type: fallbackType,
-    requiredFields: sanitiseRequiredFields(
+    requiredFields: sanitizeRequiredFields(
       constraint.requiredFields,
       fallbackType,
     ),
@@ -50,17 +69,7 @@ const mapConstraint = (
 };
 
 export const loadSchemaConstraints = async (
-  db: {
-    select: () => {
-      from: (table: typeof schemaConstraints) => {
-        where: (condition: unknown) => {
-          limit: (
-            count: number,
-          ) => Promise<Array<{ profileId: string; requiredFields: unknown }>>;
-        };
-      };
-    };
-  },
+  db: SchemaConstraintDb,
   profileId: string,
   type: ConstraintType,
 ): Promise<LoadedSchemaConstraint> => {

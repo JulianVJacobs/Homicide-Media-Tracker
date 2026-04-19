@@ -3,13 +3,10 @@ import {
   sqliteTable,
   text,
   integer,
+  uniqueIndex,
   // type SQLiteTableWithColumns
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
-import {
-  SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
-  SCHEMA_CONSTRAINT_REQUIRED_FIELDS,
-} from '../contracts/schema-constraints';
 
 // interface DBTable {
 //   table: SQLiteTable<T>,
@@ -177,7 +174,12 @@ export const schemaConstraints = sqliteTable('schema_constraint', {
   requiredFields: text('required_fields', { mode: 'json' }).notNull(),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => ({
+  profileTypeUnique: uniqueIndex('schema_constraint_profile_type_unique').on(
+    table.profileId,
+    table.type,
+  ),
+}));
 
 export const migrationSchemaConstraints = `CREATE TABLE IF NOT EXISTS schema_constraint (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -188,20 +190,6 @@ export const migrationSchemaConstraints = `CREATE TABLE IF NOT EXISTS schema_con
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(profile_id, type)
 )`;
-
-export const migrationSeedDefaultSchemaConstraints = `INSERT OR IGNORE INTO schema_constraint (
-  profile_id,
-  type,
-  required_fields,
-  created_at,
-  updated_at
-) VALUES
-  ('${SCHEMA_CONSTRAINT_PROFILE_DEFAULT}', 'victim', '${JSON.stringify(
-    SCHEMA_CONSTRAINT_REQUIRED_FIELDS.victim,
-  )}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('${SCHEMA_CONSTRAINT_PROFILE_DEFAULT}', 'perpetrator', '${JSON.stringify(
-    SCHEMA_CONSTRAINT_REQUIRED_FIELDS.perpetrator,
-  )}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`;
 
 export type SchemaConstraint = typeof schemaConstraints.$inferSelect;
 export type NewSchemaConstraint = typeof schemaConstraints.$inferInsert;
@@ -398,7 +386,6 @@ export const migrations = [
   migrationVictimPromotionAuditColumn,
   migrationPerpetratorPromotionAuditColumn,
   migrationSchemaConstraints,
-  migrationSeedDefaultSchemaConstraints,
   migrationUsers,
   migrationSyncQueue,
   migrationAppConfig,

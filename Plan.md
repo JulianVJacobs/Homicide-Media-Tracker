@@ -62,3 +62,28 @@
 ### Risks / blockers
 - If lane implementations use different field keys for `participantType`, contract drift may require alignment patch.
 - If `participant` (Other) persistence shape diverges from shared-fields-only assumption, contract revision will be needed.
+
+## Phase 3 Lima — Event-Actor-Role Integration (In Progress)
+
+### Coordination notes
+- India/Juliet/Kilo coordination is active via CI lane monitoring (`copilot/featindia-event-schema`, `copilot/featlima-integration` currently running).
+- Contract alignment locked in this branch through `GET /api/events/contract` with frozen payload keys for event, actor, event_actor_role, and claim.
+- No participant/victim/perpetrator merge plumbing changes introduced in this integration slice.
+
+### Completed in this integration branch
+- Published Phase 3 contract freeze endpoint: `GET /api/events/contract`.
+- Added integrated event read endpoint: `GET /api/events/:id`.
+- Added backward-compatible actor projection from legacy `victims` and `perpetrators` records.
+- Added default role projection (`victim` / `perpetrator`) with explicit detail-payload override support.
+- Added claim projection support from event details payload.
+- Added focused tests for contract freeze and integration payload mapping.
+
+### Verification status
+- ✅ `npm run lint`
+- ✅ `npm run test`
+- ⚠️ `npm run build` blocked in sandbox by external font fetch (`fonts.googleapis.com`) and an existing unrelated module-resolution error in `app/api/participants/form-contract/route.ts`.
+
+### Remaining before final Phase 3 closeout
+- Validate final India/Juliet/Kilo merged payloads against this frozen contract shape.
+- Execute post-merge end-to-end create event → add actors → assign roles → add claims flow in integrated lane.
+- Mark Phase 3 complete after merged-lane verification.

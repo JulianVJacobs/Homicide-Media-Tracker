@@ -102,9 +102,16 @@ export async function POST(
         ? null
         : Number(payload.confidence);
 
-    if (!actorId || !Number.isInteger(roleTermId)) {
+    if (!actorId) {
       return NextResponse.json(
-        { success: false, error: 'actorId and integer roleTermId are required' },
+        { success: false, error: 'actorId is required' },
+        { status: 400 },
+      );
+    }
+
+    if (!Number.isInteger(roleTermId)) {
+      return NextResponse.json(
+        { success: false, error: 'roleTermId must be an integer' },
         { status: 400 },
       );
     }

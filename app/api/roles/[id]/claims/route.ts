@@ -80,11 +80,21 @@ export async function POST(
         ? payload.schemaFieldId.trim()
         : null;
 
-    if (!predicateKey || !VALUE_TYPES.has(valueType)) {
+    if (!predicateKey) {
       return NextResponse.json(
         {
           success: false,
-          error: `predicateKey and valueType are required. valueType must be one of: ${CLAIM_VALUE_TYPES.join(', ')}`,
+          error: 'predicateKey is required',
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!VALUE_TYPES.has(valueType)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `valueType must be one of: ${CLAIM_VALUE_TYPES.join(', ')}`,
         },
         { status: 400 },
       );

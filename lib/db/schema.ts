@@ -352,7 +352,7 @@ export const eventActorRoles = sqliteTable('event_actor_role', {
 });
 
 const confidenceCheckConstraint = buildConfidenceCheck('confidence');
-const certaintyCheckConstraint = `CHECK (certainty IN (${buildEscapedSqlInList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)}))`;
+const eventActorRoleCertaintyCheckConstraint = `CHECK (certainty IN (${buildEscapedSqlInList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)}))`;
 
 export const migrationEventActorRoles = `CREATE TABLE IF NOT EXISTS event_actor_role (
   id TEXT PRIMARY KEY,
@@ -361,7 +361,7 @@ export const migrationEventActorRoles = `CREATE TABLE IF NOT EXISTS event_actor_
   role_term_id INTEGER NOT NULL REFERENCES schema_vocab_term(id),
   role_scope TEXT,
   confidence INTEGER ${confidenceCheckConstraint},
-  certainty TEXT DEFAULT 'unknown' ${certaintyCheckConstraint},
+  certainty TEXT DEFAULT 'unknown' ${eventActorRoleCertaintyCheckConstraint},
   is_primary_role INTEGER DEFAULT 0,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP

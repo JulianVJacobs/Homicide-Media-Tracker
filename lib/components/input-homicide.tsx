@@ -14,8 +14,11 @@ import { toast } from 'react-toastify';
 import { getBaseUrl } from '../platform';
 import { v4 as uuidv4 } from 'uuid';
 import ArticleForm, { ArticleFormValues } from './article-form';
-import VictimForm, { VictimFormValues } from './victim-form';
-import PerpetratorForm, { PerpetratorFormValues } from './perpetrator-form';
+import ParticipantForm, {
+  OtherParticipantFormValues,
+} from './participant-form';
+import { VictimFormValues } from './victim-form';
+import { PerpetratorFormValues } from './perpetrator-form';
 
 interface InputHomicideProps {
   onBack: () => void;
@@ -27,6 +30,9 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
   );
   const [victims, setVictims] = useState<VictimFormValues[]>([]);
   const [perpetrators, setPerpetrators] = useState<PerpetratorFormValues[]>([]);
+  const [otherParticipants, setOtherParticipants] = useState<
+    OtherParticipantFormValues[]
+  >([]);
   // Defensive: never set to undefined/null
   const [typeOfMurder, setTypeOfMurder] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,10 +41,9 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
   // Calculate progress
   const progress = () => {
     let completed = 0;
-    if (articleData) completed += 25;
-    if (victims.length > 0) completed += 25;
-    if (perpetrators.length > 0) completed += 25;
-    if (typeOfMurder) completed += 25;
+    if (articleData) completed += 34;
+    if (victims.length > 0 && perpetrators.length > 0) completed += 33;
+    if (typeOfMurder) completed += 33;
     return completed;
   };
 
@@ -68,6 +73,16 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
     toast.info('All perpetrators cleared');
   };
 
+  const handleSubmitOtherParticipant = (data: OtherParticipantFormValues) => {
+    setOtherParticipants((prev = []) => [...prev, data]);
+    toast.success('Other participant added successfully');
+  };
+
+  const handleClearOtherParticipants = () => {
+    setOtherParticipants([]);
+    toast.info('All other participants cleared');
+  };
+
   const handleSubmitForm = async () => {
     if (!articleData) {
       toast.error('Please complete the article information');
@@ -83,7 +98,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
 
     if (perpetrators.length === 0) {
       toast.error('Please add at least one perpetrator');
-      setCurrentStep(3);
+      setCurrentStep(2);
       return;
     }
 
@@ -152,6 +167,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
           ...articleData,
           victims,
           perpetrators,
+          otherParticipants,
           typeOfMurder,
           createdAt: new Date().toISOString(),
         },
@@ -166,6 +182,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
       setArticleData(null);
       setVictims([]);
       setPerpetrators([]);
+      setOtherParticipants([]);
       setTypeOfMurder('');
       setCurrentStep(1);
     } catch (error) {
@@ -220,16 +237,14 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                   ✓ Article Info {articleData ? '(Complete)' : '(Incomplete)'}
                 </small>
                 <small
-                  className={victims.length > 0 ? 'text-success' : 'text-muted'}
-                >
-                  ✓ Victims ({victims.length})
-                </small>
-                <small
                   className={
-                    perpetrators.length > 0 ? 'text-success' : 'text-muted'
+                    victims.length > 0 && perpetrators.length > 0
+                      ? 'text-success'
+                      : 'text-muted'
                   }
                 >
-                  ✓ Perpetrators ({perpetrators.length})
+                  ✓ Participants (V:{victims.length} / P:{perpetrators.length}
+                  {' / '}O:{otherParticipants.length})
                 </small>
                 <small className={typeOfMurder ? 'text-success' : 'text-muted'}>
                   ✓ Murder Type {typeOfMurder ? '(Complete)' : '(Incomplete)'}
@@ -255,23 +270,17 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                   onClick={() => setCurrentStep(2)}
                   disabled={!articleData}
                 >
-                  2. Victims
+                  2. Participants
                 </button>
                 <button
                   type="button"
                   className={`btn ${currentStep === 3 ? 'btn-primary' : 'btn-outline-primary'}`}
                   onClick={() => setCurrentStep(3)}
-                  disabled={!articleData}
+                  disabled={
+                    !articleData || victims.length === 0 || perpetrators.length === 0
+                  }
                 >
-                  3. Perpetrators
-                </button>
-                <button
-                  type="button"
-                  className={`btn ${currentStep === 4 ? 'btn-primary' : 'btn-outline-primary'}`}
-                  onClick={() => setCurrentStep(4)}
-                  disabled={!articleData || victims.length === 0}
-                >
-                  4. Final Details
+                  3. Final Details
                 </button>
               </div>
             </Card.Body>
@@ -285,26 +294,23 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
             />
           )}
 
-          {/* Step 2: Victim Form */}
+          {/* Step 2: Participant Form */}
           {currentStep === 2 && (
-            <VictimForm
-              onSubmit={handleSubmitVictimForm}
+            <ParticipantForm
+              onSubmitVictim={handleSubmitVictimForm}
+              onSubmitPerpetrator={handleSubmitPerpetratorForm}
+              onSubmitOther={handleSubmitOtherParticipant}
               victims={victims}
-              onClearVictims={handleClearVictims}
-            />
-          )}
-
-          {/* Step 3: Perpetrator Form */}
-          {currentStep === 3 && (
-            <PerpetratorForm
-              onSubmit={handleSubmitPerpetratorForm}
               perpetrators={perpetrators}
+              otherParticipants={otherParticipants}
+              onClearVictims={handleClearVictims}
               onClearPerpetrators={handleClearPerpetrators}
+              onClearOtherParticipants={handleClearOtherParticipants}
             />
           )}
 
-          {/* Step 4: Final Details and Submit */}
-          {currentStep === 4 && (
+          {/* Step 3: Final Details and Submit */}
+          {currentStep === 3 && (
             <Card className="mb-4">
               <Card.Header>
                 <h4 className="mb-0">Final Details & Submit</h4>
@@ -362,9 +368,9 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                 <div className="d-flex justify-content-end gap-2 mt-4">
                   <Button
                     variant="outline-primary"
-                    onClick={() => setCurrentStep(3)}
+                    onClick={() => setCurrentStep(2)}
                   >
-                    Back to Perpetrators
+                    Back to Participants
                   </Button>
                   <Button
                     variant="primary"
@@ -380,7 +386,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
           )}
 
           {/* Navigation buttons for active steps */}
-          {currentStep < 4 && (
+          {currentStep < 3 && (
             <Card>
               <Card.Body>
                 <div className="d-flex justify-content-between">
@@ -402,11 +408,16 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                         toast.error('Please add at least one victim first');
                         return;
                       }
-                      setCurrentStep(Math.min(4, currentStep + 1));
+                      if (currentStep === 2 && perpetrators.length === 0) {
+                        toast.error('Please add at least one perpetrator first');
+                        return;
+                      }
+                      setCurrentStep(Math.min(3, currentStep + 1));
                     }}
                     disabled={
                       (currentStep === 1 && !articleData) ||
-                      (currentStep === 2 && victims.length === 0)
+                      (currentStep === 2 &&
+                        (victims.length === 0 || perpetrators.length === 0))
                     }
                   >
                     Next Step

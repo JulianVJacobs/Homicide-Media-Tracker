@@ -116,6 +116,19 @@ Contract version: `2026-04-18`
 ### Alias promotion result fields
 
 - `participantId`
+
+---
+
+## Participant Form Contract
+
+Contract version: `2026-04-19`
+
+- Contract source: `lib/contracts/participant-form.ts`
+- Published endpoint: `GET /api/participants/form-contract`
+- Supported participant types:
+  - `victim`
+  - `perpetrator`
+  - `other`
 - `role`
 - `newPrimaryName`
 - `demotedPrimaryAlias`

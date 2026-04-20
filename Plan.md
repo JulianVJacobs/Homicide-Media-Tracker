@@ -162,7 +162,7 @@
   - `[2.2.0][04-role-attrs-outlet]` → PR #24 (draft/open, blocked)
   - `[2.2.0][05-regression-verification]` → PR #27 (draft/open, blocked)
 - Global blockers:
-  - Worker PRs currently target `origin/main` instead of `phase/2.2.0`.
+  - Worker PRs currently target `main` instead of `phase/2.2.0`.
   - Worker branches are not using canonical `lane/2.2.0/*` names.
   - No worker lane currently has implementation diffs or completed lane-level verification evidence.
   - Integrated verification is blocked until lanes 01-05 are merged to `phase/2.2.0`.

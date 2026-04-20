@@ -38,7 +38,7 @@ lanes:
       - merge policy enforcement
       - final integration PR to origin/main
     blockers:
-      - origin/phase/2.2.0 branch not found; worker PRs are currently opened against origin/main.
+      - phase/2.2.0 branch not found; worker PRs are currently opened against main.
       - Integrated verification is blocked until lanes 01-05 are merged into phase/2.2.0.
     verification:
       - manifest published

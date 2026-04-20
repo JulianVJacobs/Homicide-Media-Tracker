@@ -54,8 +54,6 @@
         "Postman.postman-for-vscode",
         "ms-kubernetes-tools.vscode-kubernetes-tools",
         "bradlc.vscode-tailwindcss",
-        "VisualStudioExptTeam.vscodeintellicode",
-        "VisualStudioExptTeam.intellicode-api-usage-examples",
         "mongodb.mongodb-vscode",
         "ms-azuretools.vscode-docker",
         "donjayamanne.githistory",

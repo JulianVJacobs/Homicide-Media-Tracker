@@ -27,11 +27,15 @@ Establish a solid participant/actor model with alias support, merge workflows, a
     - [x] Allow promoting an alias to primary name
     - [x] Preserve old primary name as alias after promotion
     - [x] Update duplicate matching to use primary + aliases
-- [x] **1.2.x**
+- [ ] **1.2.x**
   - [x] Combine victim and perpetrator steps into "participants" step
     - [x] Add dropdown to switch between profiles
     - [x] Refactor forms for participant type (type-agnostic form + type selector)
     - [x] Make profiles fully configurable via schema_profile + schema_constraint
+  - [ ] Complete fleet phase `1.2.1` for participant form integration and verification
+    - [ ] Run `[1.2.1][00-conductor]` over the approved phase branch
+    - [ ] Merge `[1.2.1][01-form-submission]` and `[1.2.1][02-list-rendering]` into `phase/1.2.1`
+    - [ ] Finish `[1.2.1][03-compat-verification]` and open the final PR to `origin/main`
 - [ ] **1.3.x** (optional polish, defer for Phase 3 if time-critical)
   - [ ] Perpetrator "unknown" input as checkbox
   - [ ] Victim-perpetrator relationship "other" option with custom text
@@ -41,6 +45,18 @@ Establish a solid participant/actor model with alias support, merge workflows, a
 ---
 
 ### **Phase 2: Event-Actor-Role Generalization & Configurable Profiles (2.x.x releases)**
+
+### Active Fleet Execution Proposal
+
+- Proposed planned version: `1.2.1`
+- Approval state: pending user approval before fleet launch
+- Phase branch: `phase/1.2.1`
+- Merge policy: eager worker merge into `phase/1.2.1` after verification, then one final PR to `origin/main`
+- Parallel-safe lanes:
+  - `[1.2.1][00-conductor] Integrate phase 1.2.1 fleet`
+  - `[1.2.1][01-form-submission] Wire unified participant form submission to validation endpoints`
+  - `[1.2.1][02-list-rendering] Render participant type labels and visibility state in list UI`
+  - `[1.2.1][03-compat-verification] Verify legacy loading and end-to-end participant type switching`
 
 Generalize the participant model into a core Event–Actor–Role ontology. Introduce annotation events with configurable profiles, role-based claims, and prepare for AtoM plugin integration.
 

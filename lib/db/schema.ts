@@ -166,10 +166,78 @@ export const migrationPerpetrators = `CREATE TABLE IF NOT EXISTS perpetrators (
 export type Perpetrator = typeof perpetrators.$inferSelect;
 export type NewPerpetrator = typeof perpetrators.$inferInsert;
 
+// --- Schema profiles ---
+export const schemaProfiles = sqliteTable('schema_profile', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  entityLevel: text('entity_level').notNull(),
+  description: text('description'),
+  createdBy: text('created_by'),
+  updatedBy: text('updated_by'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const migrationSchemaProfiles = `CREATE TABLE IF NOT EXISTS schema_profile (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  entity_level TEXT NOT NULL,
+  description TEXT,
+  created_by TEXT,
+  updated_by TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type SchemaProfile = typeof schemaProfiles.$inferSelect;
+export type NewSchemaProfile = typeof schemaProfiles.$inferInsert;
+
+// --- Schema fields ---
+export const schemaFields = sqliteTable('schema_field', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: text('profile_id')
+    .notNull()
+    .references(() => schemaProfiles.id),
+  entityType: text('entity_type').notNull(),
+  fieldKey: text('field_key').notNull(),
+  fieldType: text('field_type').notNull(),
+  fieldConfig: text('field_config', { mode: 'json' }),
+  createdBy: text('created_by'),
+  updatedBy: text('updated_by'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  profileEntityFieldUnique: uniqueIndex('schema_field_profile_entity_field_unique').on(
+    table.profileId,
+    table.entityType,
+    table.fieldKey,
+  ),
+}));
+
+export const migrationSchemaFields = `CREATE TABLE IF NOT EXISTS schema_field (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  profile_id TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  field_key TEXT NOT NULL,
+  field_type TEXT NOT NULL,
+  field_config TEXT,
+  created_by TEXT,
+  updated_by TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(profile_id, entity_type, field_key),
+  FOREIGN KEY(profile_id) REFERENCES schema_profile(id)
+)`;
+
+export type SchemaField = typeof schemaFields.$inferSelect;
+export type NewSchemaField = typeof schemaFields.$inferInsert;
+
 // --- Schema constraints ---
 export const schemaConstraints = sqliteTable('schema_constraint', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  profileId: text('profile_id').notNull(),
+  profileId: text('profile_id')
+    .notNull()
+    .references(() => schemaProfiles.id),
   type: text('type').notNull(),
   requiredFields: text('required_fields', { mode: 'json' }).notNull(),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
@@ -188,11 +256,62 @@ export const migrationSchemaConstraints = `CREATE TABLE IF NOT EXISTS schema_con
   required_fields TEXT NOT NULL,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(profile_id, type)
+  UNIQUE(profile_id, type),
+  FOREIGN KEY(profile_id) REFERENCES schema_profile(id)
 )`;
 
 export type SchemaConstraint = typeof schemaConstraints.$inferSelect;
 export type NewSchemaConstraint = typeof schemaConstraints.$inferInsert;
+
+// --- Annotation events ---
+export const annotationEvents = sqliteTable('annotation_event', {
+  id: text('id').primaryKey(),
+  profileId: text('profile_id')
+    .notNull()
+    .references(() => schemaProfiles.id),
+  eventType: text('event_type'),
+  datetimeMode: text('datetime_mode').notNull(),
+  eventDate: text('event_date'),
+  startDate: text('start_date'),
+  endDate: text('end_date'),
+  locationPoint: text('location_point', { mode: 'json' }),
+  locationFallback: text('location_fallback'),
+  locationType: text('location_type', { mode: 'json' }),
+  notes: text('notes'),
+  confidence: integer('confidence'),
+  createdBy: text('created_by'),
+  updatedBy: text('updated_by'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const migrationAnnotationEvents = `CREATE TABLE IF NOT EXISTS annotation_event (
+  id TEXT PRIMARY KEY,
+  profile_id TEXT NOT NULL,
+  event_type TEXT,
+  datetime_mode TEXT NOT NULL CHECK(datetime_mode IN ('EXACT', 'RANGE', 'UNKNOWN')),
+  event_date TEXT,
+  start_date TEXT,
+  end_date TEXT,
+  location_point TEXT,
+  location_fallback TEXT,
+  location_type TEXT,
+  notes TEXT,
+  confidence INTEGER CHECK(confidence IS NULL OR (confidence >= 0 AND confidence <= 100)),
+  created_by TEXT,
+  updated_by TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  CHECK(
+    (datetime_mode = 'EXACT' AND event_date IS NOT NULL AND start_date IS NULL AND end_date IS NULL)
+    OR (datetime_mode = 'RANGE' AND event_date IS NULL AND start_date IS NOT NULL AND end_date IS NOT NULL AND start_date <= end_date)
+    OR (datetime_mode = 'UNKNOWN' AND event_date IS NULL AND start_date IS NULL AND end_date IS NULL)
+  ),
+  FOREIGN KEY(profile_id) REFERENCES schema_profile(id)
+)`;
+
+export type AnnotationEvent = typeof annotationEvents.$inferSelect;
+export type NewAnnotationEvent = typeof annotationEvents.$inferInsert;
 
 // --- Users ---
 export const users = sqliteTable('users', {
@@ -353,6 +472,8 @@ export const migrationIndexes = [
   `CREATE INDEX IF NOT EXISTS idx_report_annotations_source_article_id ON report_annotations(source_article_id)`,
   `CREATE INDEX IF NOT EXISTS idx_report_annotations_target_article_id ON report_annotations(target_article_id)`,
   `CREATE INDEX IF NOT EXISTS idx_schema_constraint_profile_type ON schema_constraint(profile_id, type)`,
+  `CREATE INDEX IF NOT EXISTS idx_schema_field_profile_entity ON schema_field(profile_id, entity_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_annotation_event_profile_id ON annotation_event(profile_id)`,
 ];
 
 export const migrationVictimAliasColumn = `ALTER TABLE victims ADD COLUMN victim_alias TEXT`;
@@ -385,7 +506,10 @@ export const migrations = [
   migrationPerpetratorMergeAuditColumn,
   migrationVictimPromotionAuditColumn,
   migrationPerpetratorPromotionAuditColumn,
+  migrationSchemaProfiles,
+  migrationSchemaFields,
   migrationSchemaConstraints,
+  migrationAnnotationEvents,
   migrationUsers,
   migrationSyncQueue,
   migrationAppConfig,

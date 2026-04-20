@@ -8,17 +8,17 @@ This single README combines development guidance from the project and an older b
 
 ## Roadmap
 
-**Current version: 1.1.0**
+**Current version: 1.1.0 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**
 
-- [ ] **1.x.x**
-  - [x] **1.2.x**
-    - [x] Make PWA offline-first
-      - [x] Implement service worker for asset caching
-      - [x] Use IndexedDB for storage
-  - [ ] Combine victim and perpetrator steps into "participants" step
-    - [ ] Add dropdown to switch between profiles
-    - [ ] Refactor forms for participant type
-    - [ ] Make profiles fully configurable
+### **Foundation: Participant Management (1.x.x releases)**
+
+Establish a solid participant/actor model with alias support, merge workflows, and configurable profiles as the foundation for Event-Actor-Role generalization.
+
+- [x] **1.0.x**
+  - [x] Make PWA offline-first
+    - [x] Implement service worker for asset caching
+    - [x] Use IndexedDB for storage
+- [x] **1.1.x**
   - [x] Add "alias" field to every participant
     - [x] Update schema to include alias
     - [x] Add input field to participant form
@@ -27,65 +27,122 @@ This single README combines development guidance from the project and an older b
     - [x] Allow promoting an alias to primary name
     - [x] Preserve old primary name as alias after promotion
     - [x] Update duplicate matching to use primary + aliases
+- [ ] **1.2.x**
+  - [x] Combine victim and perpetrator steps into "participants" step
+    - [x] Add dropdown to switch between profiles
+    - [x] Refactor forms for participant type (type-agnostic form + type selector)
+    - [x] Make profiles fully configurable via schema_profile + schema_constraint
+  - [ ] Complete fleet phase `1.2.1` for participant form integration and verification
+    - [ ] Run `[1.2.1][00-conductor]` over the approved phase branch
+    - [ ] Merge `[1.2.1][01-form-submission]` and `[1.2.1][02-list-rendering]` into `phase/1.2.1`
+    - [ ] Finish `[1.2.1][03-compat-verification]` and open the final PR to `origin/main`
+- [ ] **1.3.x** (optional polish, defer for Phase 3 if time-critical)
   - [ ] Perpetrator "unknown" input as checkbox
-    - [ ] Replace text input with checkbox
-    - [ ] Update validation logic
-  - [ ] Victim-perpetrator relationship "other" option
-    - [ ] Add text input for custom relationships
-    - [ ] Allow saving custom options for reuse
+  - [ ] Victim-perpetrator relationship "other" option with custom text
   - [ ] Perpetrator sentencing: support multiple sentences
-    - [ ] Update schema for multiple sentences
-    - [ ] Refactor UI for ordinal + multiple life sentences
-  - [ ] Add final review step
-    - [ ] Summarise all entries before submission
-    - [ ] Add review modal to UI
-  - [ ] Add "type of murder" field to perpetrator form
-    - [ ] Add checklist input
-    - [ ] Support "other" option
-  - [ ] Change "type of murder" from dropdown to checklist
-    - [ ] Refactor UI for multiple selections
-    - [ ] Add custom "other" option
-  - [x] Make participant entries editable after "add"
-    - [x] Add edit button to participant list
-    - [x] Implement edit modal
-  - [ ] Show detailed summary of participants after "add"
-    - [ ] Display summary table
-    - [ ] Highlight incomplete/invalid entries
-- [ ] **2.x.x**
-  - [ ] Generalise schema to event reporting model
-    - [ ] Design new core entities: Event, Report, Participant, Relationship
-    - [ ] Migrate existing homicide data to new schema
-    - [ ] Preserve homicide-specific schema as preloaded configuration
-  - [ ] Support reports about any class of event
-    - [ ] Refactor event creation logic
-    - [ ] Add event type selector
-  - [ ] Events will have participants, and participants can relate to other participants
-    - [ ] Implement flexible participant relationships
-    - [ ] Update UI for relationship mapping
-  - [ ] Template/profile system for participant types
-    - [ ] Define types (e.g., "victim", "perpetrator") and custom fields
-    - [ ] Implement dynamic form generation
-  - [ ] Dynamically generated forms based on profile and fields
-    - [ ] Refactor form logic for dynamic fields
-    - [ ] Add profile selection UI
-  - [ ] Implement template/profile system and dynamic form logic
-    - [ ] Enable flexible data entry
-    - [ ] Test with multiple event types
-  - [ ] Ensure backward compatibility and load preloaded configuration on setup
-    - [ ] Test migration for existing users
-    - [ ] Add fallback logic for legacy data
-- [ ] **x.x.x**
-  - [ ] Report queue
-    - [ ] Implement queue logic for backlog reports
-    - [ ] Add UI for processing queued reports
-  - [ ] Draft support
-    - [ ] Allow saving articles/participants as drafts
-    - [ ] Add review and completion options
-  - [ ] Detailed Sync Status Visualization
-    - [ ] Implement circular progress tracking component
-    - [ ] Animate fill for in-progress syncs
-    - [ ] Show green check mark if all records are synced
-    - [ ] Show red cross if any record fails
+  - [ ] Add final review step before submission
+
+---
+
+### **Phase 2: Event-Actor-Role Generalization & Configurable Profiles (2.x.x releases)**
+
+### Active Fleet Execution Proposal
+
+- Proposed planned version: `1.2.1`
+- Approval state: pending user approval before fleet launch
+- Phase branch: `phase/1.2.1`
+- Merge policy: eager worker merge into `phase/1.2.1` after verification, then one final PR to `origin/main`
+- Parallel-safe lanes:
+  - `[1.2.1][00-conductor] Integrate phase 1.2.1 fleet`
+  - `[1.2.1][01-form-submission] Wire unified participant form submission to validation endpoints`
+  - `[1.2.1][02-list-rendering] Render participant type labels and visibility state in list UI`
+  - `[1.2.1][03-compat-verification] Verify legacy loading and end-to-end participant type switching`
+
+Generalize the participant model into a core Event–Actor–Role ontology. Introduce annotation events with configurable profiles, role-based claims, and prepare for AtoM plugin integration.
+
+- [ ] **2.0.x — Event-Actor-Role Core Schema**
+  - [ ] Design and implement core entities
+    - [ ] `annotation_event`: events with datetime modes (exact/approx/unknown), location, profile reference
+    - [ ] `actor`: generalized entity with canonical labels, aliases, identifiers
+    - [ ] `event_actor_role`: link events to actors with role vocabulary (Victim, Perpetrator, Witness, Reporter, etc.)
+    - [ ] `schema_profile`, `schema_field`, `schema_constraint`: configurable profile registry
+  - [ ] Implement backward-compatibility mapping
+    - [ ] Migrate existing victim/perpetrator records → actor + event_actor_role
+    - [ ] Preserve legacy participant/victim/perpetrator semantics
+  - [ ] Add role-based claims and evidence
+    - [ ] `claim`: assertions on actors/roles with confidence and source evidence
+    - [ ] `claim_evidence`: link claims to article mentions with coder metadata
+- [ ] **2.1.x — Multi-Domain Profile Support**
+  - [ ] Implement admin UI for profile definition
+  - [ ] Support homicide (preloaded default) + custom domains
+  - [ ] Role-based field visibility and validation
+  - [ ] Support role-specific attributes (e.g., "conviction" shows for Perpetrator; "contact" for Witness)
+- [ ] **2.2.x — Identity Resolution & Merge at Scale**
+  - [ ] Reuse alias + promotion logic for actors
+  - [ ] Enhance duplicate matching for multi-field scoring
+  - [ ] Provide explainability for candidate scoring
+  - [ ] Build actor merge queue and promotion UI
+
+---
+
+### **Phase 3: Graph Visualization & Statistical Reproducibility**
+
+Enable research workflows with graph exploration, multi-source analysis, and exportable lineage.
+
+- [ ] **3.0.x — Graph Explorer**
+  - [ ] Implement graph backend: article–event–actor–role–claim edges
+  - [ ] Build graph visualization UI
+  - [ ] Support filtering and traversal by role, profile, confidence
+- [ ] **3.1.x — Statistical Reproducibility**
+  - [ ] Provide export modes: mention-level raw, actor-resolved, diff metadata
+  - [ ] Document merge lineage and reversibility
+  - [ ] Support audit trail for coder decisions and merge rationale
+
+---
+
+### **Phase 4: AtoM Plugin & Workbench Deployment**
+
+Transition to AtoM plugin architecture. Implement plugin backend, specialized workbench UI, and targeted PWA for offline annotation workflows.
+
+- [ ] **4.0.x — AtoM Plugin Backend (Symfony)**
+  - [ ] Create AtoM plugin scaffold (access-homicide-tracker)
+  - [ ] Implement plugin routes for CRUD on events, actors, roles, claims, evidence, merges, graph
+  - [ ] Integrate with AtoM ACL and user management
+  - [ ] Publish annotation layer API contract
+- [ ] **4.1.x — Workbench UI in AtoM**
+  - [ ] Build workbench pages: Event extraction, Actors/Roles, Connection graph, Merge queue, Review log
+  - [ ] Integrate with AtoM article/information-object records as source anchors
+  - [ ] Support annotation tabs within article record view
+- [ ] **4.2.x — Targeted PWA & Offline Sync**
+  - [ ] Implement service worker for workbench routes only (not full-site offline)
+  - [ ] Cache manifest, vocabularies, recent records, and mutation queue
+  - [ ] Use IndexedDB for offline queue with idempotency keys, ordered replay, and conflict handling
+  - [ ] Implement sync endpoint: `/api/workbench/sync/batch`
+- [ ] **4.3.x — Plugin Hardening & Pilot**
+  - [ ] Run pilot with historical homicide data
+  - [ ] Test offline reliability, merge quality, analysis consistency
+  - [ ] Gather user feedback on workbench workflows
+  - [ ] Prepare for production deployment
+
+---
+
+### **Phase 5: Migration & Sustainability**
+
+Complete migration from standalone HMT. Archive legacy system. Establish ongoing plugin maintenance.
+
+- [ ] **5.0.x — Data Migration from Current System**
+  - [ ] Map articles → AtoM information objects
+  - [ ] Map victims/perpetrators/events → actor + event_actor_role + claims
+  - [ ] Preserve source URLs and article provenance
+  - [ ] Support bulk ingest and reconciliation
+- [ ] **5.1.x — Legacy Archive & Deprecation**
+  - [ ] Archive current Next.js HMT as historical baseline
+  - [ ] Migrate user research artifacts to AtoM plugin
+  - [ ] Provide read-only access to legacy data during transition
+- [ ] **5.2.x — Ongoing Maintenance & Extensibility**
+  - [ ] Support additional research domains (trafficking, corruption, etc.)
+  - [ ] Extend plugin with community-contributed profile templates
+  - [ ] Maintain plugin compatibility with AtoM versions
 
 ---
 

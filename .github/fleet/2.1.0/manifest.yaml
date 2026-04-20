@@ -60,14 +60,18 @@ lanes:
     branch: lane/2.1.0/03-domain-seed-support
     prNumber: null
     status: active
-    readiness: ready-to-implement
+    readiness: ready-for-pr
     ownedSurface:
       - seed loaders
       - migration-safe domain seed routines
       - domain registration APIs
     blockers: []
     verification:
-      - seed idempotency tests pending
+      - Added migration-safe domain seed lifecycle via `lib/db/domain-seed.ts` and wired DB startup seeding through a domain registry in `lib/db/server.ts`.
+      - Verified idempotent behavior with `lib/db/domain-seed.test.ts` (`applies homicide default seed once and remains idempotent on rerun`).
+      - Verified migration-safe behavior with `lib/db/domain-seed.test.ts` (`skips missing tables to stay migration-safe`).
+      - Validation evidence: `npm run test -- lib/db/domain-seed.test.ts lib/db/schema-profile-loader.test.ts lib/db/schema-constraint-loader.test.ts` and `npm run lint`.
+      - Rollback/re-run safety: seeding uses `INSERT OR IGNORE`; reruns are non-destructive and safe after partial rollbacks because missing seed tables are skipped until migrations are present.
 
   - laneId: 04-regression-verification
     role: worker

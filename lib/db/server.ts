@@ -28,17 +28,14 @@ import {
   migrations,
 } from './schema';
 import {
-  SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
-  SCHEMA_CONSTRAINT_REQUIRED_FIELDS,
-} from '../contracts/schema-constraints';
-import {
-  HOMICIDE_EVENT_PROFILE,
-  HOMICIDE_EVENT_PROFILE_FIELDS,
-} from '../contracts/schema-profile';
-import {
   DEFAULT_EVENT_ACTOR_ROLE_TERMS,
   EVENT_ACTOR_ROLE_VOCAB_KEY,
 } from './role-vocabulary';
+import {
+  HOMICIDE_DEFAULT_DOMAIN_SEED,
+  type DomainSeedDefinition,
+  applyDomainSeed,
+} from './domain-seed';
 
 type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
 
@@ -59,6 +56,10 @@ export interface DatabaseConfig {
 }
 
 class DatabaseManagerServer {
+  private domainSeedRegistry = new Map<string, DomainSeedDefinition>([
+    [HOMICIDE_DEFAULT_DOMAIN_SEED.domainKey, HOMICIDE_DEFAULT_DOMAIN_SEED],
+  ]);
+
   async ensureDatabaseInitialised(): Promise<void> {
     if (!this.localDb) {
       await this.initialiseLocal();
@@ -170,70 +171,38 @@ class DatabaseManagerServer {
         }
       }
     }
-    await this.seedDefaultSchemaRegistry();
+    await this.seedRegisteredDomainSeeds();
     await this.seedDefaultRoleVocabulary();
   }
 
-  private async seedDefaultSchemaRegistry(): Promise<void> {
+  async registerDomainSeed(seed: DomainSeedDefinition): Promise<void> {
+    this.domainSeedRegistry.set(seed.domainKey, seed);
     if (!this.localClient) {
       return;
     }
+    await applyDomainSeed(this.localClient, seed);
+  }
 
-    await this.localClient.execute({
-      sql: `INSERT OR IGNORE INTO schema_profile (
-        id,
-        name,
-        entity_level,
-        description,
-        created_at,
-        updated_at
-      ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-      args: [
-        HOMICIDE_EVENT_PROFILE.id,
-        HOMICIDE_EVENT_PROFILE.name,
-        HOMICIDE_EVENT_PROFILE.entityLevel,
-        HOMICIDE_EVENT_PROFILE.description,
-      ],
-    });
+  getRegisteredDomainSeeds(): DomainSeedDefinition[] {
+    return Array.from(this.domainSeedRegistry.values()).map((seed) => ({
+      ...seed,
+      profile: { ...seed.profile },
+      fields: seed.fields.map((field) => ({ ...field })),
+      constraints: Object.fromEntries(
+        Object.entries(seed.constraints).map(([type, fields]) => [
+          type,
+          [...fields],
+        ]),
+      ),
+    }));
+  }
 
-    for (const field of HOMICIDE_EVENT_PROFILE_FIELDS) {
-      await this.localClient.execute({
-        sql: `INSERT OR IGNORE INTO schema_field (
-          profile_id,
-          entity_type,
-          field_key,
-          field_type,
-          field_config,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        args: [
-          HOMICIDE_EVENT_PROFILE.id,
-          field.entityType,
-          field.fieldKey,
-          field.fieldType,
-          JSON.stringify(field.fieldConfig),
-        ],
-      });
+  private async seedRegisteredDomainSeeds(): Promise<void> {
+    if (!this.localClient) {
+      return;
     }
-
-    for (const [type, requiredFields] of Object.entries(
-      SCHEMA_CONSTRAINT_REQUIRED_FIELDS,
-    )) {
-      await this.localClient.execute({
-        sql: `INSERT OR IGNORE INTO schema_constraint (
-          profile_id,
-          type,
-          required_fields,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        args: [
-          SCHEMA_CONSTRAINT_PROFILE_DEFAULT,
-          type,
-          JSON.stringify(requiredFields),
-        ],
-      });
+    for (const seed of this.domainSeedRegistry.values()) {
+      await applyDomainSeed(this.localClient, seed);
     }
   }
 

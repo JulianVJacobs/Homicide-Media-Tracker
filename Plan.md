@@ -152,6 +152,21 @@
 - Approval status: approved by launch intent (`let's finish off phase 2`)
 - Escalation rule: if breaking API/schema migration is required, stop lane and split into `2.3.0` or re-contract as major.
 
+### Execution status snapshot (conductor update: 2026-04-20)
+
+- Manifest source of truth: `.github/fleet/2.2.0/manifest.yaml` (updated with live PR and blocker state).
+- Lane PR inventory:
+  - `[2.2.0][01-identity-core]` → PR #23 (draft/open, blocked)
+  - `[2.2.0][02-scoring-explainability]` → PR #25 (draft/open, blocked)
+  - `[2.2.0][03-merge-queue-ui]` → PR #26 (draft/open, blocked)
+  - `[2.2.0][04-role-attrs-outlet]` → PR #24 (draft/open, blocked)
+  - `[2.2.0][05-regression-verification]` → PR #27 (draft/open, blocked)
+- Global blockers:
+  - Worker PRs currently target `origin/main` instead of `phase/2.2.0`.
+  - Worker branches are not using canonical `lane/2.2.0/*` names.
+  - No worker lane currently has implementation diffs or completed lane-level verification evidence.
+  - Integrated verification is blocked until lanes 01-05 are merged to `phase/2.2.0`.
+
 ### Parallel-safe lane decomposition
 
 - `[2.2.0][00-conductor] Integrate phase 2.2.0 closeout fleet`

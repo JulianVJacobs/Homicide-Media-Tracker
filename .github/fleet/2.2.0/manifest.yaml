@@ -31,80 +31,114 @@ lanes:
     branch: phase/2.2.0
     prNumber: null
     status: active
-    readiness: waiting
+    readiness: blocked
     ownedSurface:
       - phase branch governance
       - manifest lifecycle
       - merge policy enforcement
       - final integration PR to origin/main
-    blockers: []
+    blockers:
+      - origin/phase/2.2.0 branch not found; worker PRs are currently opened against origin/main.
+      - Integrated verification is blocked until lanes 01-05 are merged into phase/2.2.0.
     verification:
       - manifest published
       - lane boundaries declared
+      - baseline validation on conductor branch: npm run lint ✅, npm run test ✅
 
   - laneId: 01-identity-core
     role: worker
-    branch: lane/2.2.0/01-identity-core
-    prNumber: null
-    status: planned
-    readiness: waiting
+    branch: copilot/220-reuse-alias-promotion-logic
+    prNumber: 23
+    status: open-draft
+    readiness: blocked
     ownedSurface:
       - actor identity core logic
       - alias and promotion reuse for actors
       - multi-field duplicate scoring internals
-    blockers: []
-    verification: []
+    blockers:
+      - PR #23 targets origin/main instead of phase/2.2.0 (fleet policy violation).
+      - No lane-scoped verification summary is present in the PR.
+      - Worker branch naming does not follow lane/2.2.0/01-identity-core.
+    verification:
+      - PR #23 opened as draft from copilot/220-reuse-alias-promotion-logic -> main.
+      - Changed files in PR #23: none (no worker implementation committed yet).
+      - Workflow check: copilot run in progress (run 24672419645).
 
   - laneId: 02-scoring-explainability
     role: worker
-    branch: lane/2.2.0/02-scoring-explainability
-    prNumber: null
-    status: planned
-    readiness: waiting
+    branch: copilot/220-02-scoring-explainability
+    prNumber: 25
+    status: open-draft
+    readiness: blocked
     ownedSurface:
       - explainability DTOs and contracts
       - score breakdown API payload mapping
       - candidate-scoring rationale responses
     blockers:
+      - PR #25 targets origin/main instead of phase/2.2.0 (fleet policy violation).
       - waits for lane 01 scoring outputs
-    verification: []
+      - No lane-scoped verification summary is present in the PR.
+      - Worker branch naming does not follow lane/2.2.0/02-scoring-explainability.
+    verification:
+      - PR #25 opened as draft from copilot/220-02-scoring-explainability -> main.
+      - Changed files in PR #25: none (no worker implementation committed yet).
+      - Workflow check: copilot run in progress (run 24672464768).
 
   - laneId: 03-merge-queue-ui
     role: worker
-    branch: lane/2.2.0/03-merge-queue-ui
-    prNumber: null
-    status: planned
-    readiness: waiting
+    branch: copilot/220-merge-queue-ui
+    prNumber: 26
+    status: open-draft
+    readiness: blocked
     ownedSurface:
       - actor merge queue UI
       - promotion workflow UI
       - queue filtering and sort controls
     blockers:
+      - PR #26 targets origin/main instead of phase/2.2.0 (fleet policy violation).
       - needs merge candidates from lane 01
-    verification: []
+      - No lane-scoped verification summary is present in the PR.
+      - Worker branch naming does not follow lane/2.2.0/03-merge-queue-ui.
+    verification:
+      - PR #26 opened as draft from copilot/220-merge-queue-ui -> main.
+      - Changed files in PR #26: none (no worker implementation committed yet).
+      - Workflow check: no checks reported yet.
 
   - laneId: 04-role-attrs-outlet
     role: worker
-    branch: lane/2.2.0/04-role-attrs-outlet
-    prNumber: null
-    status: planned
-    readiness: waiting
+    branch: copilot/220-complete-role-attrs-behavior
+    prNumber: 24
+    status: open-draft
+    readiness: blocked
     ownedSurface:
       - role-specific attribute rendering and validation
       - searchable outlet combobox UI and API data path
-    blockers: []
-    verification: []
+    blockers:
+      - PR #24 targets origin/main instead of phase/2.2.0 (fleet policy violation).
+      - No lane-scoped verification summary is present in the PR.
+      - Worker branch naming does not follow lane/2.2.0/04-role-attrs-outlet.
+    verification:
+      - PR #24 opened as draft from copilot/220-complete-role-attrs-behavior -> main.
+      - Changed files in PR #24: none (no worker implementation committed yet).
+      - Workflow check: copilot run in progress (run 24672442837).
 
   - laneId: 05-regression-verification
     role: worker
-    branch: lane/2.2.0/05-regression-verification
-    prNumber: null
-    status: planned
+    branch: copilot/220-verify-regression-behavior
+    prNumber: 27
+    status: open-draft
     readiness: blocked
     ownedSurface:
       - integrated regression checklist
       - compatibility and e2e verification
       - final readiness report
     blockers:
+      - PR #27 targets origin/main instead of phase/2.2.0 (fleet policy violation).
       - waits for merged outputs from lanes 01 through 04
-    verification: []
+      - Start condition not met: lanes 01-04 are not merged into phase/2.2.0.
+      - No lane-scoped verification summary is present in the PR.
+      - Worker branch naming does not follow lane/2.2.0/05-regression-verification.
+    verification:
+      - PR #27 opened as draft from copilot/220-verify-regression-behavior -> main.
+      - Changed files in PR #27: none (no worker verification artifacts committed yet).
+      - Workflow check: no checks reported yet.

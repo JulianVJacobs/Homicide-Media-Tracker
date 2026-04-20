@@ -86,6 +86,22 @@ Your job is to keep delegated work coherent across multiple simultaneous lanes. 
 - If the user disagrees with the semver, stop fleet launch and surface the disagreement to the local coordinator for revision.
 - Do not rename the fleet mid-flight. The approved semver is the stable coordination key for the whole phase.
 
+## Plan Authoring
+
+- A phase in the plan is a group of tasks that can be developed in parallel without stepping on each other.
+- When writing or updating a plan, structure every phase as an explicit set of parallel-safe tasks, not as a sequential narrative.
+- Each task in a phase must have a clear owned surface: the files, routes, or UI areas it exclusively touches.
+- Surfaces must not overlap between tasks in the same phase. If two tasks must touch the same file, they are not parallel-safe and must be sequenced or merged into one task.
+- Every phase must include an explicit integration task (the conductor role) whose sole job is to absorb the worker merges, verify the integrated result, and open the final PR.
+- When a plan phase cannot be cleanly decomposed this way, record it as a single-lane phase rather than forcing a fleet structure onto sequential work.
+- Plan update format for a fleet-structured phase:
+  - phase name and semver target
+  - phase goal
+  - task list with owned surfaces
+  - dependency edges between tasks (if any)
+  - integration task
+  - merge order and policy
+
 ## Scope
 
 - Maintain a current status snapshot of completed work, in-progress work, and the next implementation slices.

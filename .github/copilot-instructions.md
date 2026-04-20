@@ -69,6 +69,9 @@ This file gives focused, actionable guidance for AI coding agents working in thi
 
 - After completing any task (code changes, research, or review), always update the active plan artifact before finalizing. Include: what was completed, what remains, and any new risks or follow-ups.
 - For implementation tasks that involve a pull request, update the plan twice: once immediately after creating the pull request, and again after the pull request is accepted/merged.
+- Plan phases must be structured as groups of parallel-safe tasks, not sequential narratives. Each task must declare its owned surface (files, routes, or UI areas) with no overlap between tasks in the same phase. If tasks cannot be made non-overlapping, sequence them explicitly or merge them.
+- Every fleet-structured phase requires a conductor task whose role is integration governance, not feature work. The conductor creates the phase branch, merges worker PRs, and opens the final PR to origin/main.
+- A fleet cannot launch without an approved semver contract. The fleet-orchestrator agent governs this protocol. For multi-task phase work, invoke it rather than writing ad hoc parallel prompts.
 
 11. Further notes and maintainers
 

@@ -7,6 +7,14 @@ import {
   // type SQLiteTableWithColumns
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+import {
+  buildConfidenceCheck,
+  CLAIM_EVIDENCE_STRENGTH_VALUES,
+  CLAIM_SUBJECT_TYPES,
+  CLAIM_VALUE_TYPES,
+  EVENT_ACTOR_ROLE_CERTAINTY_VALUES,
+  buildEscapedSqlInList,
+} from './domain-constants';
 
 // interface DBTable {
 //   table: SQLiteTable<T>,
@@ -339,6 +347,217 @@ export const migrationUsers = `CREATE TABLE IF NOT EXISTS users (
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
+export const schemaFields = sqliteTable('schema_field', {
+  id: text('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  label: text('label').notNull(),
+  valueType: text('value_type'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const migrationSchemaFields = `CREATE TABLE IF NOT EXISTS schema_field (
+  id TEXT PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  label TEXT NOT NULL,
+  value_type TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type SchemaField = typeof schemaFields.$inferSelect;
+export type NewSchemaField = typeof schemaFields.$inferInsert;
+
+export const schemaVocabTerms = sqliteTable(
+  'schema_vocab_term',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    vocabKey: text('vocab_key').notNull(),
+    termKey: text('term_key').notNull(),
+    label: text('label').notNull(),
+    description: text('description'),
+    isSystem: integer('is_system', { mode: 'boolean' }).default(true),
+    createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => ({
+    vocabTermUnique: uniqueIndex('schema_vocab_term_vocab_term_unique').on(
+      table.vocabKey,
+      table.termKey,
+    ),
+  }),
+);
+
+export const migrationSchemaVocabTerms = `CREATE TABLE IF NOT EXISTS schema_vocab_term (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  vocab_key TEXT NOT NULL,
+  term_key TEXT NOT NULL,
+  label TEXT NOT NULL,
+  description TEXT,
+  is_system INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(vocab_key, term_key)
+)`;
+
+export type SchemaVocabTerm = typeof schemaVocabTerms.$inferSelect;
+export type NewSchemaVocabTerm = typeof schemaVocabTerms.$inferInsert;
+
+export const annotationEvents = sqliteTable('annotation_event', {
+  id: text('id').primaryKey(),
+  dateMode: text('date_mode'),
+  eventDate: text('event_date'),
+  eventDateFrom: text('event_date_from'),
+  eventDateTo: text('event_date_to'),
+  location: text('location'),
+  notes: text('notes'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const migrationAnnotationEvents = `CREATE TABLE IF NOT EXISTS annotation_event (
+  id TEXT PRIMARY KEY,
+  date_mode TEXT,
+  event_date TEXT,
+  event_date_from TEXT,
+  event_date_to TEXT,
+  location TEXT,
+  notes TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type AnnotationEvent = typeof annotationEvents.$inferSelect;
+export type NewAnnotationEvent = typeof annotationEvents.$inferInsert;
+
+export const actors = sqliteTable('actor', {
+  id: text('id').primaryKey(),
+  displayName: text('display_name'),
+  actorType: text('actor_type'),
+  notes: text('notes'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const migrationActors = `CREATE TABLE IF NOT EXISTS actor (
+  id TEXT PRIMARY KEY,
+  display_name TEXT,
+  actor_type TEXT,
+  notes TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type Actor = typeof actors.$inferSelect;
+export type NewActor = typeof actors.$inferInsert;
+
+export const eventActorRoles = sqliteTable('event_actor_role', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => annotationEvents.id, { onDelete: 'cascade' }),
+  actorId: text('actor_id')
+    .notNull()
+    .references(() => actors.id, { onDelete: 'cascade' }),
+  roleTermId: integer('role_term_id')
+    .notNull()
+    .references(() => schemaVocabTerms.id, { onDelete: 'restrict' }),
+  roleScope: text('role_scope'),
+  confidence: integer('confidence'),
+  certainty: text('certainty').default('unknown'),
+  isPrimaryRole: integer('is_primary_role', { mode: 'boolean' }).default(false),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+const confidenceCheckConstraint = buildConfidenceCheck('confidence');
+const eventActorRoleCertaintyCheckConstraint = `CHECK (certainty IN (${buildEscapedSqlInList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)}))`;
+
+export const migrationEventActorRoles = `CREATE TABLE IF NOT EXISTS event_actor_role (
+  id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL REFERENCES annotation_event(id) ON DELETE CASCADE,
+  actor_id TEXT NOT NULL REFERENCES actor(id) ON DELETE CASCADE,
+  role_term_id INTEGER NOT NULL REFERENCES schema_vocab_term(id) ON DELETE RESTRICT,
+  role_scope TEXT,
+  confidence INTEGER ${confidenceCheckConstraint},
+  certainty TEXT DEFAULT 'unknown' ${eventActorRoleCertaintyCheckConstraint},
+  is_primary_role INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type EventActorRole = typeof eventActorRoles.$inferSelect;
+export type NewEventActorRole = typeof eventActorRoles.$inferInsert;
+
+export const claims = sqliteTable('claim', {
+  id: text('id').primaryKey(),
+  subjectType: text('subject_type').notNull(),
+  subjectId: text('subject_id').notNull(),
+  predicateKey: text('predicate_key').notNull(),
+  valueJson: text('value_json', { mode: 'json' }),
+  valueType: text('value_type').notNull(),
+  confidence: integer('confidence'),
+  assertedBy: text('asserted_by'),
+  assertedAt: text('asserted_at').default(sql`CURRENT_TIMESTAMP`),
+  schemaFieldId: text('schema_field_id').references(() => schemaFields.id),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+const claimSubjectTypeConstraint = `CHECK (subject_type IN (${buildEscapedSqlInList(CLAIM_SUBJECT_TYPES)}))`;
+const claimValueTypeConstraint = `CHECK (value_type IN (${buildEscapedSqlInList(CLAIM_VALUE_TYPES)}))`;
+
+export const migrationClaims = `CREATE TABLE IF NOT EXISTS claim (
+  id TEXT PRIMARY KEY,
+  subject_type TEXT NOT NULL ${claimSubjectTypeConstraint},
+  subject_id TEXT NOT NULL,
+  predicate_key TEXT NOT NULL,
+  value_json TEXT,
+  value_type TEXT NOT NULL ${claimValueTypeConstraint},
+  confidence INTEGER ${confidenceCheckConstraint},
+  asserted_by TEXT,
+  asserted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  schema_field_id TEXT REFERENCES schema_field(id),
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type Claim = typeof claims.$inferSelect;
+export type NewClaim = typeof claims.$inferInsert;
+
+export const claimEvidence = sqliteTable('claim_evidence', {
+  id: text('id').primaryKey(),
+  claimId: text('claim_id')
+    .notNull()
+    .references(() => claims.id, { onDelete: 'cascade' }),
+  sourceRecordId: text('source_record_id').references(() => articles.id, {
+    onDelete: 'set null',
+  }),
+  excerptText: text('excerpt_text').notNull(),
+  selectorJson: text('selector_json', { mode: 'json' }),
+  coderNote: text('coder_note'),
+  evidenceStrength: text('evidence_strength').notNull(),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+const claimEvidenceStrengthConstraint = `CHECK (evidence_strength IN (${buildEscapedSqlInList(CLAIM_EVIDENCE_STRENGTH_VALUES)}))`;
+
+export const migrationClaimEvidence = `CREATE TABLE IF NOT EXISTS claim_evidence (
+  id TEXT PRIMARY KEY,
+  claim_id TEXT NOT NULL REFERENCES claim(id) ON DELETE CASCADE,
+  source_record_id TEXT REFERENCES articles(id) ON DELETE SET NULL,
+  excerpt_text TEXT NOT NULL,
+  selector_json TEXT,
+  coder_note TEXT,
+  evidence_strength TEXT NOT NULL ${claimEvidenceStrengthConstraint},
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type ClaimEvidence = typeof claimEvidence.$inferSelect;
+export type NewClaimEvidence = typeof claimEvidence.$inferInsert;
+
 // --- Events ---
 export const events = sqliteTable('events', {
   id: text('id').primaryKey(),
@@ -549,6 +768,12 @@ export const migrationIndexes = [
   `CREATE INDEX IF NOT EXISTS idx_actor_alias_value ON actor_alias(alias_value)`,
   `CREATE INDEX IF NOT EXISTS idx_actor_identifier_namespace_value ON actor_identifier(namespace, value)`,
   `CREATE INDEX IF NOT EXISTS idx_actor_identifier_actor_id ON actor_identifier(actor_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_event_actor_role_event_id ON event_actor_role(event_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_event_actor_role_actor_id ON event_actor_role(actor_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_event_actor_role_role_term_id ON event_actor_role(role_term_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_claim_subject ON claim(subject_type, subject_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_claim_predicate ON claim(predicate_key)`,
+  `CREATE INDEX IF NOT EXISTS idx_claim_evidence_claim_id ON claim_evidence(claim_id)`,
 ];
 
 export const migrationVictimAliasColumn = `ALTER TABLE victims ADD COLUMN victim_alias TEXT`;
@@ -766,6 +991,13 @@ export const migrations = [
   migrationSchemaConstraints,
   migrationAnnotationEvents,
   migrationUsers,
+  migrationSchemaFields,
+  migrationSchemaVocabTerms,
+  migrationAnnotationEvents,
+  migrationActors,
+  migrationEventActorRoles,
+  migrationClaims,
+  migrationClaimEvidence,
   migrationSyncQueue,
   migrationAppConfig,
   ...migrationIndexes,

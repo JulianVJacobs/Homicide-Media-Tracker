@@ -1,3 +1,8 @@
+- Phase 3 Kilo status (current branch):
+  - Completed: event_actor_role, claim, and claim_evidence tables added with FK wiring; default event-role vocabulary seeding added; basic event-role and role-claim CRUD endpoints implemented.
+  - Remaining: Lima UI wiring and any stricter domain-level predicate/role policy decisions if product requires them.
+  - Blockers: none for backend schema/API delivery; current implementation supports free-form claim predicates and flexible selector_json evidence formats.
+
 - Completed baseline: participant alias support and merge/promotion infrastructure are already implemented and must remain unchanged.
 - Remaining scope: form contract publication first, then post-merge integration wiring and verification only.
 - Hotel slice: publish unified participant form contract, define visibility/editability defaults, and track integration readiness/risk.

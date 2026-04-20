@@ -347,27 +347,6 @@ export const migrationUsers = `CREATE TABLE IF NOT EXISTS users (
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
-export const schemaFields = sqliteTable('schema_field', {
-  id: text('id').primaryKey(),
-  key: text('key').notNull().unique(),
-  label: text('label').notNull(),
-  valueType: text('value_type'),
-  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
-});
-
-export const migrationSchemaFields = `CREATE TABLE IF NOT EXISTS schema_field (
-  id TEXT PRIMARY KEY,
-  key TEXT NOT NULL UNIQUE,
-  label TEXT NOT NULL,
-  value_type TEXT,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-)`;
-
-export type SchemaField = typeof schemaFields.$inferSelect;
-export type NewSchemaField = typeof schemaFields.$inferInsert;
-
 export const schemaVocabTerms = sqliteTable(
   'schema_vocab_term',
   {
@@ -402,54 +381,6 @@ export const migrationSchemaVocabTerms = `CREATE TABLE IF NOT EXISTS schema_voca
 
 export type SchemaVocabTerm = typeof schemaVocabTerms.$inferSelect;
 export type NewSchemaVocabTerm = typeof schemaVocabTerms.$inferInsert;
-
-export const annotationEvents = sqliteTable('annotation_event', {
-  id: text('id').primaryKey(),
-  dateMode: text('date_mode'),
-  eventDate: text('event_date'),
-  eventDateFrom: text('event_date_from'),
-  eventDateTo: text('event_date_to'),
-  location: text('location'),
-  notes: text('notes'),
-  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
-});
-
-export const migrationAnnotationEvents = `CREATE TABLE IF NOT EXISTS annotation_event (
-  id TEXT PRIMARY KEY,
-  date_mode TEXT,
-  event_date TEXT,
-  event_date_from TEXT,
-  event_date_to TEXT,
-  location TEXT,
-  notes TEXT,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-)`;
-
-export type AnnotationEvent = typeof annotationEvents.$inferSelect;
-export type NewAnnotationEvent = typeof annotationEvents.$inferInsert;
-
-export const actors = sqliteTable('actor', {
-  id: text('id').primaryKey(),
-  displayName: text('display_name'),
-  actorType: text('actor_type'),
-  notes: text('notes'),
-  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
-});
-
-export const migrationActors = `CREATE TABLE IF NOT EXISTS actor (
-  id TEXT PRIMARY KEY,
-  display_name TEXT,
-  actor_type TEXT,
-  notes TEXT,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-)`;
-
-export type Actor = typeof actors.$inferSelect;
-export type NewActor = typeof actors.$inferInsert;
 
 export const eventActorRoles = sqliteTable('event_actor_role', {
   id: text('id').primaryKey(),
@@ -991,10 +922,7 @@ export const migrations = [
   migrationSchemaConstraints,
   migrationAnnotationEvents,
   migrationUsers,
-  migrationSchemaFields,
   migrationSchemaVocabTerms,
-  migrationAnnotationEvents,
-  migrationActors,
   migrationEventActorRoles,
   migrationClaims,
   migrationClaimEvidence,

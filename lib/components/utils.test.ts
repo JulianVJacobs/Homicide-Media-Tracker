@@ -26,6 +26,20 @@ describe('detectDuplicates', () => {
     expect(matches[0].explainability).toBe(
       'The newsReportUrl values are an exact match.',
     );
+    expect(matches[0].scoring.summaryRationale).toContain('Primary url signal');
+    expect(matches[0].scoring.whyMatched).toContain(
+      'Matched fields: newsReportUrl',
+    );
+    expect(matches[0].scoring.weightedContributions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          signal: 'url',
+          weight: 0.6,
+          rawScore: 1,
+          weightedScore: 0.6,
+        }),
+      ]),
+    );
   });
 
   it('matches primary name against aliases and returns reason fields', () => {
@@ -54,6 +68,8 @@ describe('detectDuplicates', () => {
       expect.arrayContaining(['primaryName', 'aliases']),
     );
     expect(matches[0].explainability).toContain('primaryName');
+    expect(matches[0].scoring.summaryRationale).toContain('Primary name signal');
+    expect(matches[0].scoring.whyMatched).toContain('Reason code: name');
   });
 
   it('keeps title matching behavior with explainability details', () => {
@@ -77,5 +93,7 @@ describe('detectDuplicates', () => {
       matchedFields: ['newsReportHeadline'],
     });
     expect(matches[0].explainability).toContain('similar');
+    expect(matches[0].scoring.totalWeightedScore).toBeGreaterThan(0);
+    expect(matches[0].scoring.weightedContributions).toHaveLength(3);
   });
 });

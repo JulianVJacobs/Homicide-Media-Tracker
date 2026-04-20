@@ -278,7 +278,83 @@ export interface DuplicateMatch {
   matchReason: string;
   explainability: string;
   matchedFields: string[];
+  scoring: DuplicateScoringDetails;
 }
+
+export type DuplicateScoreSignal = 'url' | 'name' | 'title';
+
+export interface DuplicateWeightedContribution {
+  signal: DuplicateScoreSignal;
+  weight: number;
+  rawScore: number;
+  weightedScore: number;
+}
+
+export interface DuplicateScoringDetails {
+  whyMatched: string[];
+  summaryRationale: string;
+  totalWeightedScore: number;
+  weightedContributions: DuplicateWeightedContribution[];
+}
+
+type DuplicateSignalScores = Record<DuplicateScoreSignal, number>;
+
+const DUPLICATE_SIGNAL_WEIGHTS: Record<DuplicateScoreSignal, number> = {
+  url: 0.6,
+  name: 0.3,
+  title: 0.1,
+};
+
+const roundScore = (value: number) => Number(value.toFixed(4));
+
+const buildScoringDetails = (
+  matchType: DuplicateMatch['matchType'],
+  explainability: string,
+  matchedFields: string[],
+  signalScores: DuplicateSignalScores,
+): DuplicateScoringDetails => {
+  const weightedContributions: DuplicateWeightedContribution[] =
+    Object.entries(DUPLICATE_SIGNAL_WEIGHTS).map(([signal, weight]) => {
+      const typedSignal = signal as DuplicateScoreSignal;
+      const rawScore = signalScores[typedSignal] ?? 0;
+      return {
+        signal: typedSignal,
+        weight,
+        rawScore: roundScore(rawScore),
+        weightedScore: roundScore(rawScore * weight),
+      };
+    });
+
+  const totalWeightedScore = roundScore(
+    weightedContributions.reduce(
+      (sum, contribution) => sum + contribution.weightedScore,
+      0,
+    ),
+  );
+  const strongestContribution = weightedContributions.reduce((best, current) =>
+    current.weightedScore > best.weightedScore ? current : best,
+  );
+  const summaryRationale = `Primary ${matchType} signal selected with ${(
+    signalScores[
+      matchType === 'content'
+        ? 'title'
+        : (matchType as Exclude<DuplicateMatch['matchType'], 'content'>)
+    ] * 100
+  ).toFixed(1)}% raw similarity; strongest weighted contribution was ${
+    strongestContribution.signal
+  } (${(strongestContribution.weightedScore * 100).toFixed(1)}%).`;
+
+  return {
+    whyMatched: [
+      explainability,
+      `Matched fields: ${matchedFields.join(', ')}`,
+      `Reason code: ${matchType}`,
+    ],
+    summaryRationale,
+    totalWeightedScore,
+    weightedContributions,
+  };
+};
 
 export function detectDuplicates(
   newArticle: DuplicateCandidate,
@@ -294,58 +370,82 @@ export function detectDuplicates(
     : undefined;
 
   for (const existing of existingArticles) {
+    const existingArticleUrl = existing.newsReportUrl
+      ? existing.newsReportUrl.toString()
+      : undefined;
+    const hasExactUrlMatch =
+      !!newArticleUrl && !!existingArticleUrl && newArticleUrl === existingArticleUrl;
+    const nameAliasMatch = getBestNameAliasMatch(newArticle, existing);
+    const titleSimilarity = calculateSimilarity(
+      newArticleHeadline ?? '',
+      existing.newsReportHeadline?.toString() ?? '',
+    );
+    const signalScores: DuplicateSignalScores = {
+      url: hasExactUrlMatch ? 1 : 0,
+      name: nameAliasMatch?.similarity ?? 0,
+      title: titleSimilarity,
+    };
+
     // Exact URL match
-    if (
-      newArticleUrl &&
-      existing.newsReportUrl &&
-      newArticleUrl === existing.newsReportUrl.toString()
-    ) {
+    if (hasExactUrlMatch) {
+      const explainability = 'The newsReportUrl values are an exact match.';
+      const matchedFields = ['newsReportUrl'];
       matches.push({
         id: existing.id,
         similarity: 1.0,
         matchType: 'url',
         confidence: 'high',
         matchReason: 'exact_url_match',
-        explainability: 'The newsReportUrl values are an exact match.',
-        matchedFields: ['newsReportUrl'],
+        explainability,
+        matchedFields,
+        scoring: buildScoringDetails('url', explainability, matchedFields, signalScores),
       });
       continue;
     }
 
-    const nameAliasMatch = getBestNameAliasMatch(newArticle, existing);
     if (
       nameAliasMatch &&
       nameAliasMatch.similarity >= NAME_ALIAS_MATCH_THRESHOLD
     ) {
+      const explainability = `Matched "${nameAliasMatch.newValue}" (${nameAliasMatch.newField}) with "${nameAliasMatch.existingValue}" (${nameAliasMatch.existingField}).`;
+      const matchedFields = [nameAliasMatch.newField, nameAliasMatch.existingField];
       matches.push({
         id: existing.id,
         similarity: nameAliasMatch.similarity,
         matchType: 'name',
         confidence: nameAliasMatch.similarity > 0.95 ? 'high' : 'medium',
         matchReason: 'name_alias_overlap',
-        explainability: `Matched "${nameAliasMatch.newValue}" (${nameAliasMatch.newField}) with "${nameAliasMatch.existingValue}" (${nameAliasMatch.existingField}).`,
-        matchedFields: [nameAliasMatch.newField, nameAliasMatch.existingField],
+        explainability,
+        matchedFields,
+        scoring: buildScoringDetails(
+          'name',
+          explainability,
+          matchedFields,
+          signalScores,
+        ),
       });
       continue;
     }
 
-    // Title similarity using Levenshtein distance
-    const titleSimilarity = calculateSimilarity(
-      newArticleHeadline ?? '',
-      existing.newsReportHeadline?.toString() ?? '',
-    );
-
     if (titleSimilarity > 0.85) {
+      const explainability = `The newsReportHeadline values are similar (${(
+        titleSimilarity * 100
+      ).toFixed(1)}%).`;
+      const matchedFields = ['newsReportHeadline'];
       matches.push({
         id: existing.id,
         similarity: titleSimilarity,
         matchType: 'title',
         confidence: titleSimilarity > 0.95 ? 'high' : 'medium',
         matchReason: 'headline_similarity',
-        explainability: `The newsReportHeadline values are similar (${(
-          titleSimilarity * 100
-        ).toFixed(1)}%).`,
-        matchedFields: ['newsReportHeadline'],
+        explainability,
+        matchedFields,
+        scoring: buildScoringDetails(
+          'title',
+          explainability,
+          matchedFields,
+          signalScores,
+        ),
       });
     }
   }

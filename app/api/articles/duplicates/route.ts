@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbm, DatabaseManagerServer } from '../../../../lib/db/server';
 import { detectDuplicates } from '../../../../lib/components/utils';
 import * as schema from '../../../../lib/db/schema';
+import { mapDuplicateMatchDtos } from '../utils';
 
 /**
  * POST /api/articles/duplicates - Detect duplicate articles
@@ -36,13 +37,14 @@ export async function POST(request: NextRequest) {
 
     // Detect potential duplicates
     const duplicates = detectDuplicates(articleData, existingArticles);
+    const duplicateDtos = mapDuplicateMatchDtos(duplicates);
 
     return NextResponse.json({
       success: true,
       data: {
         hasDuplicates: duplicates.length > 0,
         duplicateCount: duplicates.length,
-        matches: duplicates,
+        matches: duplicateDtos,
       },
     });
   } catch (error) {
@@ -87,18 +89,19 @@ export async function GET(request: NextRequest) {
       const highConfidenceMatches = duplicates.filter(
         (match) => match.similarity >= threshold,
       );
+      const highConfidenceDtos = mapDuplicateMatchDtos(highConfidenceMatches);
 
-      if (highConfidenceMatches.length > 0) {
+      if (highConfidenceDtos.length > 0) {
         const group = {
           primary: currentArticle,
-          duplicates: highConfidenceMatches,
+          duplicates: highConfidenceDtos,
         };
 
         duplicateGroups.push(group);
 
         // Mark all articles in this group as processed
         processed.add(currentArticle.id);
-        highConfidenceMatches.forEach((match) => {
+        highConfidenceDtos.forEach((match) => {
           const matchedArticle = articles.find(
             (a: schema.Article) => a.id === match.id,
           );

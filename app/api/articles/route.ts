@@ -11,7 +11,7 @@ import {
   detectDuplicates,
   generateArticleId,
 } from '../../../lib/components/utils';
-import { coerceArticle } from './utils';
+import { coerceArticle, mapDuplicateMatchDtos } from './utils';
 
 const ensureServerDatabase = async () => {
   if (!(dbm instanceof DatabaseManagerServer)) {
@@ -135,13 +135,14 @@ export async function POST(request: Request) {
 
     const existingArticles = await db.select().from(articles);
     const duplicates = detectDuplicates(coerced, existingArticles);
+    const duplicateDtos = mapDuplicateMatchDtos(duplicates);
 
     if (duplicates.length > 0 && duplicates[0].confidence === 'high') {
       return NextResponse.json(
         {
           success: false,
           error: 'Potential duplicate article detected',
-          duplicates: duplicates.slice(0, 3),
+          duplicates: duplicateDtos.slice(0, 3),
           id: duplicates[0].id,
         },
         { status: 409 },
@@ -189,7 +190,7 @@ export async function POST(request: Request) {
         data: created ?? (newArticle as Article),
         message: 'Article created successfully',
         warnings: validation.warnings,
-        duplicates: duplicates.slice(0, 3),
+        duplicates: duplicateDtos.slice(0, 3),
       },
       { status: 201 },
     );

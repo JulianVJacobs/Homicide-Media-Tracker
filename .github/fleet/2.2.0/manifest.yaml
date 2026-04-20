@@ -59,15 +59,18 @@ lanes:
     role: worker
     branch: lane/2.2.0/02-scoring-explainability
     prNumber: null
-    status: planned
-    readiness: waiting
+    prTitle: '[2.2.0][02-scoring-explainability] expose duplicate-scoring explainability contracts and payload mapping'
+    status: completed
+    readiness: ready-for-review
     ownedSurface:
       - explainability DTOs and contracts
       - score breakdown API payload mapping
       - candidate-scoring rationale responses
-    blockers:
-      - waits for lane 01 scoring outputs
-    verification: []
+    blockers: []
+    verification:
+      - npm run test -- lib/components/utils.test.ts app/api/articles/utils.test.ts lib/contracts/duplicate-scoring.test.ts
+      - npm run lint
+      - npm run test
 
   - laneId: 03-merge-queue-ui
     role: worker

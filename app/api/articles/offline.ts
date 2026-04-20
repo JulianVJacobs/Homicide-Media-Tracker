@@ -8,7 +8,7 @@ import {
 } from '../../../lib/components/utils';
 import { prepareArticlePayload } from '../../../lib/utils/transformers';
 import { getBaseUrl } from '../../../lib/platform';
-import { coerceArticle } from './utils';
+import { coerceArticle, mapDuplicateMatchDtos } from './utils';
 
 export async function get(req: Request) {
   console.log('api/articles:GET');
@@ -90,11 +90,12 @@ export async function post(req: Request) {
     const db = dbm.getLocal();
     const existingArticles: Article[] = await db.articles.toArray();
     const duplicates = detectDuplicates(coerced, existingArticles);
+    const duplicateDtos = mapDuplicateMatchDtos(duplicates);
     if (duplicates.length > 0 && duplicates[0].confidence === 'high') {
       return {
         success: false,
         error: 'Potential duplicate article detected',
-        duplicates: duplicates.slice(0, 3),
+        duplicates: duplicateDtos.slice(0, 3),
         id: duplicates[0].id,
       };
     }
@@ -116,7 +117,7 @@ export async function post(req: Request) {
       success: true,
       data: articleData,
       warnings: validation.warnings,
-      duplicates: duplicates.length > 0 ? duplicates.slice(0, 3) : [],
+      duplicates: duplicateDtos.length > 0 ? duplicateDtos.slice(0, 3) : [],
     };
   } catch (e) {
     console.error(e);

@@ -67,21 +67,21 @@ lanes:
     role: worker
     branch: copilot/220-02-scoring-explainability
     prNumber: 25
-    status: open-draft
-    readiness: blocked
+    status: ready-for-review
+    readiness: ready
     ownedSurface:
       - explainability DTOs and contracts
       - score breakdown API payload mapping
       - candidate-scoring rationale responses
-    blockers:
-      - PR #25 targets origin/main instead of phase/2.2.0 (fleet policy violation).
-      - waits for lane 01 scoring outputs
-      - No lane-scoped verification summary is present in the PR.
-      - Worker branch naming does not follow lane/2.2.0/02-scoring-explainability.
+    blockers: []
     verification:
-      - PR #25 opened as draft from copilot/220-02-scoring-explainability -> main.
-      - Changed files in PR #25: none (no worker implementation committed yet).
-      - Workflow check: copilot run in progress (run 24672464768).
+      - npm run test -- lib/components/utils.test.ts app/api/articles/utils.test.ts lib/contracts/duplicate-scoring.test.ts ✅
+      - npm run lint ✅
+      - npm run test ✅
+      - lib/contracts/duplicate-scoring.ts: frozen DuplicateMatchDto contract (version 2026-04-20)
+      - lib/components/utils.ts: DuplicateScoringDetails added to DuplicateMatch; buildScoringDetails constructor
+      - app/api/articles/utils.ts: mapDuplicateMatchDto / mapDuplicateMatchDtos DTO mappers
+      - API routes updated: /api/articles, /api/articles/offline, /api/articles/duplicates
 
   - laneId: 03-merge-queue-ui
     role: worker

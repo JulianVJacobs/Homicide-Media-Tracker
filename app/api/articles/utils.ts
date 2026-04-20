@@ -1,4 +1,6 @@
 import type { Article } from '../../../lib/db/schema';
+import type { DuplicateMatch } from '../../../lib/components/utils';
+import type { DuplicateMatchDto } from '../../../lib/contracts/duplicate-scoring';
 import {
   toNullableIsoString,
   toNullableString,
@@ -61,3 +63,30 @@ export const coerceArticle = (
 
   return result;
 };
+
+export const mapDuplicateMatchDto = (match: DuplicateMatch): DuplicateMatchDto => ({
+  id: match.id,
+  similarity: match.similarity,
+  matchType: match.matchType,
+  confidence: match.confidence,
+  matchReason: match.matchReason,
+  explainability: match.explainability,
+  matchedFields: [...match.matchedFields],
+  scoring: {
+    whyMatched: [...match.scoring.whyMatched],
+    summaryRationale: match.scoring.summaryRationale,
+    totalWeightedScore: match.scoring.totalWeightedScore,
+    weightedContributions: match.scoring.weightedContributions.map(
+      (contribution) => ({
+        signal: contribution.signal,
+        weight: contribution.weight,
+        rawScore: contribution.rawScore,
+        weightedScore: contribution.weightedScore,
+      }),
+    ),
+  },
+});
+
+export const mapDuplicateMatchDtos = (
+  matches: DuplicateMatch[],
+): DuplicateMatchDto[] => matches.map(mapDuplicateMatchDto);

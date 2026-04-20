@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Card,
   Form,
@@ -16,6 +16,10 @@ import {
   type RoleProfileContext,
   useConstraintEvaluation,
 } from './role-visibility';
+import {
+  buildVisibleFieldSet,
+  filterRequiredFieldsByVisibility,
+} from './participant-field-visibility';
 
 interface VictimFormProps {
   onSubmit: (data: VictimFormValues) => void;
@@ -23,6 +27,7 @@ interface VictimFormProps {
   onClearVictims: () => void;
   requiredFields?: readonly string[];
   roleProfileContext?: RoleProfileContext;
+  visibleFieldGroups?: readonly string[];
 }
 
 type VictimFieldKeys = Extract<
@@ -54,6 +59,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
   onClearVictims,
   requiredFields,
   roleProfileContext,
+  visibleFieldGroups,
 }) => {
   // Default data for dev/testing
   const RESET_DATA: VictimFormValues = {
@@ -91,11 +97,50 @@ const VictimForm: React.FC<VictimFormProps> = ({
     }
   }, [currentVictim.placeOfDeathProvince]);
 
+  const groupVisibility = useMemo(
+    () => ({
+      coreIdentity:
+        !visibleFieldGroups || visibleFieldGroups.includes('coreIdentity'),
+      demographics:
+        !visibleFieldGroups || visibleFieldGroups.includes('demographics'),
+      deathDetails:
+        !visibleFieldGroups || visibleFieldGroups.includes('deathDetails'),
+      location: !visibleFieldGroups || visibleFieldGroups.includes('location'),
+    }),
+    [visibleFieldGroups],
+  );
+
+  const visibleFields = useMemo(
+    () =>
+      buildVisibleFieldSet(groupVisibility, {
+        coreIdentity: ['victimName', 'victimAlias'],
+        deathDetails: [
+          'dateOfDeath',
+          'sexualAssault',
+          'modeOfDeathGeneral',
+          'modeOfDeathSpecific',
+        ],
+        location: [
+          'placeOfDeathProvince',
+          'placeOfDeathTown',
+          'typeOfLocation',
+          'policeStation',
+        ],
+        demographics: ['genderOfVictim', 'raceOfVictim', 'ageOfVictim', 'ageRangeOfVictim'],
+      }),
+    [groupVisibility],
+  );
+
+  const effectiveRequiredFields = useMemo(
+    () => filterRequiredFieldsByVisibility(requiredFields, visibleFields),
+    [requiredFields, visibleFields],
+  );
+
   const constraintState = useConstraintEvaluation(
     currentVictim as Record<string, unknown>,
     'victim',
     roleProfileContext,
-    { requiredFields },
+    { requiredFields: effectiveRequiredFields },
   );
   const isValid = constraintState.isValid;
 
@@ -216,254 +261,270 @@ const VictimForm: React.FC<VictimFormProps> = ({
         )}
 
         <Form>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Victim Name *</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentVictim.victimName ?? ''}
-                  onChange={(e) => handleChange('victimName', e.target.value)}
-                  placeholder="Full name of victim"
-                  required
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Alias</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentVictim.victimAlias ?? ''}
-                  onChange={(e) => handleChange('victimAlias', e.target.value)}
-                  placeholder="Known alias/nickname"
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Date of Death *</Form.Label>
-                <Form.Control
-                  type="date"
-                  value={currentVictim.dateOfDeath ?? ''}
-                  onChange={(e) => handleChange('dateOfDeath', e.target.value)}
-                  required
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Province *</Form.Label>
-                <Form.Select
-                  value={currentVictim.placeOfDeathProvince ?? ''}
-                  onChange={(e) =>
-                    handleChange('placeOfDeathProvince', e.target.value)
-                  }
-                  required
-                >
-                  {provinceOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Town</Form.Label>
-                <Form.Select
-                  value={currentVictim.placeOfDeathTown ?? ''}
-                  onChange={(e) =>
-                    handleChange('placeOfDeathTown', e.target.value)
-                  }
-                  disabled={!currentVictim.placeOfDeathProvince}
-                >
-                  <option value="">Select Town</option>
-                  {availableTowns.map((town) => (
-                    <option key={town} value={town}>
-                      {town}
-                    </option>
-                  ))}
-                </Form.Select>
-                {currentVictim.placeOfDeathTown === 'Other' && (
+          {groupVisibility.coreIdentity && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Victim Name *</Form.Label>
                   <Form.Control
                     type="text"
-                    className="mt-2"
-                    value={customTown}
-                    onChange={(e) => setCustomTown(e.target.value)}
-                    placeholder="Enter custom town name"
+                    value={currentVictim.victimName ?? ''}
+                    onChange={(e) => handleChange('victimName', e.target.value)}
+                    placeholder="Full name of victim"
+                    required
                   />
-                )}
-              </Form.Group>
-            </Col>
-          </Row>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Alias</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={currentVictim.victimAlias ?? ''}
+                    onChange={(e) => handleChange('victimAlias', e.target.value)}
+                    placeholder="Known alias/nickname"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Gender *</Form.Label>
-                <Form.Select
-                  value={currentVictim.genderOfVictim ?? ''}
-                  onChange={(e) =>
-                    handleChange('genderOfVictim', e.target.value)
-                  }
-                  required
-                >
-                  {genderOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Race</Form.Label>
-                <Form.Select
-                  value={currentVictim.raceOfVictim ?? ''}
-                  onChange={(e) => handleChange('raceOfVictim', e.target.value)}
-                >
-                  {raceOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
+          {groupVisibility.deathDetails && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Date of Death *</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={currentVictim.dateOfDeath ?? ''}
+                    onChange={(e) => handleChange('dateOfDeath', e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Age</Form.Label>
-                <Form.Control
-                  type="number"
-                  value={
-                    currentVictim.ageOfVictim !== null
-                      ? currentVictim.ageOfVictim
-                      : ''
-                  }
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    const parsed = raw === '' ? null : Number(raw);
-                    const nextValue = Number.isNaN(parsed) ? null : parsed;
-                    handleChange(
-                      'ageOfVictim',
-                      nextValue as VictimFormValues['ageOfVictim'],
-                    );
-                  }}
-                  placeholder="Exact age if known"
-                  min="0"
-                  max="120"
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Age Range</Form.Label>
-                <Form.Select
-                  value={currentVictim.ageRangeOfVictim ?? ''}
-                  onChange={(e) =>
-                    handleChange('ageRangeOfVictim', e.target.value)
-                  }
-                >
-                  {ageRangeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
+          {groupVisibility.location && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Province *</Form.Label>
+                  <Form.Select
+                    value={currentVictim.placeOfDeathProvince ?? ''}
+                    onChange={(e) =>
+                      handleChange('placeOfDeathProvince', e.target.value)
+                    }
+                    required
+                  >
+                    {provinceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Town</Form.Label>
+                  <Form.Select
+                    value={currentVictim.placeOfDeathTown ?? ''}
+                    onChange={(e) =>
+                      handleChange('placeOfDeathTown', e.target.value)
+                    }
+                    disabled={!currentVictim.placeOfDeathProvince}
+                  >
+                    <option value="">Select Town</option>
+                    {availableTowns.map((town) => (
+                      <option key={town} value={town}>
+                        {town}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  {currentVictim.placeOfDeathTown === 'Other' && (
+                    <Form.Control
+                      type="text"
+                      className="mt-2"
+                      value={customTown}
+                      onChange={(e) => setCustomTown(e.target.value)}
+                      placeholder="Enter custom town name"
+                    />
+                  )}
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Location Type</Form.Label>
-                <Form.Select
-                  value={currentVictim.typeOfLocation ?? ''}
-                  onChange={(e) =>
-                    handleChange('typeOfLocation', e.target.value)
-                  }
-                >
-                  {locationTypeOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Police Station</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentVictim.policeStation ?? ''}
-                  onChange={(e) =>
-                    handleChange('policeStation', e.target.value)
-                  }
-                  placeholder="Name of police station"
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+          {groupVisibility.demographics && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Gender *</Form.Label>
+                  <Form.Select
+                    value={currentVictim.genderOfVictim ?? ''}
+                    onChange={(e) =>
+                      handleChange('genderOfVictim', e.target.value)
+                    }
+                    required
+                  >
+                    {genderOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Race</Form.Label>
+                  <Form.Select
+                    value={currentVictim.raceOfVictim ?? ''}
+                    onChange={(e) =>
+                      handleChange('raceOfVictim', e.target.value)
+                    }
+                  >
+                    {raceOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
-          <Row>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Sexual Assault</Form.Label>
-                <Form.Select
-                  value={currentVictim.sexualAssault ?? ''}
-                  onChange={(e) =>
-                    handleChange('sexualAssault', e.target.value)
-                  }
-                >
-                  {yesNoOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Mode of Death (General)</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentVictim.modeOfDeathGeneral ?? ''}
-                  onChange={(e) =>
-                    handleChange('modeOfDeathGeneral', e.target.value)
-                  }
-                  placeholder="e.g., Gunshot, Stabbing"
-                />
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Mode of Death (Specific)</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentVictim.modeOfDeathSpecific ?? ''}
-                  onChange={(e) =>
-                    handleChange('modeOfDeathSpecific', e.target.value)
-                  }
-                  placeholder="Specific details"
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+          {groupVisibility.demographics && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Age</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={
+                      currentVictim.ageOfVictim !== null
+                        ? currentVictim.ageOfVictim
+                        : ''
+                    }
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      const parsed = raw === '' ? null : Number(raw);
+                      const nextValue = Number.isNaN(parsed) ? null : parsed;
+                      handleChange(
+                        'ageOfVictim',
+                        nextValue as VictimFormValues['ageOfVictim'],
+                      );
+                    }}
+                    placeholder="Exact age if known"
+                    min="0"
+                    max="120"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Age Range</Form.Label>
+                  <Form.Select
+                    value={currentVictim.ageRangeOfVictim ?? ''}
+                    onChange={(e) =>
+                      handleChange('ageRangeOfVictim', e.target.value)
+                    }
+                  >
+                    {ageRangeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {groupVisibility.location && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Location Type</Form.Label>
+                  <Form.Select
+                    value={currentVictim.typeOfLocation ?? ''}
+                    onChange={(e) =>
+                      handleChange('typeOfLocation', e.target.value)
+                    }
+                  >
+                    {locationTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Police Station</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={currentVictim.policeStation ?? ''}
+                    onChange={(e) =>
+                      handleChange('policeStation', e.target.value)
+                    }
+                    placeholder="Name of police station"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
+
+          {groupVisibility.deathDetails && (
+            <Row>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Sexual Assault</Form.Label>
+                  <Form.Select
+                    value={currentVictim.sexualAssault ?? ''}
+                    onChange={(e) =>
+                      handleChange('sexualAssault', e.target.value)
+                    }
+                  >
+                    {yesNoOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Mode of Death (General)</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={currentVictim.modeOfDeathGeneral ?? ''}
+                    onChange={(e) =>
+                      handleChange('modeOfDeathGeneral', e.target.value)
+                    }
+                    placeholder="e.g., Gunshot, Stabbing"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Mode of Death (Specific)</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={currentVictim.modeOfDeathSpecific ?? ''}
+                    onChange={(e) =>
+                      handleChange('modeOfDeathSpecific', e.target.value)
+                    }
+                    placeholder="Specific details"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
           <div className="d-flex justify-content-end">
             <Button

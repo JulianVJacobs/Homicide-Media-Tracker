@@ -87,13 +87,17 @@ lanes:
     role: worker
     branch: lane/2.2.0/04-role-attrs-outlet
     prNumber: null
-    status: planned
-    readiness: waiting
+    status: completed
+    readiness: ready-for-review
     ownedSurface:
       - role-specific attribute rendering and validation
       - searchable outlet combobox UI and API data path
     blockers: []
-    verification: []
+    verification:
+      - npm run test -- lib/components/role-visibility.test.ts lib/contracts/participant-form.test.ts lib/components/participant-field-visibility.test.ts app/api/articles/outlets/utils.test.ts passed
+      - npm run lint passed
+      - npm run test passed
+      - outlet combobox UI screenshot captured (https://github.com/user-attachments/assets/26490dc7-349f-4615-8581-f7c53685e0c2)
 
   - laneId: 05-regression-verification
     role: worker

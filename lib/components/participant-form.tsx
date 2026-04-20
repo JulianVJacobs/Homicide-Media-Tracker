@@ -79,8 +79,8 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
       }),
     [roleProfileContext, perpetratorRequiredFields],
   );
-  const hasVictimFormFields = visibleFieldGroups.includes('deathDetails');
-  const hasPerpetratorFormFields = visibleFieldGroups.includes('suspectStatus');
+  const hasVictimFormFields = visibleFieldGroups.includes('coreIdentity');
+  const hasPerpetratorFormFields = visibleFieldGroups.includes('coreIdentity');
   const hasOtherFormFields = visibleFieldGroups.includes('coreIdentity');
 
   return (
@@ -122,6 +122,7 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
           onClearVictims={onClearVictims}
           roleProfileContext={roleProfileContext}
           requiredFields={resolvedVictimRequiredFields}
+          visibleFieldGroups={visibleFieldGroups}
         />
       )}
 
@@ -139,6 +140,7 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
           onClearPerpetrators={onClearPerpetrators}
           roleProfileContext={roleProfileContext}
           requiredFields={resolvedPerpetratorRequiredFields}
+          visibleFieldGroups={visibleFieldGroups}
         />
       )}
 

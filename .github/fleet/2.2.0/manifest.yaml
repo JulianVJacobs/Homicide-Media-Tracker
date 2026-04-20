@@ -99,12 +99,17 @@ lanes:
     role: worker
     branch: lane/2.2.0/05-regression-verification
     prNumber: null
-    status: planned
-    readiness: blocked
+    status: completed
+    readiness: completed
     ownedSurface:
       - integrated regression checklist
       - compatibility and e2e verification
       - final readiness report
-    blockers:
-      - waits for merged outputs from lanes 01 through 04
-    verification: []
+    blockers: []
+    verification:
+      - readiness report published: .github/fleet/2.2.0/05-regression-readiness.md
+      - area status PASS: identity/scoring explainability regression (`npm run test -- lib/components/utils.test.ts lib/components/participant-merge-queue.utils.test.ts`)
+      - area status PASS: merge queue + alias/promotion compatibility (`npm run test -- app/api/participant-alias.test.ts app/api/participant-merge-promotion.test.ts lib/contracts/participant-merge.test.ts`)
+      - area status PASS: contract drift guardrails (`npm run test -- lib/contracts/participant-form.test.ts lib/contracts/events-contract.test.ts lib/events/integration.test.ts`)
+      - area status PASS: integrated branch baseline (`npm run lint` and `npm run test` passed; 18 suites / 58 tests)
+      - blocker review complete: no semver drift or breaking behavior detected in verification scope

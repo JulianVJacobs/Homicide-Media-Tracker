@@ -29,4 +29,13 @@ describe('participant form contract', () => {
       'coreIdentity',
     ]);
   });
+
+  it('publishes role-based visibility rules', () => {
+    expect(
+      PARTICIPANT_FORM_CONTRACT.roleVisibilityRules.viewer?.victim,
+    ).toEqual(['coreIdentity']);
+    expect(
+      PARTICIPANT_FORM_CONTRACT.roleVisibilityRules.viewer?.perpetrator,
+    ).toEqual(['coreIdentity']);
+  });
 });

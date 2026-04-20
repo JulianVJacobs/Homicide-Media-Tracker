@@ -50,14 +50,17 @@ lanes:
     branch: lane/2.1.0/02-role-visibility
     prNumber: null
     status: active
-    readiness: ready-to-implement
+    readiness: ready-for-review
     ownedSurface:
       - role-based field visibility rules
       - form rendering gates
       - role constraint evaluation
     blockers: []
     verification:
-      - role visibility rule tests pending
+      - npm run lint ✅
+      - npm run test ✅ (16 suites, 51 tests)
+      - npm run test -- lib/contracts/participant-form.test.ts lib/components/role-visibility.test.ts ✅
+      - role-specific visibility verified in helper tests (viewer role reduced to coreIdentity; profile override honored)
 
   - laneId: 03-domain-seed-support
     role: worker

@@ -7,6 +7,14 @@ import {
   // type SQLiteTableWithColumns
 } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
+import {
+  buildConfidenceCheck,
+  CLAIM_EVIDENCE_STRENGTH_VALUES,
+  CLAIM_SUBJECT_TYPES,
+  CLAIM_VALUE_TYPES,
+  EVENT_ACTOR_ROLE_CERTAINTY_VALUES,
+  buildEscapedSqlInList,
+} from './domain-constants';
 
 // interface DBTable {
 //   table: SQLiteTable<T>,
@@ -339,6 +347,148 @@ export const migrationUsers = `CREATE TABLE IF NOT EXISTS users (
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
+export const schemaVocabTerms = sqliteTable(
+  'schema_vocab_term',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    vocabKey: text('vocab_key').notNull(),
+    termKey: text('term_key').notNull(),
+    label: text('label').notNull(),
+    description: text('description'),
+    isSystem: integer('is_system', { mode: 'boolean' }).default(true),
+    createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => ({
+    vocabTermUnique: uniqueIndex('schema_vocab_term_vocab_term_unique').on(
+      table.vocabKey,
+      table.termKey,
+    ),
+  }),
+);
+
+export const migrationSchemaVocabTerms = `CREATE TABLE IF NOT EXISTS schema_vocab_term (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  vocab_key TEXT NOT NULL,
+  term_key TEXT NOT NULL,
+  label TEXT NOT NULL,
+  description TEXT,
+  is_system INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(vocab_key, term_key)
+)`;
+
+export type SchemaVocabTerm = typeof schemaVocabTerms.$inferSelect;
+export type NewSchemaVocabTerm = typeof schemaVocabTerms.$inferInsert;
+
+export const eventActorRoles = sqliteTable('event_actor_role', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => annotationEvents.id, { onDelete: 'cascade' }),
+  actorId: text('actor_id')
+    .notNull()
+    .references(() => actors.id, { onDelete: 'cascade' }),
+  roleTermId: integer('role_term_id')
+    .notNull()
+    .references(() => schemaVocabTerms.id, { onDelete: 'restrict' }),
+  roleScope: text('role_scope'),
+  confidence: integer('confidence'),
+  certainty: text('certainty').default('unknown'),
+  isPrimaryRole: integer('is_primary_role', { mode: 'boolean' }).default(false),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+const confidenceCheckConstraint = buildConfidenceCheck('confidence');
+const eventActorRoleCertaintyCheckConstraint = `CHECK (certainty IN (${buildEscapedSqlInList(EVENT_ACTOR_ROLE_CERTAINTY_VALUES)}))`;
+
+export const migrationEventActorRoles = `CREATE TABLE IF NOT EXISTS event_actor_role (
+  id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL REFERENCES annotation_event(id) ON DELETE CASCADE,
+  actor_id TEXT NOT NULL REFERENCES actor(id) ON DELETE CASCADE,
+  role_term_id INTEGER NOT NULL REFERENCES schema_vocab_term(id) ON DELETE RESTRICT,
+  role_scope TEXT,
+  confidence INTEGER ${confidenceCheckConstraint},
+  certainty TEXT DEFAULT 'unknown' ${eventActorRoleCertaintyCheckConstraint},
+  is_primary_role INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type EventActorRole = typeof eventActorRoles.$inferSelect;
+export type NewEventActorRole = typeof eventActorRoles.$inferInsert;
+
+export const claims = sqliteTable('claim', {
+  id: text('id').primaryKey(),
+  subjectType: text('subject_type').notNull(),
+  subjectId: text('subject_id').notNull(),
+  predicateKey: text('predicate_key').notNull(),
+  valueJson: text('value_json', { mode: 'json' }),
+  valueType: text('value_type').notNull(),
+  confidence: integer('confidence'),
+  assertedBy: text('asserted_by'),
+  assertedAt: text('asserted_at').default(sql`CURRENT_TIMESTAMP`),
+  schemaFieldId: text('schema_field_id').references(() => schemaFields.id),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+const claimSubjectTypeConstraint = `CHECK (subject_type IN (${buildEscapedSqlInList(CLAIM_SUBJECT_TYPES)}))`;
+const claimValueTypeConstraint = `CHECK (value_type IN (${buildEscapedSqlInList(CLAIM_VALUE_TYPES)}))`;
+
+export const migrationClaims = `CREATE TABLE IF NOT EXISTS claim (
+  id TEXT PRIMARY KEY,
+  subject_type TEXT NOT NULL ${claimSubjectTypeConstraint},
+  subject_id TEXT NOT NULL,
+  predicate_key TEXT NOT NULL,
+  value_json TEXT,
+  value_type TEXT NOT NULL ${claimValueTypeConstraint},
+  confidence INTEGER ${confidenceCheckConstraint},
+  asserted_by TEXT,
+  asserted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  schema_field_id TEXT REFERENCES schema_field(id),
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type Claim = typeof claims.$inferSelect;
+export type NewClaim = typeof claims.$inferInsert;
+
+export const claimEvidence = sqliteTable('claim_evidence', {
+  id: text('id').primaryKey(),
+  claimId: text('claim_id')
+    .notNull()
+    .references(() => claims.id, { onDelete: 'cascade' }),
+  sourceRecordId: text('source_record_id').references(() => articles.id, {
+    onDelete: 'set null',
+  }),
+  excerptText: text('excerpt_text').notNull(),
+  selectorJson: text('selector_json', { mode: 'json' }),
+  coderNote: text('coder_note'),
+  evidenceStrength: text('evidence_strength').notNull(),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+const claimEvidenceStrengthConstraint = `CHECK (evidence_strength IN (${buildEscapedSqlInList(CLAIM_EVIDENCE_STRENGTH_VALUES)}))`;
+
+export const migrationClaimEvidence = `CREATE TABLE IF NOT EXISTS claim_evidence (
+  id TEXT PRIMARY KEY,
+  claim_id TEXT NOT NULL REFERENCES claim(id) ON DELETE CASCADE,
+  source_record_id TEXT REFERENCES articles(id) ON DELETE SET NULL,
+  excerpt_text TEXT NOT NULL,
+  selector_json TEXT,
+  coder_note TEXT,
+  evidence_strength TEXT NOT NULL ${claimEvidenceStrengthConstraint},
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type ClaimEvidence = typeof claimEvidence.$inferSelect;
+export type NewClaimEvidence = typeof claimEvidence.$inferInsert;
+
 // --- Events ---
 export const events = sqliteTable('events', {
   id: text('id').primaryKey(),
@@ -415,6 +565,76 @@ export const migrationParticipants = `CREATE TABLE IF NOT EXISTS participants (
 export type Participant = typeof participants.$inferSelect;
 export type NewParticipant = typeof participants.$inferInsert;
 
+// --- Actors ---
+export const actors = sqliteTable('actor', {
+  id: text('id').primaryKey(),
+  canonicalLabel: text('canonical_label'),
+  actorKind: text('actor_kind').notNull().default('unknown'),
+  status: text('status').notNull().default('active'),
+  schemaProfileId: text('schema_profile_id'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const migrationActors = `CREATE TABLE IF NOT EXISTS actor (
+  id TEXT PRIMARY KEY,
+  canonical_label TEXT,
+  actor_kind TEXT NOT NULL DEFAULT 'unknown',
+  status TEXT NOT NULL DEFAULT 'active',
+  schema_profile_id TEXT REFERENCES schema_profile(id),
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type Actor = typeof actors.$inferSelect;
+export type NewActor = typeof actors.$inferInsert;
+
+export const actorAliases = sqliteTable('actor_alias', {
+  id: text('id').primaryKey(),
+  actorId: text('actor_id').notNull(),
+  aliasValue: text('alias_value').notNull(),
+  aliasNormalized: text('alias_normalized').notNull(),
+  isPrimary: integer('is_primary', { mode: 'boolean' }).default(false),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const migrationActorAliases = `CREATE TABLE IF NOT EXISTS actor_alias (
+  id TEXT PRIMARY KEY,
+  actor_id TEXT NOT NULL REFERENCES actor(id),
+  alias_value TEXT NOT NULL,
+  alias_normalized TEXT NOT NULL,
+  is_primary INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type ActorAlias = typeof actorAliases.$inferSelect;
+export type NewActorAlias = typeof actorAliases.$inferInsert;
+
+export const actorIdentifiers = sqliteTable('actor_identifier', {
+  id: text('id').primaryKey(),
+  actorId: text('actor_id').notNull(),
+  namespace: text('namespace').notNull(),
+  value: text('value').notNull(),
+  isPrimary: integer('is_primary', { mode: 'boolean' }).default(false),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const migrationActorIdentifiers = `CREATE TABLE IF NOT EXISTS actor_identifier (
+  id TEXT PRIMARY KEY,
+  actor_id TEXT NOT NULL REFERENCES actor(id),
+  namespace TEXT NOT NULL,
+  value TEXT NOT NULL,
+  is_primary INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`;
+
+export type ActorIdentifier = typeof actorIdentifiers.$inferSelect;
+export type NewActorIdentifier = typeof actorIdentifiers.$inferInsert;
+
 // --- Sync Queue ---
 export const syncQueue = sqliteTable('sync_queue', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -474,6 +694,17 @@ export const migrationIndexes = [
   `CREATE INDEX IF NOT EXISTS idx_schema_constraint_profile_type ON schema_constraint(profile_id, type)`,
   `CREATE INDEX IF NOT EXISTS idx_schema_field_profile_entity ON schema_field(profile_id, entity_type)`,
   `CREATE INDEX IF NOT EXISTS idx_annotation_event_profile_id ON annotation_event(profile_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_actor_canonical_label ON actor(canonical_label)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_actor_alias_actor_normalized ON actor_alias(actor_id, alias_normalized)`,
+  `CREATE INDEX IF NOT EXISTS idx_actor_alias_value ON actor_alias(alias_value)`,
+  `CREATE INDEX IF NOT EXISTS idx_actor_identifier_namespace_value ON actor_identifier(namespace, value)`,
+  `CREATE INDEX IF NOT EXISTS idx_actor_identifier_actor_id ON actor_identifier(actor_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_event_actor_role_event_id ON event_actor_role(event_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_event_actor_role_actor_id ON event_actor_role(actor_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_event_actor_role_role_term_id ON event_actor_role(role_term_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_claim_subject ON claim(subject_type, subject_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_claim_predicate ON claim(predicate_key)`,
+  `CREATE INDEX IF NOT EXISTS idx_claim_evidence_claim_id ON claim_evidence(claim_id)`,
 ];
 
 export const migrationVictimAliasColumn = `ALTER TABLE victims ADD COLUMN victim_alias TEXT`;
@@ -488,9 +719,182 @@ export const migrationVictimPromotionAuditColumn = `ALTER TABLE victims ADD COLU
 export const migrationPerpetratorPromotionAuditColumn = `ALTER TABLE perpetrators ADD COLUMN promotion_audit TEXT`;
 // NOTE: merge_audit and promotion_audit are JSON-serialized payloads stored as TEXT.
 
+export const migrationBackfillVictimsToActors = `INSERT OR IGNORE INTO actor (
+  id,
+  canonical_label,
+  actor_kind,
+  status,
+  created_at,
+  updated_at
+)
+SELECT
+  id,
+  NULLIF(TRIM(victim_name), ''),
+  'person',
+  CASE WHEN merged_into_id IS NOT NULL THEN 'merged' ELSE 'active' END,
+  COALESCE(created_at, CURRENT_TIMESTAMP),
+  COALESCE(updated_at, CURRENT_TIMESTAMP)
+FROM victims`;
+
+export const migrationBackfillPerpetratorsToActors = `INSERT OR IGNORE INTO actor (
+  id,
+  canonical_label,
+  actor_kind,
+  status,
+  created_at,
+  updated_at
+)
+SELECT
+  id,
+  NULLIF(TRIM(perpetrator_name), ''),
+  'person',
+  CASE WHEN merged_into_id IS NOT NULL THEN 'merged' ELSE 'active' END,
+  COALESCE(created_at, CURRENT_TIMESTAMP),
+  COALESCE(updated_at, CURRENT_TIMESTAMP)
+FROM perpetrators`;
+
+export const migrationBackfillVictimIdentifiers = `INSERT OR IGNORE INTO actor_identifier (
+  id,
+  actor_id,
+  namespace,
+  value,
+  is_primary,
+  created_at,
+  updated_at
+)
+SELECT
+  'legacy_victim_id:' || id,
+  id,
+  'legacy_victim_id',
+  id,
+  1,
+  COALESCE(created_at, CURRENT_TIMESTAMP),
+  COALESCE(updated_at, CURRENT_TIMESTAMP)
+FROM victims`;
+
+export const migrationBackfillPerpIdentifiers = `INSERT OR IGNORE INTO actor_identifier (
+  id,
+  actor_id,
+  namespace,
+  value,
+  is_primary,
+  created_at,
+  updated_at
+)
+SELECT
+  'legacy_perp_id:' || id,
+  id,
+  'legacy_perp_id',
+  id,
+  1,
+  COALESCE(created_at, CURRENT_TIMESTAMP),
+  COALESCE(updated_at, CURRENT_TIMESTAMP)
+FROM perpetrators`;
+
+export const migrationBackfillPrimaryNameIdentifiers = `INSERT OR IGNORE INTO actor_identifier (
+  id,
+  actor_id,
+  namespace,
+  value,
+  is_primary,
+  created_at,
+  updated_at
+)
+SELECT
+  'primary_name:' || id,
+  id,
+  'primary_name',
+  COALESCE(TRIM(canonical_label), ''),
+  1,
+  COALESCE(created_at, CURRENT_TIMESTAMP),
+  COALESCE(updated_at, CURRENT_TIMESTAMP)
+FROM actor
+WHERE canonical_label IS NOT NULL AND TRIM(canonical_label) != ''`;
+
+export const migrationBackfillVictimAliases = `WITH RECURSIVE split(actor_id, alias, rest, created_at, updated_at) AS (
+  SELECT
+    id,
+    '',
+    COALESCE(victim_alias, '') || '|',
+    COALESCE(created_at, CURRENT_TIMESTAMP),
+    COALESCE(updated_at, CURRENT_TIMESTAMP)
+  FROM victims
+  WHERE victim_alias IS NOT NULL AND TRIM(victim_alias) != ''
+  UNION ALL
+  SELECT
+    actor_id,
+    TRIM(substr(rest, 1, instr(rest, '|') - 1)),
+    substr(rest, instr(rest, '|') + 1),
+    created_at,
+    updated_at
+  FROM split
+  WHERE rest != ''
+)
+INSERT OR IGNORE INTO actor_alias (
+  id,
+  actor_id,
+  alias_value,
+  alias_normalized,
+  is_primary,
+  created_at,
+  updated_at
+)
+SELECT
+  'victim_alias:' || actor_id || ':' || lower(alias),
+  actor_id,
+  alias,
+  lower(alias),
+  0,
+  created_at,
+  updated_at
+FROM split
+WHERE alias != ''`;
+
+export const migrationBackfillPerpAliases = `WITH RECURSIVE split(actor_id, alias, rest, created_at, updated_at) AS (
+  SELECT
+    id,
+    '',
+    COALESCE(perpetrator_alias, '') || '|',
+    COALESCE(created_at, CURRENT_TIMESTAMP),
+    COALESCE(updated_at, CURRENT_TIMESTAMP)
+  FROM perpetrators
+  WHERE perpetrator_alias IS NOT NULL AND TRIM(perpetrator_alias) != ''
+  UNION ALL
+  SELECT
+    actor_id,
+    TRIM(substr(rest, 1, instr(rest, '|') - 1)),
+    substr(rest, instr(rest, '|') + 1),
+    created_at,
+    updated_at
+  FROM split
+  WHERE rest != ''
+)
+INSERT OR IGNORE INTO actor_alias (
+  id,
+  actor_id,
+  alias_value,
+  alias_normalized,
+  is_primary,
+  created_at,
+  updated_at
+)
+SELECT
+  'perp_alias:' || actor_id || ':' || lower(alias),
+  actor_id,
+  alias,
+  lower(alias),
+  0,
+  created_at,
+  updated_at
+FROM split
+WHERE alias != ''`;
+
 // --- Unified migration array ---
 export const migrations = [
   migrationParticipants,
+  migrationActors,
+  migrationActorAliases,
+  migrationActorIdentifiers,
   migrationArticles,
   migrationEvents,
   migrationReportAnnotations,
@@ -508,9 +912,20 @@ export const migrations = [
   migrationPerpetratorPromotionAuditColumn,
   migrationSchemaProfiles,
   migrationSchemaFields,
+  migrationBackfillVictimsToActors,
+  migrationBackfillPerpetratorsToActors,
+  migrationBackfillVictimIdentifiers,
+  migrationBackfillPerpIdentifiers,
+  migrationBackfillPrimaryNameIdentifiers,
+  migrationBackfillVictimAliases,
+  migrationBackfillPerpAliases,
   migrationSchemaConstraints,
   migrationAnnotationEvents,
   migrationUsers,
+  migrationSchemaVocabTerms,
+  migrationEventActorRoles,
+  migrationClaims,
+  migrationClaimEvidence,
   migrationSyncQueue,
   migrationAppConfig,
   ...migrationIndexes,

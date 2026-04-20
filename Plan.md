@@ -1,3 +1,8 @@
+- Phase 3 Kilo status (current branch):
+  - Completed: event_actor_role, claim, and claim_evidence tables added with FK wiring; default event-role vocabulary seeding added; basic event-role and role-claim CRUD endpoints implemented.
+  - Remaining: Lima UI wiring and any stricter domain-level predicate/role policy decisions if product requires them.
+  - Blockers: none for backend schema/API delivery; current implementation supports free-form claim predicates and flexible selector_json evidence formats.
+
 - Completed baseline: participant alias support and merge/promotion infrastructure are already implemented and must remain unchanged.
 - Remaining scope: form contract publication first, then post-merge integration wiring and verification only.
 - Hotel slice: publish unified participant form contract, define visibility/editability defaults, and track integration readiness/risk.
@@ -104,3 +109,28 @@
 
 - If lane implementations use different field keys for `participantType`, contract drift may require alignment patch.
 - If `participant` (Other) persistence shape diverges from shared-fields-only assumption, contract revision will be needed.
+
+## Phase 3 Lima — Event-Actor-Role Integration (In Progress)
+
+### Coordination notes
+- India/Juliet/Kilo coordination is active via CI lane monitoring (`copilot/featindia-event-schema`, `copilot/featlima-integration` currently running).
+- Contract alignment locked in this branch through `GET /api/events/contract` with frozen payload keys for event, actor, event_actor_role, and claim.
+- No participant/victim/perpetrator merge plumbing changes introduced in this integration slice.
+
+### Completed in this integration branch
+- Published Phase 3 contract freeze endpoint: `GET /api/events/contract`.
+- Added integrated event read endpoint: `GET /api/events/:id`.
+- Added backward-compatible actor projection from legacy `victims` and `perpetrators` records.
+- Added default role projection (`victim` / `perpetrator`) with explicit detail-payload override support.
+- Added claim projection support from event details payload.
+- Added focused tests for contract freeze and integration payload mapping.
+
+### Verification status
+- ✅ `npm run lint`
+- ✅ `npm run test`
+- ⚠️ `npm run build` blocked in sandbox by external font fetch (`fonts.googleapis.com`) and an existing unrelated module-resolution error in `app/api/participants/form-contract/route.ts`.
+
+### Remaining before final Phase 3 closeout
+- Validate final India/Juliet/Kilo merged payloads against this frozen contract shape.
+- Execute post-merge end-to-end create event → add actors → assign roles → add claims flow in integrated lane.
+- Mark Phase 3 complete after merged-lane verification.

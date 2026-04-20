@@ -15,6 +15,13 @@ export interface MergeQueueCandidate {
   right: MergeParticipantRecord;
 }
 
+export type MergeQueueRoleFilter = 'all' | MergeParticipantRole;
+export type MergeQueueSortOrder =
+  | 'shared-value-asc'
+  | 'shared-value-desc'
+  | 'role-asc'
+  | 'role-desc';
+
 const NAME_DELIMITER = /[,;|]+/;
 
 export const normaliseName = (value: string | null | undefined): string =>
@@ -84,6 +91,63 @@ export const buildMergeQueueCandidates = (
     }
   }
   return candidates;
+};
+
+const candidateMatchesSearch = (
+  candidate: MergeQueueCandidate,
+  searchTerm: string,
+): boolean => {
+  if (!searchTerm) return true;
+  const values = [
+    candidate.sharedValue,
+    candidate.left.primaryName,
+    candidate.left.alias,
+    candidate.right.primaryName,
+    candidate.right.alias,
+    candidate.left.id,
+    candidate.right.id,
+  ];
+  return values.some((value) => normaliseName(value).includes(searchTerm));
+};
+
+export const filterAndSortMergeQueueCandidates = (
+  queue: MergeQueueCandidate[],
+  options: {
+    roleFilter: MergeQueueRoleFilter;
+    searchText: string;
+    sortOrder: MergeQueueSortOrder;
+  },
+): MergeQueueCandidate[] => {
+  const searchTerm = normaliseName(options.searchText);
+  const filtered = queue.filter((candidate) => {
+    if (
+      options.roleFilter !== 'all' &&
+      candidate.left.role !== options.roleFilter
+    ) {
+      return false;
+    }
+    return candidateMatchesSearch(candidate, searchTerm);
+  });
+
+  return filtered.sort((left, right) => {
+    if (options.sortOrder === 'role-asc' || options.sortOrder === 'role-desc') {
+      const direction = options.sortOrder === 'role-asc' ? 1 : -1;
+      const roleCompare = left.left.role.localeCompare(right.left.role);
+      if (roleCompare !== 0) return roleCompare * direction;
+      const sharedCompare = normaliseName(left.sharedValue).localeCompare(
+        normaliseName(right.sharedValue),
+      );
+      if (sharedCompare !== 0) return sharedCompare * direction;
+      return left.id.localeCompare(right.id) * direction;
+    }
+
+    const direction = options.sortOrder === 'shared-value-asc' ? 1 : -1;
+    const sharedCompare = normaliseName(left.sharedValue).localeCompare(
+      normaliseName(right.sharedValue),
+    );
+    if (sharedCompare !== 0) return sharedCompare * direction;
+    return left.id.localeCompare(right.id) * direction;
+  });
 };
 
 export interface AliasPromotionResult {

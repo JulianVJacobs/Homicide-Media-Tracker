@@ -73,15 +73,19 @@ lanes:
     role: worker
     branch: lane/2.2.0/03-merge-queue-ui
     prNumber: null
-    status: planned
-    readiness: waiting
+    status: active
+    readiness: ready-for-review
     ownedSurface:
       - actor merge queue UI
       - promotion workflow UI
       - queue filtering and sort controls
     blockers:
       - needs merge candidates from lane 01
-    verification: []
+    verification:
+      - added queue role filter, sort options, and search pathway in participant merge queue UI
+      - added merge decision action pathways (keep-left / keep-right / review merge)
+      - validated with npm run test -- lib/components/participant-merge-queue.utils.test.ts
+      - validated with npm run lint
 
   - laneId: 04-role-attrs-outlet
     role: worker

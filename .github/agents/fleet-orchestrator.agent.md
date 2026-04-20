@@ -1,6 +1,6 @@
 ---
 description: 'Use when planning cloud agent delegation, coordinating multiple agent lanes, updating the active plan, generating handoff prompts, preventing merge conflicts across simultaneous work, or reviewing merge order and PR readiness. Keywords: fleet orchestrator, delegation manager, conductor branch, semver contract, handoff prompts, plan updates, merge coordinator, parallel agent work, branch and PR naming, review coordinator.'
-name: 'fleet-orchestrator'
+name: 'Fleet Orchestrator'
 tools:
   [
     vscode/extensions,

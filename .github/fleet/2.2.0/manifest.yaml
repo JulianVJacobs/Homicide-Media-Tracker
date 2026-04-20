@@ -46,14 +46,17 @@ lanes:
     role: worker
     branch: lane/2.2.0/01-identity-core
     prNumber: null
-    status: planned
-    readiness: waiting
+    status: ready-for-review
+    readiness: ready
     ownedSurface:
       - actor identity core logic
       - alias and promotion reuse for actors
       - multi-field duplicate scoring internals
     blockers: []
-    verification: []
+    verification:
+      - npm run test -- lib/actors/identity-core.test.ts
+      - npm run lint
+      - npm run test
 
   - laneId: 02-scoring-explainability
     role: worker

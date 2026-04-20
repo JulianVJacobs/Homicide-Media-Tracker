@@ -5,9 +5,14 @@ import { Alert, Button, Card, Col, Form, ListGroup, Row } from 'react-bootstrap'
 import VictimForm, { type VictimFormValues } from './victim-form';
 import PerpetratorForm, { type PerpetratorFormValues } from './perpetrator-form';
 import {
-  PARTICIPANT_FORM_VISIBLE_FIELD_GROUPS,
   type ParticipantType,
 } from '@/lib/contracts/participant-form';
+import {
+  type ProfileVisibilityRules,
+  type RoleProfileContext,
+  resolveRequiredConstraintFields,
+  useRoleFieldVisibility,
+} from './role-visibility';
 
 export interface OtherParticipantFormValues {
   participantName: string;
@@ -24,6 +29,10 @@ interface ParticipantFormProps {
   onClearVictims: () => void;
   onClearPerpetrators: () => void;
   onClearOtherParticipants: () => void;
+  roleProfileContext?: RoleProfileContext;
+  profileVisibilityRules?: ProfileVisibilityRules;
+  victimRequiredFields?: readonly string[];
+  perpetratorRequiredFields?: readonly string[];
 }
 
 const ParticipantForm: React.FC<ParticipantFormProps> = ({
@@ -36,6 +45,10 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
   onClearVictims,
   onClearPerpetrators,
   onClearOtherParticipants,
+  roleProfileContext,
+  profileVisibilityRules,
+  victimRequiredFields,
+  perpetratorRequiredFields,
 }) => {
   const [participantType, setParticipantType] = useState<ParticipantType>('victim');
   const [otherForm, setOtherForm] = useState<OtherParticipantFormValues>({
@@ -47,7 +60,28 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
     () => Boolean(otherForm.participantName.trim()),
     [otherForm.participantName],
   );
-  const visibleFieldGroups = PARTICIPANT_FORM_VISIBLE_FIELD_GROUPS[participantType];
+  const visibleFieldGroups = useRoleFieldVisibility(
+    participantType,
+    roleProfileContext,
+    profileVisibilityRules,
+  );
+  const resolvedVictimRequiredFields = useMemo(
+    () =>
+      resolveRequiredConstraintFields('victim', roleProfileContext, {
+        requiredFields: victimRequiredFields,
+      }),
+    [roleProfileContext, victimRequiredFields],
+  );
+  const resolvedPerpetratorRequiredFields = useMemo(
+    () =>
+      resolveRequiredConstraintFields('perpetrator', roleProfileContext, {
+        requiredFields: perpetratorRequiredFields,
+      }),
+    [roleProfileContext, perpetratorRequiredFields],
+  );
+  const hasVictimFormFields = visibleFieldGroups.includes('deathDetails');
+  const hasPerpetratorFormFields = visibleFieldGroups.includes('suspectStatus');
+  const hasOtherFormFields = visibleFieldGroups.includes('coreIdentity');
 
   return (
     <>
@@ -74,24 +108,48 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
         </Card.Body>
       </Card>
 
-      {participantType === 'victim' && visibleFieldGroups.includes('deathDetails') && (
+      {participantType === 'victim' && !hasVictimFormFields && (
+        <Alert variant="warning">
+          Your role/profile visibility settings do not allow victim fields in this
+          form.
+        </Alert>
+      )}
+
+      {participantType === 'victim' && hasVictimFormFields && (
         <VictimForm
           onSubmit={onSubmitVictim}
           victims={victims}
           onClearVictims={onClearVictims}
+          roleProfileContext={roleProfileContext}
+          requiredFields={resolvedVictimRequiredFields}
         />
       )}
 
-      {participantType === 'perpetrator' &&
-        visibleFieldGroups.includes('suspectStatus') && (
+      {participantType === 'perpetrator' && !hasPerpetratorFormFields && (
+        <Alert variant="warning">
+          Your role/profile visibility settings do not allow perpetrator fields in
+          this form.
+        </Alert>
+      )}
+
+      {participantType === 'perpetrator' && hasPerpetratorFormFields && (
         <PerpetratorForm
           onSubmit={onSubmitPerpetrator}
           perpetrators={perpetrators}
           onClearPerpetrators={onClearPerpetrators}
+          roleProfileContext={roleProfileContext}
+          requiredFields={resolvedPerpetratorRequiredFields}
         />
       )}
 
-      {participantType === 'other' && visibleFieldGroups.includes('coreIdentity') && (
+      {participantType === 'other' && !hasOtherFormFields && (
+        <Alert variant="warning">
+          Your role/profile visibility settings do not allow other participant
+          fields in this form.
+        </Alert>
+      )}
+
+      {participantType === 'other' && hasOtherFormFields && (
         <Card className="mb-4">
           <Card.Header>
             <div className="d-flex justify-content-between align-items-center">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   Form,
@@ -12,12 +12,17 @@ import {
 } from 'react-bootstrap';
 import type { NewVictim } from '@/lib/db/schema';
 import { townsByProvince } from '@/lib/data/towns-by-province';
-import { SCHEMA_CONSTRAINT_REQUIRED_FIELDS } from '@/lib/contracts/schema-constraints';
+import {
+  type RoleProfileContext,
+  useConstraintEvaluation,
+} from './role-visibility';
 
 interface VictimFormProps {
   onSubmit: (data: VictimFormValues) => void;
   victims: VictimFormValues[];
   onClearVictims: () => void;
+  requiredFields?: readonly string[];
+  roleProfileContext?: RoleProfileContext;
 }
 
 type VictimFieldKeys = Extract<
@@ -47,6 +52,8 @@ const VictimForm: React.FC<VictimFormProps> = ({
   onSubmit,
   victims = [],
   onClearVictims,
+  requiredFields,
+  roleProfileContext,
 }) => {
   // Default data for dev/testing
   const RESET_DATA: VictimFormValues = {
@@ -71,7 +78,6 @@ const VictimForm: React.FC<VictimFormProps> = ({
 
   const [availableTowns, setAvailableTowns] = useState<string[]>([]);
   const [customTown, setCustomTown] = useState('');
-  const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
     // Update available towns based on selected province
@@ -85,17 +91,13 @@ const VictimForm: React.FC<VictimFormProps> = ({
     }
   }, [currentVictim.placeOfDeathProvince]);
 
-  useEffect(() => {
-    // Validate required fields
-    const required = SCHEMA_CONSTRAINT_REQUIRED_FIELDS.victim;
-    const allRequiredFilled = required.every((field) => {
-      const value = currentVictim[field as keyof VictimFormValues];
-      if (value === null || value === undefined) return false;
-      if (typeof value === 'number') return true;
-      return value.toString().trim() !== '';
-    });
-    setIsValid(allRequiredFilled);
-  }, [currentVictim]);
+  const constraintState = useConstraintEvaluation(
+    currentVictim as Record<string, unknown>,
+    'victim',
+    roleProfileContext,
+    { requiredFields },
+  );
+  const isValid = constraintState.isValid;
 
   const handleChange = <K extends keyof VictimFormValues>(
     field: K,

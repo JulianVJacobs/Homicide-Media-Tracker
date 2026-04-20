@@ -175,12 +175,15 @@ class DatabaseManagerServer {
     await this.seedDefaultRoleVocabulary();
   }
 
-  async registerDomainSeed(seed: DomainSeedDefinition): Promise<void> {
+  async registerDomainSeed(seed: DomainSeedDefinition): Promise<{
+    applied: boolean;
+  }> {
     this.domainSeedRegistry.set(seed.domainKey, seed);
     if (!this.localClient) {
-      return;
+      return { applied: false };
     }
     await applyDomainSeed(this.localClient, seed);
+    return { applied: true };
   }
 
   getRegisteredDomainSeeds(): DomainSeedDefinition[] {

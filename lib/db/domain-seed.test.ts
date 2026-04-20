@@ -98,4 +98,21 @@ describe('applyDomainSeed', () => {
       expect.arrayContaining(['schema_field', 'schema_constraint']),
     );
   });
+
+  it('records all missing table dependencies when profile table is absent', async () => {
+    const client = new MockSqlClient([]);
+
+    const result = await applyDomainSeed(client, HOMICIDE_DEFAULT_DOMAIN_SEED);
+
+    expect(result.profileRowsAffected).toBe(0);
+    expect(result.fieldRowsAffected).toBe(0);
+    expect(result.constraintRowsAffected).toBe(0);
+    expect(result.skippedTables).toEqual(
+      expect.arrayContaining([
+        'schema_profile',
+        'schema_field',
+        'schema_constraint',
+      ]),
+    );
+  });
 });

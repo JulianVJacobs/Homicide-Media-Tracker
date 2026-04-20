@@ -101,8 +101,20 @@ export const applyDomainSeed = async (
   };
 
   const hasProfileTable = await tableExists(client, 'schema_profile');
-  if (!hasProfileTable) {
+  const hasFieldTable = await tableExists(client, 'schema_field');
+  const hasConstraintTable = await tableExists(client, 'schema_constraint');
+  const profileTableMissing = !hasProfileTable;
+
+  if (profileTableMissing) {
     result.skippedTables.push('schema_profile');
+  }
+  if (!hasFieldTable) {
+    result.skippedTables.push('schema_field');
+  }
+  if (!hasConstraintTable) {
+    result.skippedTables.push('schema_constraint');
+  }
+  if (profileTableMissing) {
     return result;
   }
 
@@ -125,10 +137,7 @@ export const applyDomainSeed = async (
     }),
   );
 
-  const hasFieldTable = await tableExists(client, 'schema_field');
-  if (!hasFieldTable) {
-    result.skippedTables.push('schema_field');
-  } else {
+  if (hasFieldTable) {
     for (const field of seed.fields) {
       result.fieldRowsAffected += getRowsAffected(
         await client.execute({
@@ -153,25 +162,21 @@ export const applyDomainSeed = async (
     }
   }
 
-  const hasConstraintTable = await tableExists(client, 'schema_constraint');
-  if (!hasConstraintTable) {
-    result.skippedTables.push('schema_constraint');
-    return result;
-  }
-
-  for (const [type, requiredFields] of Object.entries(seed.constraints)) {
-    result.constraintRowsAffected += getRowsAffected(
-      await client.execute({
-        sql: `INSERT OR IGNORE INTO schema_constraint (
-          profile_id,
-          type,
-          required_fields,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        args: [seed.profile.id, type, JSON.stringify(requiredFields)],
-      }),
-    );
+  if (hasConstraintTable) {
+    for (const [type, requiredFields] of Object.entries(seed.constraints)) {
+      result.constraintRowsAffected += getRowsAffected(
+        await client.execute({
+          sql: `INSERT OR IGNORE INTO schema_constraint (
+            profile_id,
+            type,
+            required_fields,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          args: [seed.profile.id, type, JSON.stringify(requiredFields)],
+        }),
+      );
+    }
   }
 
   return result;

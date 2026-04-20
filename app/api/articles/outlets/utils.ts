@@ -7,11 +7,20 @@ export const normalizeOutletValue = (value: string): string =>
   value.trim().replace(whitespacePattern, ' ');
 
 export const normalizeTermKey = (value: string): string => {
-  const slug = normalizeOutletValue(value)
+  const slugBase = normalizeOutletValue(value)
     .toLowerCase()
-    .replace(slugPattern, '-')
-    .replace(/^-+/, '')
-    .replace(/-+$/, '');
+    .replace(slugPattern, '-');
+  let start = 0;
+  let end = slugBase.length;
+
+  while (start < end && slugBase[start] === '-') {
+    start += 1;
+  }
+  while (end > start && slugBase[end - 1] === '-') {
+    end -= 1;
+  }
+
+  const slug = slugBase.slice(start, end);
 
   return slug || 'outlet';
 };

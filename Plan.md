@@ -118,6 +118,25 @@
 3. `[2.1.0][04-regression-verification]` rebases on the phase branch after worker merges and records final verification.
 4. `[2.1.0][00-conductor]` opens the final PR from `phase/2.1.0` to `origin/main`.
 
+### 2.1.0 lane 04 verification snapshot (2026-04-20)
+
+- Completed:
+  - Ran baseline checks: `npm run lint` ✅, `npm run test` ✅.
+  - Ran targeted regression suite for backward compatibility + profile/role workflows:
+    - `lib/db/schema-profile-loader.test.ts`
+    - `lib/db/schema-constraint-loader.test.ts`
+    - `lib/db/schema.actor.test.ts`
+    - `lib/events/integration.test.ts`
+    - `app/api/participant-alias.test.ts`
+    - `app/api/participant-merge-promotion.test.ts`
+    - `lib/contracts/participant-form.test.ts`
+    - `lib/contracts/events-contract.test.ts`
+    - `lib/db/role-vocabulary.test.ts`
+- Remaining:
+  - Final lane 04 signoff after 01/02/03 merges into `phase/2.1.0`.
+- Risks / blockers:
+  - `npm run build` blocked in sandbox (`fonts.googleapis.com` unreachable) and existing unresolved import in `app/api/participants/form-contract/route.ts`.
+
 ## Milestone status
 
 ### Completed

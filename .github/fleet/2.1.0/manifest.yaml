@@ -73,13 +73,18 @@ lanes:
     role: worker
     branch: lane/2.1.0/04-regression-verification
     prNumber: null
-    status: queued
-    readiness: waiting-on-workers
+    status: blocked
+    readiness: not-ready
     ownedSurface:
       - compatibility regression tests
       - end-to-end role/profile workflows
       - verification report
     blockers:
       - waiting for 01/02/03 merges into phase/2.1.0
+      - phase/2.1.0 is not yet available in this clone for lane rebase/verification handoff
+      - npm run build fails in sandbox (fonts.googleapis.com unreachable and unresolved import in app/api/participants/form-contract/route.ts)
     verification:
-      - regression matrix pending
+      - backward compatibility checks passed: lib/contracts/participant-form.test.ts, lib/events/integration.test.ts, lib/db/schema.actor.test.ts, app/api/participant-alias.test.ts, app/api/participant-merge-promotion.test.ts
+      - profile + role visibility workflow checks passed: lib/db/schema-profile-loader.test.ts, lib/db/schema-constraint-loader.test.ts, lib/db/role-vocabulary.test.ts, lib/contracts/events-contract.test.ts
+      - baseline repository checks: npm run lint ✅, npm run test ✅, npm run build ⚠️ (blocked by sandbox/network and existing module-resolution failure)
+      - readiness decision: not ready for final regression signoff until 01/02/03 are merged into phase/2.1.0 and build blockers are cleared

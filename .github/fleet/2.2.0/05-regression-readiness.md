@@ -19,7 +19,7 @@
 ## Blocker list
 
 - None in owned verification surface.
-- Historical CI note observed: workflow run `24563387714` failed on `main` due `npm error Missing script: "package"` in workflow configuration, not from current lane code changes.
+- Historical CI note observed: workflow run `24563387714` failed on `main` due to `npm error Missing script: "package"` in workflow configuration, not from current lane code changes.
 
 ## Semver and contract drift assessment
 

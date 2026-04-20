@@ -61,6 +61,12 @@
 
 ## Fleet orchestration schema (canonical)
 
+### Checklist marker convention
+
+- `[x]` completed in the scoped release line
+- `[ ]` planned and not yet completed
+- `[>]` deferred/re-scoped to another semver target (no standalone release at original line)
+
 ### Canonical identity and naming
 
 - Fleet identity token: approved planned version (semver)
@@ -75,25 +81,27 @@
 - Legacy phonetic lane labels (for example Lima/India/Juliet/Kilo) are archived-only references.
 - All active planning, delegation, and review uses canonical semver lane ids only.
 
-## Fleet execution proposal (active)
+## Fleet execution record (completed)
 
-### Fleet contract proposal
+### Fleet contract record
 
 - Proposed planned version: `2.1.0`
 - Version rationale: additive support for multi-domain profiles and role-based field visibility following completed `2.0.x` schema merge.
-- Approval state: approved (fleet initiated 2026-04-20).
+- Approval state: approved and completed (fleet initiated and closed 2026-04-20).
 - Allowed change class: additive profile and validation features only; no breaking schema removals.
 - Phase branch: `phase/2.1.0`
 - Merge policy: eager merge into the phase branch after required verification, followed by one final PR to `origin/main`.
 
-### Fleet launch status
+### Fleet completion status
 
-- Launch state: active
-- Conductor lane: `[2.1.0][00-conductor]`
-- Worker lanes active: `[2.1.0][01-profile-admin-ui]`, `[2.1.0][02-role-visibility]`, `[2.1.0][03-domain-seed-support]`
-- Verification lane queued: `[2.1.0][04-regression-verification]` after worker merges
+- Launch state: closed
+- Final PR: `#17` merged to `origin/main` at `b3d147b`
+- Conductor lane completed: `[2.1.0][00-conductor]`
+- Worker lanes completed: `[2.1.0][01-profile-admin-ui]`, `[2.1.0][02-role-visibility]`, `[2.1.0][03-domain-seed-support]`
+- Verification lane completed: `[2.1.0][04-regression-verification]`
+- Branch cleanup completed: remaining `origin/copilot/*` worker refs deleted after final merge
 
-### Parallel-safe lane decomposition
+### Completed lane decomposition
 
 - `[2.1.0][00-conductor] Integrate phase 2.1.0 fleet`
   - Owned surface: phase branch governance, manifest updates, merge policy enforcement, final PR to `origin/main`.
@@ -110,30 +118,78 @@
 
 - Manifest path: `.github/fleet/2.1.0/manifest.yaml`
 - Required lane state fields: lane id, branch, PR status, owned surface, readiness, blockers, and verification summary.
+- Final manifest state: PR merged, cleanup complete, conductor complete.
 
-### Merge order proposal
+### Merge order record
 
-1. `[2.1.0][00-conductor]` creates `phase/2.1.0` and publishes the manifest.
-2. `[2.1.0][01-profile-admin-ui]`, `[2.1.0][02-role-visibility]`, and `[2.1.0][03-domain-seed-support]` run in parallel against the approved contract.
-3. `[2.1.0][04-regression-verification]` rebases on the phase branch after worker merges and records final verification.
-4. `[2.1.0][00-conductor]` opens the final PR from `phase/2.1.0` to `origin/main`.
+1. `[2.1.0][00-conductor]` created `phase/2.1.0` and published the manifest.
+2. `[2.1.0][01-profile-admin-ui]`, `[2.1.0][02-role-visibility]`, and `[2.1.0][03-domain-seed-support]` merged into the phase branch.
+3. `[2.1.0][04-regression-verification]` verified integrated behavior and signed off.
+4. `[2.1.0][00-conductor]` opened the final PR to `origin/main` and completed post-merge cleanup.
 
 ## Milestone status
 
 ### Completed
 
-- Published form contract and implementation assumptions for parallel lanes.
-- Fixed scope to integration-only (alias + merge plumbing unchanged).
+- `2.1.0` multi-domain profile support fleet completed and merged.
+- Final integrated verification passed: lint + test green on integrated branch.
+- Post-merge branch cleanup completed for remaining `origin/copilot/*` worker branches.
 
-### Remaining
+### Next candidates
 
-- Post-merge integration wiring across unified form, validation endpoints, and list UI.
-- Post-merge regression verification and end-to-end scenario execution.
+- `[2.0.1][01-outlet-combobox]` searchable news outlet reference list feature (self-contained).
+- `2.2.x` identity resolution and merge at scale.
+- `3.0.x` graph explorer and `3.1.x` statistical reproducibility roadmap items, after `2.2.x` unless explicitly scoped to unresolved/raw actor views.
 
-### Risks / blockers
+## Active fleet proposal (Phase 2 closeout)
 
-- If lane implementations use different field keys for `participantType`, contract drift may require alignment patch.
-- If `participant` (Other) persistence shape diverges from shared-fields-only assumption, contract revision will be needed.
+### Fleet contract block
+
+- Phase name: Phase 2 closeout
+- Planned version: `2.2.0`
+- Version rationale: closes all remaining `2.x` roadmap items (identity resolution, merge-at-scale UX, role-specific attributes, and outlet combobox) before opening Phase 3 implementation.
+- Allowed change class: minor
+- Approval status: approved by launch intent (`let's finish off phase 2`)
+- Escalation rule: if breaking API/schema migration is required, stop lane and split into `2.3.0` or re-contract as major.
+
+### Parallel-safe lane decomposition
+
+- `[2.2.0][00-conductor] Integrate phase 2.2.0 closeout fleet`
+  - Owned surface: `phase/2.2.0` governance, `.github/fleet/2.2.0/manifest.yaml`, final PR body, merge policy enforcement.
+- `[2.2.0][01-identity-core] Reuse alias/promotion logic for actors and add multi-field duplicate scoring`
+  - Owned surface: actor identity core logic, duplicate scoring services, merge candidate model internals.
+- `[2.2.0][02-scoring-explainability] Add candidate scoring explainability surfaces and API outputs`
+  - Owned surface: explainability DTOs/contracts, score breakdown API payloads, endpoint response mapping.
+- `[2.2.0][03-merge-queue-ui] Build actor merge queue and promotion workflow UI`
+  - Owned surface: merge queue views/components, promotion action UX, queue-level filters/sorting.
+- `[2.2.0][04-role-attrs-outlet] Complete role-specific attributes and ship outlet searchable combobox`
+  - Owned surface: role-specific attribute rendering/validation and outlet-combobox UI/API data path.
+- `[2.2.0][05-regression-verification] Verify integrated closeout behavior`
+  - Owned surface: cross-lane regression tests, integrated verification checklist, final readiness report.
+
+### Dependency edges
+
+- `[2.2.0][02-scoring-explainability]` depends on `[2.2.0][01-identity-core]` scoring outputs.
+- `[2.2.0][03-merge-queue-ui]` depends on `[2.2.0][01-identity-core]` merge candidates and can absorb explainability detail after `[2.2.0][02-scoring-explainability]` lands.
+- `[2.2.0][04-role-attrs-outlet]` is parallel-safe and independent of identity-core internals.
+- `[2.2.0][05-regression-verification]` runs after worker merges on `phase/2.2.0`.
+
+### Merge order block
+
+- Baseline branch: `origin/main`
+- Phase branch: `phase/2.2.0`
+- Ordered merge sequence:
+  1. `[2.2.0][01-identity-core]`
+  2. `[2.2.0][02-scoring-explainability]`
+  3. `[2.2.0][03-merge-queue-ui]`
+  4. `[2.2.0][04-role-attrs-outlet]`
+  5. `[2.2.0][05-regression-verification]`
+  6. `[2.2.0][00-conductor]` opens one final PR from `phase/2.2.0` to `origin/main`
+
+### Residual risks / notes
+
+- Last known build risk remains external to fleet closure: sandbox font fetch and existing module-resolution issue in `app/api/participants/form-contract/route.ts` were previously noted.
+- Roadmap sequencing rule: under the current architecture, `2.2.x` should precede `3.0.x`/`3.1.x` because graph and reproducibility features depend on stable identity resolution, actor merge explainability, and merge-aware exports.
 
 ## Phase 3 Lima — Event-Actor-Role Integration (Completed, merged to origin/main)
 

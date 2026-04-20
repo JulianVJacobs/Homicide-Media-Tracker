@@ -239,6 +239,28 @@ lanes:
   - split the excess work into a later phase
   - cancel and relaunch the phase under a newly approved semver
 
+## Deferral Policy (required)
+
+- Deferral decisions must preserve semver coherence and roadmap ordering.
+- Deferral checkbox signal is `[>]` in roadmap/checklist artifacts; use it for deferred or re-scoped items in both `README.md` and `Plan.md`.
+- Never leave deferred work as an orphaned backlog bucket under an older version line once planning has moved forward.
+- When deferring work, choose one and record it explicitly in both `README.md` and `Plan.md`:
+  - absorb into a specific later semver target (for example, move deferred `1.3.x` items into `3.0.x` scope)
+  - promote the deferred line into the active target and shift the active target forward
+- If deferred work is absorbed into a later target:
+  - mark the original version line as re-scoped with no standalone release
+  - list migrated items under the destination version checklist
+  - include a one-line rationale to avoid future ambiguity
+- If a target is promoted/re-numbered:
+  - update fleet identity token, phase branch, lane ids, and manifest path to match the new semver
+  - invalidate old lane naming and treat prior labels as archived aliases only
+- Dependency-aware rule:
+  - do not defer foundational dependencies behind dependent roadmap slices unless the dependent slice is explicitly re-scoped to a safe subset
+  - record this exception in roadmap notes when used
+- Deferral must be treated as a contract change event:
+  - require explicit user approval for the chosen deferral option
+  - update status snapshots and next-slice notes immediately after approval
+
 ## Prompt Templates
 
 ### Conductor Prompt Template

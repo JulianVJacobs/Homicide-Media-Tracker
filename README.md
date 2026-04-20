@@ -8,12 +8,19 @@ This single README combines development guidance from the project and an older b
 
 ## Roadmap
 
-**Current version: 1.1.0 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**
+**Current version: 2.1.0 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**
+
+Checkbox legend:
+
+- `[x]` completed in this release line
+- `[ ]` planned and not yet completed
+- `[>]` deferred/re-scoped to a different semver target (no standalone release at original line)
 
 **Status update (2026-04-20):**
 
 - ✅ Phase 3 integration merge completed on `origin/main` (Lima final integration PR #13, India PR #14, with Juliet/Kilo integrated in Lima merge flow).
-- 🟡 Next execution focus: Graph explorer + statistical reproducibility, plus the parallel self-contained news outlet searchable combobox feature.
+- ✅ Fleet `2.1.0` completed and closed on `origin/main` (final PR `#17`, post-merge worker branch cleanup complete).
+- 🟠 Phase 2 closeout launch: fleet `2.2.0` is the active execution slice to complete remaining `2.x` scope before Phase 3.
 
 ### **Foundation: Participant Management (1.x.x releases)**
 
@@ -32,7 +39,7 @@ Establish a solid participant/actor model with alias support, merge workflows, a
     - [x] Allow promoting an alias to primary name
     - [x] Preserve old primary name as alias after promotion
     - [x] Update duplicate matching to use primary + aliases
-- [ ] **1.2.x**
+- [x] **1.2.x**
   - [x] Combine victim and perpetrator steps into "participants" step
     - [x] Add dropdown to switch between profiles
     - [x] Refactor forms for participant type (type-agnostic form + type selector)
@@ -41,33 +48,52 @@ Establish a solid participant/actor model with alias support, merge workflows, a
     - [x] Run `[1.2.1][00-conductor]` over the approved phase branch
     - [x] Merge `[1.2.1][01-form-submission]` and `[1.2.1][02-list-rendering]` into `phase/1.2.1`
     - [x] Finish `[1.2.1][03-compat-verification]` and open the final PR to `origin/main`
-- [ ] **1.3.x** (optional polish, defer for Phase 3 if time-critical)
-  - [ ] Perpetrator "unknown" input as checkbox
-  - [ ] Victim-perpetrator relationship "other" option with custom text
-  - [ ] Perpetrator sentencing: support multiple sentences
-  - [ ] Add final review step before submission
+- [>] **1.3.x** (re-scoped into `3.0.x`; no standalone `1.3.x` release)
+  - [>] Former `1.3.x` backlog merged into Phase 3 scope to preserve semver sequencing.
 
 ---
 
 ### **Phase 2: Event-Actor-Role Generalization & Configurable Profiles (2.x.x releases)**
 
-### Active Fleet Execution Proposal (canonical schema)
+Sequencing note: `2.2.x` should be completed before `3.0.x`/`3.1.x` under the current roadmap, because graph exploration and reproducibility depend on stable identity resolution, merge explainability, and actor merge workflows. If a future `3.0.x` slice is intentionally scoped to raw, non-merged graph views, that should be called out explicitly as an exception.
+
+### Most Recent Fleet Execution (canonical schema)
 
 - Proposed planned version: `2.1.0`
-- Approval state: approved (fleet initiated 2026-04-20)
+- Approval state: approved and completed (closed 2026-04-20)
 - Phase branch: `phase/2.1.0`
 - Merge policy: eager worker merge into `phase/2.1.0` after verification, then one final PR to `origin/main`
 - Lane identity format: `[<planned-version>][<agent-id>-<short-name>] <task-description>`
 - Conductor lane id reserved: `00`
-- Launch state: active
-- Parallel-safe lanes:
+- Launch state: closed
+- Completed lanes:
   - `[2.1.0][00-conductor] Integrate phase 2.1.0 fleet`
   - `[2.1.0][01-profile-admin-ui] Build schema profile administration UI`
   - `[2.1.0][02-role-visibility] Implement role-based field visibility and constraints`
   - `[2.1.0][03-domain-seed-support] Add homicide default + custom domain seed lifecycle`
   - `[2.1.0][04-regression-verification] Verify backward compatibility and end-to-end role/profile flows`
 
+- Final PR: `#17` merged to `origin/main`
+- Cleanup: remaining `origin/copilot/*` worker branches deleted after merge
+
 - Historical note: legacy phonetic lane labels were used in earlier phases and are now archived-only references.
+
+### Active Fleet Execution (phase 2 closeout)
+
+- Planned version: `2.2.0`
+- Approval state: approved and active (initiated 2026-04-20)
+- Allowed change class: minor (additive closeout for remaining `2.x` roadmap scope)
+- Phase goal: complete remaining Phase 2 deliverables before Phase 3 dependency gate
+- Phase branch: `phase/2.2.0`
+- Merge policy: eager-after-green into `phase/2.2.0`, then one final PR to `origin/main`
+- Conductor lane:
+  - `[2.2.0][00-conductor] Integrate phase 2.2.0 closeout fleet`
+- Worker lanes:
+  - `[2.2.0][01-identity-core] Reuse alias/promotion logic for actors and add multi-field duplicate scoring`
+  - `[2.2.0][02-scoring-explainability] Add candidate scoring explainability surfaces and API outputs`
+  - `[2.2.0][03-merge-queue-ui] Build actor merge queue and promotion workflow UI`
+  - `[2.2.0][04-role-attrs-outlet] Complete role-specific attributes and ship outlet searchable combobox`
+  - `[2.2.0][05-regression-verification] Verify end-to-end closeout behavior on integrated phase branch`
 
 Generalize the participant model into a core Event–Actor–Role ontology. Introduce annotation events with configurable profiles, role-based claims, and prepare for AtoM plugin integration.
 
@@ -84,9 +110,9 @@ Generalize the participant model into a core Event–Actor–Role ontology. Intr
     - [x] `claim`: assertions on actors/roles with confidence and source evidence
     - [x] `claim_evidence`: link claims to article mentions with coder metadata
 - [ ] **2.1.x — Multi-Domain Profile Support**
-  - [ ] Implement admin UI for profile definition
-  - [ ] Support homicide (preloaded default) + custom domains
-  - [ ] Role-based field visibility and validation
+  - [x] Implement admin UI for profile definition
+  - [x] Support homicide (preloaded default) + custom domains
+  - [x] Role-based field visibility and validation
   - [ ] Support role-specific attributes (e.g., "conviction" shows for Perpetrator; "contact" for Witness)
 - [ ] **2.2.x — Identity Resolution & Merge at Scale**
   - [ ] Reuse alias + promotion logic for actors
@@ -100,10 +126,18 @@ Generalize the participant model into a core Event–Actor–Role ontology. Intr
 
 Enable research workflows with graph exploration, multi-source analysis, and exportable lineage.
 
+Dependency note: Phase 3 assumes `2.2.x` is complete unless a graph slice is explicitly limited to unresolved/raw actor views.
+
+Merged from former `1.3.x` scope (now tracked under `3.0.x`):
+
 - [ ] **3.0.x — Graph Explorer**
   - [ ] Implement graph backend: article–event–actor–role–claim edges
   - [ ] Build graph visualization UI
   - [ ] Support filtering and traversal by role, profile, confidence
+  - [ ] Perpetrator "unknown" input as checkbox
+  - [ ] Victim-perpetrator relationship "other" option with custom text
+  - [ ] Perpetrator sentencing: support multiple sentences
+  - [ ] Add final review step before submission
 - [ ] **3.1.x — Statistical Reproducibility**
   - [ ] Provide export modes: mention-level raw, actor-resolved, diff metadata
   - [ ] Document merge lineage and reversibility

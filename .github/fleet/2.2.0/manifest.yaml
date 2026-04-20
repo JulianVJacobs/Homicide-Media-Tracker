@@ -1,0 +1,110 @@
+plannedVersion: 2.2.0
+phaseName: Phase 2 Closeout
+phaseGoal: Complete remaining Phase 2 scope before opening Phase 3 implementation.
+approvalState: approved
+allowedChangeClass: minor
+mergePolicy: eager-after-green
+baseBranch: origin/main
+phaseBranch: phase/2.2.0
+launchDate: 2026-04-20
+finalPr:
+  number: null
+  status: not-created
+  blockers: []
+cleanup:
+  ownerLane: 00-conductor
+  policy: delete-after-final-merge
+  phaseBranch:
+    name: phase/2.2.0
+    deleteWhen:
+      - final PR merged to origin/main
+      - worker branch deletion attempted
+  workerBranches: []
+  safeguards:
+    - never delete before final PR merge to origin/main
+    - never delete before regression sign-off
+    - if a branch no longer exists, record cleanup as already-satisfied
+  status: pending
+lanes:
+  - laneId: 00-conductor
+    role: conductor
+    branch: phase/2.2.0
+    prNumber: null
+    status: active
+    readiness: waiting
+    ownedSurface:
+      - phase branch governance
+      - manifest lifecycle
+      - merge policy enforcement
+      - final integration PR to origin/main
+    blockers: []
+    verification:
+      - manifest published
+      - lane boundaries declared
+
+  - laneId: 01-identity-core
+    role: worker
+    branch: lane/2.2.0/01-identity-core
+    prNumber: null
+    status: planned
+    readiness: waiting
+    ownedSurface:
+      - actor identity core logic
+      - alias and promotion reuse for actors
+      - multi-field duplicate scoring internals
+    blockers: []
+    verification: []
+
+  - laneId: 02-scoring-explainability
+    role: worker
+    branch: lane/2.2.0/02-scoring-explainability
+    prNumber: null
+    status: planned
+    readiness: waiting
+    ownedSurface:
+      - explainability DTOs and contracts
+      - score breakdown API payload mapping
+      - candidate-scoring rationale responses
+    blockers:
+      - waits for lane 01 scoring outputs
+    verification: []
+
+  - laneId: 03-merge-queue-ui
+    role: worker
+    branch: lane/2.2.0/03-merge-queue-ui
+    prNumber: null
+    status: planned
+    readiness: waiting
+    ownedSurface:
+      - actor merge queue UI
+      - promotion workflow UI
+      - queue filtering and sort controls
+    blockers:
+      - needs merge candidates from lane 01
+    verification: []
+
+  - laneId: 04-role-attrs-outlet
+    role: worker
+    branch: lane/2.2.0/04-role-attrs-outlet
+    prNumber: null
+    status: planned
+    readiness: waiting
+    ownedSurface:
+      - role-specific attribute rendering and validation
+      - searchable outlet combobox UI and API data path
+    blockers: []
+    verification: []
+
+  - laneId: 05-regression-verification
+    role: worker
+    branch: lane/2.2.0/05-regression-verification
+    prNumber: null
+    status: planned
+    readiness: blocked
+    ownedSurface:
+      - integrated regression checklist
+      - compatibility and e2e verification
+      - final readiness report
+    blockers:
+      - waits for merged outputs from lanes 01 through 04
+    verification: []

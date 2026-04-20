@@ -13,9 +13,10 @@ import {
 import InputHomicide from '@/lib/components/input-homicide';
 import ListHomicides from '@/lib/components/list-homicides';
 import ParticipantMergeQueue from '@/lib/components/participant-merge-queue';
+import SchemaProfileAdmin from '@/lib/components/schema-profile-admin';
 import SysInfo from '@/lib/components/system-information';
 
-type Views = 'home' | 'input' | 'list' | 'merge' | 'info';
+type Views = 'home' | 'input' | 'list' | 'merge' | 'profiles' | 'info';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<Views>('home');
@@ -60,6 +61,13 @@ export default function Home() {
                     >
                       Manage Participant Merge Queue
                     </Button>
+                    <Button
+                      variant="outline-dark"
+                      size="lg"
+                      onClick={() => setCurrentView('profiles')}
+                    >
+                      Manage Schema Profiles
+                    </Button>
                   </div>
                 </Card.Body>
               </Card>
@@ -79,6 +87,10 @@ export default function Home() {
 
     if (currentView === 'merge') {
       return <ParticipantMergeQueue onBack={() => setCurrentView('home')} />;
+    }
+
+    if (currentView === 'profiles') {
+      return <SchemaProfileAdmin onBack={() => setCurrentView('home')} />;
     }
 
     if (currentView === 'info') {
@@ -123,6 +135,13 @@ export default function Home() {
                 className={currentView === 'merge' ? 'active' : ''}
               >
                 Merge Queue
+              </Nav.Link>
+              <Nav.Link
+                href="#"
+                onClick={() => setCurrentView('profiles')}
+                className={currentView === 'profiles' ? 'active' : ''}
+              >
+                Schema Profiles
               </Nav.Link>
               <Nav.Link
                 href="#"

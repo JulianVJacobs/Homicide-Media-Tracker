@@ -1,6 +1,7 @@
 // Disable no-unused-vars, broken for spread args
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+import { type DomainSeedDefinition } from '../../lib/db/domain-seed';
 
 export type Channels = 'ipc-example';
 
@@ -51,6 +52,20 @@ const electronHandler = {
       backupPath?: string;
       error?: string;
     }> => ipcRenderer.invoke('database-backup'),
+
+    getDomainSeeds: (): Promise<{
+      success: boolean;
+      data?: DomainSeedDefinition[];
+      error?: string;
+    }> => ipcRenderer.invoke('database-domain-seeds'),
+
+    registerDomainSeed: (
+      seed: DomainSeedDefinition,
+    ): Promise<{
+      success: boolean;
+      data?: DomainSeedDefinition[];
+      error?: string;
+    }> => ipcRenderer.invoke('database-register-domain-seed', seed),
   },
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   Form,
@@ -11,12 +11,17 @@ import {
   ListGroup,
 } from 'react-bootstrap';
 import type { NewPerpetrator } from '@/lib/db/schema';
-import { SCHEMA_CONSTRAINT_REQUIRED_FIELDS } from '@/lib/contracts/schema-constraints';
+import {
+  type RoleProfileContext,
+  useConstraintEvaluation,
+} from './role-visibility';
 
 interface PerpetratorFormProps {
   onSubmit: (data: PerpetratorFormValues) => void;
   perpetrators: PerpetratorFormValues[];
   onClearPerpetrators: () => void;
+  requiredFields?: readonly string[];
+  roleProfileContext?: RoleProfileContext;
 }
 
 type PerpetratorFieldKeys = Extract<
@@ -39,6 +44,8 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   onSubmit,
   perpetrators = [],
   onClearPerpetrators,
+  requiredFields,
+  roleProfileContext,
 }) => {
   // Default data for dev/testing
   const RESET_DATA: PerpetratorFormValues = {
@@ -54,26 +61,13 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   const [currentPerpetrator, setCurrentPerpetrator] =
     useState<PerpetratorFormValues>(RESET_DATA);
 
-  const [isValid, setIsValid] = useState(false);
-
-  useEffect(() => {
-    // Validate required fields
-    const allRequiredFilled = SCHEMA_CONSTRAINT_REQUIRED_FIELDS.perpetrator.every(
-      (field) => {
-        const value = currentPerpetrator[field as keyof PerpetratorFormValues];
-        if (value === null || value === undefined) return false;
-        if (
-          typeof value === 'string' ||
-          typeof value === 'number' ||
-          typeof value === 'boolean'
-        ) {
-          return value.toString().trim() !== '';
-        }
-        return false;
-      },
-    );
-    setIsValid(allRequiredFilled);
-  }, [currentPerpetrator]);
+  const constraintState = useConstraintEvaluation(
+    currentPerpetrator as Record<string, unknown>,
+    'perpetrator',
+    roleProfileContext,
+    { requiredFields },
+  );
+  const isValid = constraintState.isValid;
 
   const handleChange = <K extends keyof PerpetratorFormValues>(
     field: K,

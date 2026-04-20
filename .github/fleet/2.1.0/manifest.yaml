@@ -9,14 +9,15 @@ phaseBranch: phase/2.1.0
 launchDate: 2026-04-20
 finalPr:
   number: null
-  status: not-created
+  status: ready
+  blockers: []
 lanes:
   - laneId: 00-conductor
     role: conductor
     branch: phase/2.1.0
     prNumber: null
     status: active
-    readiness: governing
+    readiness: opening-final-pr
     ownedSurface:
       - phase branch governance
       - manifest lifecycle
@@ -26,60 +27,81 @@ lanes:
     verification:
       - manifest published
       - lane boundaries validated
+      - 01/02/03 merged into phase/2.1.0 ✅
+      - integrated suite: 18 test suites, 58 tests passed ✅
+      - npm run lint passed on integrated branch ✅
+      - lane 04 regression sign-off received ✅
 
   - laneId: 01-profile-admin-ui
     role: worker
     branch: lane/2.1.0/01-profile-admin-ui
     prNumber: null
-    status: active
-    readiness: ready-to-implement
+    status: merged
+    readiness: merged-into-phase
     ownedSurface:
       - profile management UI
       - profile route handlers
       - profile DTO validation
     blockers: []
     verification:
-      - profile UI CRUD checks pending
+      - npm run lint passed on lane changes
+      - npm run test -- lib/contracts/schema-profile-admin-dto.test.ts passed
+      - API create/edit/delete verified via curl against /api/schema-profiles
+      - UI create/edit/delete manually verified in Schema Profiles screen
+      - screenshot evidence: https://github.com/user-attachments/assets/73e32427-8bb1-4026-bcd9-ea872bb7d8cd
+      - merged into phase/2.1.0 ✅
 
   - laneId: 02-role-visibility
     role: worker
     branch: lane/2.1.0/02-role-visibility
     prNumber: null
-    status: active
-    readiness: ready-to-implement
+    status: merged
+    readiness: merged-into-phase
     ownedSurface:
       - role-based field visibility rules
       - form rendering gates
       - role constraint evaluation
     blockers: []
     verification:
-      - role visibility rule tests pending
+      - npm run lint ✅
+      - npm run test ✅ (16 suites, 51 tests)
+      - npm run test -- lib/contracts/participant-form.test.ts lib/components/role-visibility.test.ts ✅
+      - role-specific visibility verified in helper tests (viewer role reduced to coreIdentity; profile override honored)
+      - merged into phase/2.1.0 ✅
 
   - laneId: 03-domain-seed-support
     role: worker
     branch: lane/2.1.0/03-domain-seed-support
     prNumber: null
-    status: active
-    readiness: ready-to-implement
+    status: merged
+    readiness: merged-into-phase
     ownedSurface:
       - seed loaders
       - migration-safe domain seed routines
       - domain registration APIs
     blockers: []
     verification:
-      - seed idempotency tests pending
+      - Added migration-safe domain seed lifecycle via lib/db/domain-seed.ts and wired DB startup seeding through a domain registry in lib/db/server.ts.
+      - Verified idempotent behavior with lib/db/domain-seed.test.ts (applies homicide default seed once and remains idempotent on rerun).
+      - Verified migration-safe behavior with lib/db/domain-seed.test.ts (skips missing tables to stay migration-safe).
+      - Validation evidence: npm run test -- lib/db/domain-seed.test.ts lib/db/schema-profile-loader.test.ts lib/db/schema-constraint-loader.test.ts and npm run lint passed.
+      - Rollback/re-run safety: seeding uses INSERT OR IGNORE; reruns are non-destructive and safe after partial rollbacks because missing seed tables are skipped until migrations are present.
+      - merged into phase/2.1.0 ✅
 
   - laneId: 04-regression-verification
     role: worker
     branch: lane/2.1.0/04-regression-verification
     prNumber: null
-    status: queued
-    readiness: waiting-on-workers
+    status: completed
+    readiness: completed
     ownedSurface:
       - compatibility regression tests
       - end-to-end role/profile workflows
       - verification report
-    blockers:
-      - waiting for 01/02/03 merges into phase/2.1.0
+    blockers: []
     verification:
-      - regression matrix pending
+      - backward compatibility checks passed: lib/contracts/participant-form.test.ts, lib/events/integration.test.ts, lib/db/schema.actor.test.ts, app/api/participant-alias.test.ts, app/api/participant-merge-promotion.test.ts
+      - profile + role visibility workflow checks passed: lib/db/schema-profile-loader.test.ts, lib/db/schema-constraint-loader.test.ts, lib/db/role-vocabulary.test.ts, lib/contracts/events-contract.test.ts
+      - new lane integration checks passed: lib/components/role-visibility.test.ts, lib/contracts/schema-profile-admin-dto.test.ts, lib/db/domain-seed.test.ts
+      - full integrated regression: npm run lint ✅, npm run test ✅ (18 suites, 58 tests) on phase/2.1.0 integrated branch
+      - sign-off complete ✅

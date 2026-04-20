@@ -16,6 +16,7 @@ import http from 'http';
 import net from 'net';
 import MenuBuilder from './menu';
 import { dbm } from '../../lib/db/server';
+import { type DomainSeedDefinition } from '../../lib/db/domain-seed';
 
 class AppUpdater {
   constructor() {
@@ -29,6 +30,26 @@ class AppUpdater {
 let mainWindow: BrowserWindow | null = null;
 let nextServer: ChildProcess | null = null;
 let serverPort: number = 3000;
+
+const isDomainSeedDefinition = (
+  value: unknown,
+): value is DomainSeedDefinition => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as Partial<DomainSeedDefinition>;
+  return (
+    typeof candidate.domainKey === 'string' &&
+    !!candidate.profile &&
+    typeof candidate.profile.id === 'string' &&
+    typeof candidate.profile.name === 'string' &&
+    typeof candidate.profile.entityLevel === 'string' &&
+    typeof candidate.profile.description === 'string' &&
+    Array.isArray(candidate.fields) &&
+    !!candidate.constraints &&
+    typeof candidate.constraints === 'object'
+  );
+};
 
 // Utility functions for server management
 const findAvailablePort = (startPort: number): Promise<number> => {
@@ -252,6 +273,56 @@ ipcMain.handle('database-backup', async () => {
     };
   }
 });
+
+ipcMain.handle('database-domain-seeds', async () => {
+  try {
+    if (!dbm.getLocal) {
+      return {
+        success: false,
+        error: 'Database not initialised (running in packaged mode)',
+      };
+    }
+
+    return {
+      success: true,
+      data: dbm.getRegisteredDomainSeeds(),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to list domain seeds',
+    };
+  }
+});
+
+ipcMain.handle(
+  'database-register-domain-seed',
+  async (_event, seed: unknown) => {
+  try {
+    if (!dbm.getLocal) {
+      return {
+        success: false,
+        error: 'Database not initialised (running in packaged mode)',
+      };
+    }
+
+    if (!isDomainSeedDefinition(seed)) {
+      return { success: false, error: 'Invalid domain seed payload' };
+    }
+
+    await dbm.registerDomainSeed(seed);
+    return { success: true, data: dbm.getRegisteredDomainSeeds() };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to register domain seed',
+    };
+  }
+  },
+);
 
 ipcMain.handle('show-message-box', async (_event, options) => {
   const { dialog } = await import('electron');

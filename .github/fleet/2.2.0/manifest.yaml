@@ -105,19 +105,19 @@ lanes:
     role: worker
     branch: copilot/220-complete-role-attrs-behavior
     prNumber: 24
-    status: open-draft
-    readiness: blocked
+    status: ready-for-review
+    readiness: ready
     ownedSurface:
       - role-specific attribute rendering and validation
       - searchable outlet combobox UI and API data path
-    blockers:
-      - PR #24 targets origin/main instead of phase/2.2.0 (fleet policy violation).
-      - No lane-scoped verification summary is present in the PR.
-      - Worker branch naming does not follow lane/2.2.0/04-role-attrs-outlet.
+    blockers: []
     verification:
-      - PR #24 opened as draft from copilot/220-complete-role-attrs-behavior -> main.
-      - Changed files in PR #24: none (no worker implementation committed yet).
-      - Workflow check: copilot run in progress (run 24672442837).
+      - npm run test -- lib/components/role-visibility.test.ts lib/contracts/participant-form.test.ts ✅
+      - npm run lint ✅
+      - npm run test ✅
+      - role-specific attribute gating: victim/perpetrator forms gate coreIdentity visibility and per-group required-field validation
+      - outlet combobox: GET /api/articles/outlets (ranked dedup), POST /api/articles/outlets (idempotent vocab insert)
+      - outlet combobox UI screenshot: https://github.com/user-attachments/assets/26490dc7-349f-4615-8581-f7c53685e0c2
 
   - laneId: 05-regression-verification
     role: worker

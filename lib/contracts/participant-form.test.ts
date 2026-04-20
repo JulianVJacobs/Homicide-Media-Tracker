@@ -37,5 +37,8 @@ describe('participant form contract', () => {
     expect(
       PARTICIPANT_FORM_CONTRACT.roleVisibilityRules.viewer?.perpetrator,
     ).toEqual(['coreIdentity']);
+    expect(
+      PARTICIPANT_FORM_CONTRACT.roleVisibilityRules.editor?.perpetrator,
+    ).toEqual(['coreIdentity', 'relationship', 'suspectStatus']);
   });
 });

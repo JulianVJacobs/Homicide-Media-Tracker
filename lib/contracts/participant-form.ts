@@ -26,7 +26,11 @@ export const PARTICIPANT_FORM_ROLE_VISIBILITY_RULES: Record<
 > = {
   admin: {},
   researcher: {},
-  editor: {},
+  editor: {
+    victim: ['coreIdentity', 'demographics', 'deathDetails', 'location'],
+    perpetrator: ['coreIdentity', 'relationship', 'suspectStatus'],
+    other: ['coreIdentity'],
+  },
   viewer: {
     victim: ['coreIdentity'],
     perpetrator: ['coreIdentity'],

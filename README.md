@@ -54,11 +54,12 @@ Establish a solid participant/actor model with alias support, merge workflows, a
 ### Active Fleet Execution Proposal (canonical schema)
 
 - Proposed planned version: `2.1.0`
-- Approval state: pending user approval before fleet launch
+- Approval state: approved (fleet initiated 2026-04-20)
 - Phase branch: `phase/2.1.0`
 - Merge policy: eager worker merge into `phase/2.1.0` after verification, then one final PR to `origin/main`
 - Lane identity format: `[<planned-version>][<agent-id>-<short-name>] <task-description>`
 - Conductor lane id reserved: `00`
+- Launch state: active
 - Parallel-safe lanes:
   - `[2.1.0][00-conductor] Integrate phase 2.1.0 fleet`
   - `[2.1.0][01-profile-admin-ui] Build schema profile administration UI`

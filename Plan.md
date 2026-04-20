@@ -81,10 +81,17 @@
 
 - Proposed planned version: `2.1.0`
 - Version rationale: additive support for multi-domain profiles and role-based field visibility following completed `2.0.x` schema merge.
-- Approval state: pending user approval before fleet launch.
+- Approval state: approved (fleet initiated 2026-04-20).
 - Allowed change class: additive profile and validation features only; no breaking schema removals.
 - Phase branch: `phase/2.1.0`
 - Merge policy: eager merge into the phase branch after required verification, followed by one final PR to `origin/main`.
+
+### Fleet launch status
+
+- Launch state: active
+- Conductor lane: `[2.1.0][00-conductor]`
+- Worker lanes active: `[2.1.0][01-profile-admin-ui]`, `[2.1.0][02-role-visibility]`, `[2.1.0][03-domain-seed-support]`
+- Verification lane queued: `[2.1.0][04-regression-verification]` after worker merges
 
 ### Parallel-safe lane decomposition
 

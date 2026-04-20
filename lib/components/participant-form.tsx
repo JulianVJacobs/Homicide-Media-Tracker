@@ -79,8 +79,8 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
       }),
     [roleProfileContext, perpetratorRequiredFields],
   );
-  const hasVictimFormFields = visibleFieldGroups.includes('coreIdentity');
-  const hasPerpetratorFormFields = visibleFieldGroups.includes('coreIdentity');
+  const hasVictimFormFields = visibleFieldGroups.includes('deathDetails');
+  const hasPerpetratorFormFields = visibleFieldGroups.includes('suspectStatus');
   const hasOtherFormFields = visibleFieldGroups.includes('coreIdentity');
 
   return (

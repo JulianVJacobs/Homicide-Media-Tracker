@@ -14,7 +14,7 @@
 | Identity core + scoring explainability | PASS | `npm run test -- lib/components/utils.test.ts lib/components/participant-merge-queue.utils.test.ts` (9 targeted suites run in aggregate verification set) |
 | Merge queue + promotion compatibility | PASS | `npm run test -- app/api/participant-alias.test.ts app/api/participant-merge-promotion.test.ts lib/contracts/participant-merge.test.ts` |
 | Backward compatibility + contract stability | PASS | `npm run test -- lib/contracts/participant-form.test.ts lib/contracts/events-contract.test.ts lib/events/integration.test.ts` |
-| Integrated regression baseline | PASS | `npm run lint` and `npm run test` (18 suites, 58 tests) |
+| Integrated regression baseline | PASS | `npm run lint` and `npm run test` (23 suites, 72 tests) |
 
 ## Blocker list
 

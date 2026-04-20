@@ -31,15 +31,19 @@ lanes:
     role: worker
     branch: lane/2.1.0/01-profile-admin-ui
     prNumber: null
-    status: active
-    readiness: ready-to-implement
+    status: completed
+    readiness: ready-for-merge
     ownedSurface:
       - profile management UI
       - profile route handlers
       - profile DTO validation
     blockers: []
     verification:
-      - profile UI CRUD checks pending
+      - npm run lint passed on lane changes
+      - npm run test -- lib/contracts/schema-profile-admin-dto.test.ts passed
+      - API create/edit/delete verified via curl against /api/schema-profiles
+      - UI create/edit/delete manually verified in Schema Profiles screen
+      - screenshot evidence: https://github.com/user-attachments/assets/73e32427-8bb1-4026-bcd9-ea872bb7d8cd
 
   - laneId: 02-role-visibility
     role: worker

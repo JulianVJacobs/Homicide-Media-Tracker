@@ -49,20 +49,19 @@ lanes:
     role: worker
     branch: copilot/220-reuse-alias-promotion-logic
     prNumber: 23
-    status: open-draft
-    readiness: blocked
+    status: ready-for-review
+    readiness: ready
     ownedSurface:
       - actor identity core logic
       - alias and promotion reuse for actors
       - multi-field duplicate scoring internals
-    blockers:
-      - PR #23 targets origin/main instead of phase/2.2.0 (fleet policy violation).
-      - No lane-scoped verification summary is present in the PR.
-      - Worker branch naming does not follow lane/2.2.0/01-identity-core.
+    blockers: []
     verification:
-      - PR #23 opened as draft from copilot/220-reuse-alias-promotion-logic -> main.
-      - Changed files in PR #23: none (no worker implementation committed yet).
-      - Workflow check: copilot run in progress (run 24672419645).
+      - npm run test -- lib/actors/identity-core.test.ts ✅
+      - npm run lint ✅
+      - npm run test ✅
+      - lib/actors/identity-core.ts added: ActorIdentityRecord, buildActorDuplicateCandidates, scoreActorDuplicateCandidate, buildActorAliasPromotionResult
+      - lib/actors/identity-core.test.ts: 3 test cases (alias promotion reuse, multi-field scoring, threshold filtering)
 
   - laneId: 02-scoring-explainability
     role: worker

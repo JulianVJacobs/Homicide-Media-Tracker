@@ -281,7 +281,7 @@ export interface DuplicateMatch {
   scoring: DuplicateScoringDetails;
 }
 
-export type DuplicateScoreSignal = 'url' | 'name' | 'title';
+export type DuplicateScoreSignal = 'url' | 'name' | 'title' | 'content';
 
 export interface DuplicateWeightedContribution {
   signal: DuplicateScoreSignal;
@@ -303,6 +303,7 @@ const DUPLICATE_SIGNAL_WEIGHTS: Record<DuplicateScoreSignal, number> = {
   url: 0.6,
   name: 0.3,
   title: 0.1,
+  content: 0,
 };
 
 const roundScore = (value: number) => Number(value.toFixed(4));
@@ -335,11 +336,7 @@ const buildScoringDetails = (
     current.weightedScore > best.weightedScore ? current : best,
   );
   const summaryRationale = `Primary ${matchType} signal selected with ${(
-    signalScores[
-      matchType === 'content'
-        ? 'title'
-        : (matchType as Exclude<DuplicateMatch['matchType'], 'content'>)
-    ] * 100
+    (signalScores[matchType] ?? 0) * 100
   ).toFixed(1)}% raw similarity; strongest weighted contribution was ${
     strongestContribution.signal
   } (${(strongestContribution.weightedScore * 100).toFixed(1)}%).`;
@@ -384,6 +381,7 @@ export function detectDuplicates(
       url: hasExactUrlMatch ? 1 : 0,
       name: nameAliasMatch?.similarity ?? 0,
       title: titleSimilarity,
+      content: 0,
     };
 
     // Exact URL match

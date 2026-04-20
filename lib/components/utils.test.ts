@@ -94,6 +94,6 @@ describe('detectDuplicates', () => {
     });
     expect(matches[0].explainability).toContain('similar');
     expect(matches[0].scoring.totalWeightedScore).toBeGreaterThan(0);
-    expect(matches[0].scoring.weightedContributions).toHaveLength(3);
+    expect(matches[0].scoring.weightedContributions).toHaveLength(4);
   });
 });

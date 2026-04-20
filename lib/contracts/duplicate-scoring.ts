@@ -1,6 +1,6 @@
 export const DUPLICATE_SCORING_CONTRACT_VERSION = '2026-04-20';
 
-export type DuplicateScoreSignal = 'url' | 'name' | 'title';
+export type DuplicateScoreSignal = 'url' | 'name' | 'title' | 'content';
 
 export interface DuplicateWeightedContributionDto {
   signal: DuplicateScoreSignal;

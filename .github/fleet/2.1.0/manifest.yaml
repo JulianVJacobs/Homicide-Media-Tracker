@@ -11,91 +11,96 @@ finalPr:
   number: null
   status: blocked
   blockers:
-    - waiting for lane 01/02/03 to be accepted and merged into phase/2.1.0
-    - waiting for lane 04 regression verification to complete after 01/02/03 merges
+    - waiting for lane 04 regression verification to complete
 lanes:
   - laneId: 00-conductor
     role: conductor
     branch: phase/2.1.0
     prNumber: null
     status: active
-    readiness: waiting-on-worker-prs
+    readiness: waiting-on-lane-04
     ownedSurface:
       - phase branch governance
       - manifest lifecycle
       - merge policy enforcement
       - final integration PR to origin/main
     blockers:
-      - lane 01 has owned-surface drift (lockfile-only diff)
-      - lane 02 has no merge-candidate diff yet
-      - lane 03 has no merge-candidate diff yet
+      - lane 04 regression verification must complete before final PR
     verification:
       - manifest published
       - lane boundaries validated
+      - 01/02/03 merged into phase/2.1.0 ✅
+      - integrated suite: 18 test suites, 58 tests passed ✅
+      - npm run lint passed on integrated branch ✅
 
   - laneId: 01-profile-admin-ui
     role: worker
     branch: lane/2.1.0/01-profile-admin-ui
     prNumber: null
-    status: changes-requested
-    readiness: waiting-for-owned-surface-fix
+    status: merged
+    readiness: merged-into-phase
     ownedSurface:
       - profile management UI
       - profile route handlers
       - profile DTO validation
-    blockers:
-      - merge candidate from origin/copilot/add-profile-admin-ui-schema changes only package-lock.json outside owned surface
-      - owned-surface check must pass before acceptance
+    blockers: []
     verification:
-      - rerun owned-surface check: git diff --name-only origin/main...origin/copilot/add-profile-admin-ui-schema
-      - required before merge: npm run lint && npm run test
+      - npm run lint passed on lane changes
+      - npm run test -- lib/contracts/schema-profile-admin-dto.test.ts passed
+      - API create/edit/delete verified via curl against /api/schema-profiles
+      - UI create/edit/delete manually verified in Schema Profiles screen
+      - screenshot evidence: https://github.com/user-attachments/assets/73e32427-8bb1-4026-bcd9-ea872bb7d8cd
+      - merged into phase/2.1.0 ✅
 
   - laneId: 02-role-visibility
     role: worker
     branch: lane/2.1.0/02-role-visibility
     prNumber: null
-    status: queued
-    readiness: waiting-for-merge-candidate
+    status: merged
+    readiness: merged-into-phase
     ownedSurface:
       - role-based field visibility rules
       - form rendering gates
       - role constraint evaluation
-    blockers:
-      - merge candidate from origin/copilot/add-role-based-field-visibility has no implementation diff yet
-      - owned-surface check and verification are required before acceptance
+    blockers: []
     verification:
-      - rerun owned-surface check: git diff --name-only origin/main...origin/copilot/add-role-based-field-visibility
-      - required before merge: npm run lint && npm run test
+      - npm run lint ✅
+      - npm run test ✅ (16 suites, 51 tests)
+      - npm run test -- lib/contracts/participant-form.test.ts lib/components/role-visibility.test.ts ✅
+      - role-specific visibility verified in helper tests (viewer role reduced to coreIdentity; profile override honored)
+      - merged into phase/2.1.0 ✅
 
   - laneId: 03-domain-seed-support
     role: worker
     branch: lane/2.1.0/03-domain-seed-support
     prNumber: null
-    status: queued
-    readiness: waiting-for-merge-candidate
+    status: merged
+    readiness: merged-into-phase
     ownedSurface:
       - seed loaders
       - migration-safe domain seed routines
       - domain registration APIs
-    blockers:
-      - merge candidate from origin/copilot/phase-2-1-0-homicide-domain-seed-lifecycle has no implementation diff yet
-      - owned-surface check and verification are required before acceptance
+    blockers: []
     verification:
-      - rerun owned-surface check: git diff --name-only origin/main...origin/copilot/phase-2-1-0-homicide-domain-seed-lifecycle
-      - required before merge: npm run lint && npm run test
+      - Added migration-safe domain seed lifecycle via lib/db/domain-seed.ts and wired DB startup seeding through a domain registry in lib/db/server.ts.
+      - Verified idempotent behavior with lib/db/domain-seed.test.ts (applies homicide default seed once and remains idempotent on rerun).
+      - Verified migration-safe behavior with lib/db/domain-seed.test.ts (skips missing tables to stay migration-safe).
+      - Validation evidence: npm run test -- lib/db/domain-seed.test.ts lib/db/schema-profile-loader.test.ts lib/db/schema-constraint-loader.test.ts and npm run lint passed.
+      - Rollback/re-run safety: seeding uses INSERT OR IGNORE; reruns are non-destructive and safe after partial rollbacks because missing seed tables are skipped until migrations are present.
+      - merged into phase/2.1.0 ✅
 
   - laneId: 04-regression-verification
     role: worker
     branch: lane/2.1.0/04-regression-verification
     prNumber: null
-    status: queued
-    readiness: waiting-on-workers
+    status: active
+    readiness: gate-open
     ownedSurface:
       - compatibility regression tests
       - end-to-end role/profile workflows
       - verification report
-    blockers:
-      - waiting for 01/02/03 merges into phase/2.1.0
+    blockers: []
     verification:
-      - gate opens only after 01/02/03 are merged to phase/2.1.0
+      - gate open: 01/02/03 are merged into phase/2.1.0
+      - required before final PR: run full regression against phase/2.1.0
       - required before final PR: npm run lint && npm run test

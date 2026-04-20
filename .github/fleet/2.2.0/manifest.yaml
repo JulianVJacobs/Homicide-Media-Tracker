@@ -9,17 +9,22 @@ phaseBranch: phase/2.2.0
 launchDate: 2026-04-20
 finalPr:
   number: null
-  status: not-created
+  status: ready-to-create
   blockers: []
 cleanup:
   ownerLane: 00-conductor
   policy: delete-after-final-merge
   phaseBranch:
-    name: phase/2.2.0
+    name: copilot/phase-220-closeout
     deleteWhen:
       - final PR merged to origin/main
       - worker branch deletion attempted
-  workerBranches: []
+  workerBranches:
+    - copilot/220-reuse-alias-promotion-logic
+    - copilot/220-02-scoring-explainability
+    - copilot/220-merge-queue-ui
+    - copilot/220-complete-role-attrs-behavior
+    - copilot/220-verify-regression-behavior
   safeguards:
     - never delete before final PR merge to origin/main
     - never delete before regression sign-off
@@ -28,22 +33,26 @@ cleanup:
 lanes:
   - laneId: 00-conductor
     role: conductor
-    branch: phase/2.2.0
+    branch: copilot/phase-220-closeout
     prNumber: null
-    status: active
-    readiness: blocked
+    status: completed
+    readiness: ready-for-final-pr
     ownedSurface:
       - phase branch governance
       - manifest lifecycle
       - merge policy enforcement
       - final integration PR to origin/main
-    blockers:
-      - phase/2.2.0 branch not found; worker PRs are currently opened against main
-      - Integrated verification is blocked until lanes 01-05 are merged into phase/2.2.0
+    blockers: []
     verification:
-      - manifest published
-      - lane boundaries declared
-      - baseline validation on conductor branch: npm run lint ✅, npm run test ✅
+      - manifest published and maintained
+      - lane boundaries validated across all 5 worker lanes
+      - lane 01 merged: identity-core scoring internals ✅
+      - lane 02 merged: scoring explainability contracts and DTO mapping ✅
+      - lane 03 merged: merge queue filtering, sort, and keep-side decision UX ✅
+      - lane 04 merged: role-specific attribute gating and outlet combobox ✅
+      - lane 05 merged: regression readiness report and sign-off ✅
+      - integrated verification: npm run lint ✅
+      - integrated verification: npm run test ✅ (23 suites, 72 tests)
 
   - laneId: 01-identity-core
     role: worker

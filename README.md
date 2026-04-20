@@ -10,6 +10,11 @@ This single README combines development guidance from the project and an older b
 
 **Current version: 1.1.0 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**
 
+**Status update (2026-04-20):**
+
+- ✅ Phase 3 integration merge completed on `origin/main` (Lima final integration PR #13, India PR #14, with Juliet/Kilo integrated in Lima merge flow).
+- 🟡 Next execution focus: Graph explorer + statistical reproducibility, plus the parallel self-contained news outlet searchable combobox feature.
+
 ### **Foundation: Participant Management (1.x.x releases)**
 
 Establish a solid participant/actor model with alias support, merge workflows, and configurable profiles as the foundation for Event-Actor-Role generalization.
@@ -32,10 +37,10 @@ Establish a solid participant/actor model with alias support, merge workflows, a
     - [x] Add dropdown to switch between profiles
     - [x] Refactor forms for participant type (type-agnostic form + type selector)
     - [x] Make profiles fully configurable via schema_profile + schema_constraint
-  - [ ] Complete fleet phase `1.2.1` for participant form integration and verification
-    - [ ] Run `[1.2.1][00-conductor]` over the approved phase branch
-    - [ ] Merge `[1.2.1][01-form-submission]` and `[1.2.1][02-list-rendering]` into `phase/1.2.1`
-    - [ ] Finish `[1.2.1][03-compat-verification]` and open the final PR to `origin/main`
+  - [x] Complete fleet phase `1.2.1` for participant form integration and verification
+    - [x] Run `[1.2.1][00-conductor]` over the approved phase branch
+    - [x] Merge `[1.2.1][01-form-submission]` and `[1.2.1][02-list-rendering]` into `phase/1.2.1`
+    - [x] Finish `[1.2.1][03-compat-verification]` and open the final PR to `origin/main`
 - [ ] **1.3.x** (optional polish, defer for Phase 3 if time-critical)
   - [ ] Perpetrator "unknown" input as checkbox
   - [ ] Victim-perpetrator relationship "other" option with custom text
@@ -46,32 +51,37 @@ Establish a solid participant/actor model with alias support, merge workflows, a
 
 ### **Phase 2: Event-Actor-Role Generalization & Configurable Profiles (2.x.x releases)**
 
-### Active Fleet Execution Proposal
+### Active Fleet Execution Proposal (canonical schema)
 
-- Proposed planned version: `1.2.1`
+- Proposed planned version: `2.1.0`
 - Approval state: pending user approval before fleet launch
-- Phase branch: `phase/1.2.1`
-- Merge policy: eager worker merge into `phase/1.2.1` after verification, then one final PR to `origin/main`
+- Phase branch: `phase/2.1.0`
+- Merge policy: eager worker merge into `phase/2.1.0` after verification, then one final PR to `origin/main`
+- Lane identity format: `[<planned-version>][<agent-id>-<short-name>] <task-description>`
+- Conductor lane id reserved: `00`
 - Parallel-safe lanes:
-  - `[1.2.1][00-conductor] Integrate phase 1.2.1 fleet`
-  - `[1.2.1][01-form-submission] Wire unified participant form submission to validation endpoints`
-  - `[1.2.1][02-list-rendering] Render participant type labels and visibility state in list UI`
-  - `[1.2.1][03-compat-verification] Verify legacy loading and end-to-end participant type switching`
+  - `[2.1.0][00-conductor] Integrate phase 2.1.0 fleet`
+  - `[2.1.0][01-profile-admin-ui] Build schema profile administration UI`
+  - `[2.1.0][02-role-visibility] Implement role-based field visibility and constraints`
+  - `[2.1.0][03-domain-seed-support] Add homicide default + custom domain seed lifecycle`
+  - `[2.1.0][04-regression-verification] Verify backward compatibility and end-to-end role/profile flows`
+
+- Historical note: legacy phonetic lane labels were used in earlier phases and are now archived-only references.
 
 Generalize the participant model into a core Event–Actor–Role ontology. Introduce annotation events with configurable profiles, role-based claims, and prepare for AtoM plugin integration.
 
-- [ ] **2.0.x — Event-Actor-Role Core Schema**
-  - [ ] Design and implement core entities
-    - [ ] `annotation_event`: events with datetime modes (exact/approx/unknown), location, profile reference
-    - [ ] `actor`: generalized entity with canonical labels, aliases, identifiers
-    - [ ] `event_actor_role`: link events to actors with role vocabulary (Victim, Perpetrator, Witness, Reporter, etc.)
-    - [ ] `schema_profile`, `schema_field`, `schema_constraint`: configurable profile registry
-  - [ ] Implement backward-compatibility mapping
-    - [ ] Migrate existing victim/perpetrator records → actor + event_actor_role
-    - [ ] Preserve legacy participant/victim/perpetrator semantics
-  - [ ] Add role-based claims and evidence
-    - [ ] `claim`: assertions on actors/roles with confidence and source evidence
-    - [ ] `claim_evidence`: link claims to article mentions with coder metadata
+- [x] **2.0.x — Event-Actor-Role Core Schema**
+  - [x] Design and implement core entities
+    - [x] `annotation_event`: events with datetime modes (exact/approx/unknown), location, profile reference
+    - [x] `actor`: generalized entity with canonical labels, aliases, identifiers
+    - [x] `event_actor_role`: link events to actors with role vocabulary (Victim, Perpetrator, Witness, Reporter, etc.)
+    - [x] `schema_profile`, `schema_field`, `schema_constraint`: configurable profile registry
+  - [x] Implement backward-compatibility mapping
+    - [x] Migrate/resolve existing victim/perpetrator records into actor-compatible integration payloads
+    - [x] Preserve legacy participant/victim/perpetrator semantics
+  - [x] Add role-based claims and evidence
+    - [x] `claim`: assertions on actors/roles with confidence and source evidence
+    - [x] `claim_evidence`: link claims to article mentions with coder metadata
 - [ ] **2.1.x — Multi-Domain Profile Support**
   - [ ] Implement admin UI for profile definition
   - [ ] Support homicide (preloaded default) + custom domains

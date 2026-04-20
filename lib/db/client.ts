@@ -7,6 +7,9 @@ import {
   Event,
   ReportAnnotation,
   Participant,
+  Actor,
+  ActorAlias,
+  ActorIdentifier,
   SyncQueue,
   NewSyncQueue,
   AppConfig,
@@ -22,6 +25,9 @@ class NewsReportTrackerDexie extends Dexie {
   events!: Table<Event, string>;
   reportAnnotations!: Table<ReportAnnotation, string>;
   participants!: Table<Participant, string>;
+  actors!: Table<Actor, string>;
+  actorAliases!: Table<ActorAlias, string>;
+  actorIdentifiers!: Table<ActorIdentifier, string>;
   syncQueue!: Table<SyncQueue, number>;
   appConfig!: Table<AppConfig, number>;
 

@@ -171,7 +171,6 @@ class DatabaseManagerServer {
       }
     }
     await this.seedDefaultSchemaRegistry();
-    await this.seedDefaultSchemaRegistry();
     await this.seedDefaultRoleVocabulary();
   }
 

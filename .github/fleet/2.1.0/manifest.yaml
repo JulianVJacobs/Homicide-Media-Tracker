@@ -8,16 +8,38 @@ baseBranch: origin/main
 phaseBranch: phase/2.1.0
 launchDate: 2026-04-20
 finalPr:
-  number: null
-  status: ready
+  number: 17
+  status: merged
   blockers: []
+cleanup:
+  ownerLane: 00-conductor
+  policy: delete-after-final-merge
+  phaseBranch:
+    name: phase/2.1.0
+    deleteWhen:
+      - final PR merged to origin/main
+      - worker branch deletion attempted
+  workerBranches:
+    - copilot/add-profile-admin-ui-schema
+    - copilot/add-role-based-field-visibility
+    - copilot/phase-2-1-0-homicide-domain-seed-lifecycle
+    - copilot/verification-backward-compatibility-checks
+  safeguards:
+    - never delete before final PR merge to origin/main
+    - never delete before regression sign-off
+    - if a branch no longer exists, record cleanup as already-satisfied
+  status: complete
+  completedAt: 2026-04-20
+  verification:
+    - final PR #17 merged to origin/main at b3d147b
+    - no remaining origin/copilot/* refs detected in local remote-tracking view
 lanes:
   - laneId: 00-conductor
     role: conductor
     branch: phase/2.1.0
     prNumber: null
-    status: active
-    readiness: opening-final-pr
+    status: completed
+    readiness: completed
     ownedSurface:
       - phase branch governance
       - manifest lifecycle
@@ -31,6 +53,8 @@ lanes:
       - integrated suite: 18 test suites, 58 tests passed ✅
       - npm run lint passed on integrated branch ✅
       - lane 04 regression sign-off received ✅
+      - final PR #17 merged to origin/main ✅
+      - worker branch cleanup completed ✅
 
   - laneId: 01-profile-admin-ui
     role: worker

@@ -9,29 +9,28 @@ phaseBranch: phase/2.1.0
 launchDate: 2026-04-20
 finalPr:
   number: null
-  status: blocked
-  blockers:
-    - waiting for lane 04 regression verification to complete
+  status: ready
+  blockers: []
 lanes:
   - laneId: 00-conductor
     role: conductor
     branch: phase/2.1.0
     prNumber: null
     status: active
-    readiness: waiting-on-lane-04
+    readiness: opening-final-pr
     ownedSurface:
       - phase branch governance
       - manifest lifecycle
       - merge policy enforcement
       - final integration PR to origin/main
-    blockers:
-      - lane 04 regression verification must complete before final PR
+    blockers: []
     verification:
       - manifest published
       - lane boundaries validated
       - 01/02/03 merged into phase/2.1.0 ✅
       - integrated suite: 18 test suites, 58 tests passed ✅
       - npm run lint passed on integrated branch ✅
+      - lane 04 regression sign-off received ✅
 
   - laneId: 01-profile-admin-ui
     role: worker
@@ -93,14 +92,16 @@ lanes:
     role: worker
     branch: lane/2.1.0/04-regression-verification
     prNumber: null
-    status: active
-    readiness: gate-open
+    status: completed
+    readiness: completed
     ownedSurface:
       - compatibility regression tests
       - end-to-end role/profile workflows
       - verification report
     blockers: []
     verification:
-      - gate open: 01/02/03 are merged into phase/2.1.0
-      - required before final PR: run full regression against phase/2.1.0
-      - required before final PR: npm run lint && npm run test
+      - backward compatibility checks passed: lib/contracts/participant-form.test.ts, lib/events/integration.test.ts, lib/db/schema.actor.test.ts, app/api/participant-alias.test.ts, app/api/participant-merge-promotion.test.ts
+      - profile + role visibility workflow checks passed: lib/db/schema-profile-loader.test.ts, lib/db/schema-constraint-loader.test.ts, lib/db/role-vocabulary.test.ts, lib/contracts/events-contract.test.ts
+      - new lane integration checks passed: lib/components/role-visibility.test.ts, lib/contracts/schema-profile-admin-dto.test.ts, lib/db/domain-seed.test.ts
+      - full integrated regression: npm run lint ✅, npm run test ✅ (18 suites, 58 tests) on phase/2.1.0 integrated branch
+      - sign-off complete ✅

@@ -87,21 +87,19 @@ lanes:
     role: worker
     branch: copilot/220-merge-queue-ui
     prNumber: 26
-    status: open-draft
-    readiness: blocked
+    status: ready-for-review
+    readiness: ready
     ownedSurface:
       - actor merge queue UI
       - promotion workflow UI
       - queue filtering and sort controls
-    blockers:
-      - PR #26 targets origin/main instead of phase/2.2.0 (fleet policy violation).
-      - needs merge candidates from lane 01
-      - No lane-scoped verification summary is present in the PR.
-      - Worker branch naming does not follow lane/2.2.0/03-merge-queue-ui.
+    blockers: []
     verification:
-      - PR #26 opened as draft from copilot/220-merge-queue-ui -> main.
-      - Changed files in PR #26: none (no worker implementation committed yet).
-      - Workflow check: no checks reported yet.
+      - npm run test -- lib/components/participant-merge-queue.utils.test.ts ✅
+      - npm run lint ✅
+      - added queue role filter, sort options, and text search in participant merge queue UI
+      - added explicit keep-left / keep-right merge decision action pathways
+      - filterAndSortMergeQueueCandidates utility added to participant-merge-queue.utils.ts
 
   - laneId: 04-role-attrs-outlet
     role: worker

@@ -2,6 +2,7 @@ import {
   buildAliasPromotionResult,
   buildMergeQueueCandidates,
   buildMergeResult,
+  filterAndSortMergeQueueCandidates,
   type MergeParticipantRecord,
 } from './participant-merge-queue.utils';
 
@@ -93,5 +94,93 @@ describe('participant merge queue utils', () => {
       primaryName: 'John Smith',
       alias: 'Smitty, JS, Johnny',
     });
+  });
+
+  it('filters and sorts queue candidates by role and search text', () => {
+    const queue = buildMergeQueueCandidates([
+      {
+        id: 'v1',
+        role: 'victim',
+        articleId: 'a1',
+        primaryName: 'Jane Doe',
+        alias: 'JD',
+      },
+      {
+        id: 'v2',
+        role: 'victim',
+        articleId: 'a2',
+        primaryName: 'JD',
+        alias: null,
+      },
+      {
+        id: 'p1',
+        role: 'perpetrator',
+        articleId: 'a3',
+        primaryName: 'John Smith',
+        alias: 'JS',
+      },
+      {
+        id: 'p2',
+        role: 'perpetrator',
+        articleId: 'a4',
+        primaryName: 'JS',
+        alias: null,
+      },
+    ]);
+
+    const filtered = filterAndSortMergeQueueCandidates(queue, {
+      roleFilter: 'perpetrator',
+      searchText: 'john',
+      sortOrder: 'shared-value-desc',
+    });
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].left.role).toBe('perpetrator');
+    expect(filtered[0].sharedValue).toBe('JS');
+  });
+
+  it('sorts queue candidates by shared value ascending by default behavior', () => {
+    const queue = buildMergeQueueCandidates([
+      {
+        id: 'v1',
+        role: 'victim',
+        articleId: 'a1',
+        primaryName: 'Zulu',
+        alias: 'Echo',
+      },
+      {
+        id: 'v2',
+        role: 'victim',
+        articleId: 'a2',
+        primaryName: 'Echo',
+        alias: null,
+      },
+      {
+        id: 'p1',
+        role: 'perpetrator',
+        articleId: 'a3',
+        primaryName: 'Bravo',
+        alias: 'Alpha',
+      },
+      {
+        id: 'p2',
+        role: 'perpetrator',
+        articleId: 'a4',
+        primaryName: 'Alpha',
+        alias: null,
+      },
+    ]);
+
+    const sorted = filterAndSortMergeQueueCandidates(queue, {
+      roleFilter: 'all',
+      searchText: '',
+      sortOrder: 'shared-value-asc',
+    });
+
+    expect(sorted).toHaveLength(2);
+    expect(sorted.map((candidate) => candidate.sharedValue)).toEqual([
+      'Alpha',
+      'Echo',
+    ]);
   });
 });

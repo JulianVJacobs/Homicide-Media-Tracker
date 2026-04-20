@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Badge,
+  ButtonGroup,
   Button,
   Card,
   Col,
@@ -18,7 +19,10 @@ import {
   buildAliasPromotionResult,
   buildMergeQueueCandidates,
   buildMergeResult,
+  filterAndSortMergeQueueCandidates,
   splitAliasValues,
+  type MergeQueueRoleFilter,
+  type MergeQueueSortOrder,
   type MergeParticipantRecord,
   type MergeQueueCandidate,
 } from './participant-merge-queue.utils';
@@ -68,6 +72,9 @@ const ParticipantMergeQueue: React.FC<ParticipantMergeQueueProps> = ({ onBack })
     useState<MergeParticipantRecord | null>(null);
   const [promotionValue, setPromotionValue] = useState('');
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+  const [roleFilter, setRoleFilter] = useState<MergeQueueRoleFilter>('all');
+  const [queueSearchText, setQueueSearchText] = useState('');
+  const [sortOrder, setSortOrder] = useState<MergeQueueSortOrder>('shared-value-asc');
 
   const participants = useMemo(
     () => toParticipantRecords(victims, perpetrators),
@@ -76,6 +83,15 @@ const ParticipantMergeQueue: React.FC<ParticipantMergeQueueProps> = ({ onBack })
   const queue = useMemo(
     () => buildMergeQueueCandidates(participants),
     [participants],
+  );
+  const visibleQueue = useMemo(
+    () =>
+      filterAndSortMergeQueueCandidates(queue, {
+        roleFilter,
+        searchText: queueSearchText,
+        sortOrder,
+      }),
+    [queue, queueSearchText, roleFilter, sortOrder],
   );
 
   const refreshParticipants = useCallback(async () => {
@@ -249,6 +265,12 @@ const ParticipantMergeQueue: React.FC<ParticipantMergeQueueProps> = ({ onBack })
     }
   };
 
+  const openMergeDecision = (candidate: MergeQueueCandidate, keepSide: MergeKeepSide) => {
+    setMergeKeepSide(keepSide);
+    setValidationMessage(null);
+    setSelectedCandidate(candidate);
+  };
+
   return (
     <Container fluid className="py-4">
       <Row>
@@ -278,14 +300,69 @@ const ParticipantMergeQueue: React.FC<ParticipantMergeQueueProps> = ({ onBack })
 
           <Card className="mb-4">
             <Card.Body>
-              <div className="d-flex gap-4">
+              <div className="d-flex flex-wrap gap-4">
                 <div>
                   <strong>Participants:</strong> {participants.length}
                 </div>
                 <div>
                   <strong>Queue Items:</strong> {queue.length}
                 </div>
+                <div>
+                  <strong>Visible Items:</strong> {visibleQueue.length}
+                </div>
               </div>
+            </Card.Body>
+          </Card>
+
+          <Card className="mb-4">
+            <Card.Body>
+              <Row className="g-3">
+                <Col md={4}>
+                  <Form.Group controlId="queue-role-filter">
+                    <Form.Label>Role Filter</Form.Label>
+                    <Form.Select
+                      value={roleFilter}
+                      onChange={(event) =>
+                        setRoleFilter(event.target.value as MergeQueueRoleFilter)
+                      }
+                      disabled={busy || loading}
+                    >
+                      <option value="all">All Roles</option>
+                      <option value="victim">Victim</option>
+                      <option value="perpetrator">Perpetrator</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group controlId="queue-sort-order">
+                    <Form.Label>Sort By</Form.Label>
+                    <Form.Select
+                      value={sortOrder}
+                      onChange={(event) =>
+                        setSortOrder(event.target.value as MergeQueueSortOrder)
+                      }
+                      disabled={busy || loading}
+                    >
+                      <option value="shared-value-asc">Shared value (A-Z)</option>
+                      <option value="shared-value-desc">Shared value (Z-A)</option>
+                      <option value="role-asc">Role (A-Z)</option>
+                      <option value="role-desc">Role (Z-A)</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group controlId="queue-search">
+                    <Form.Label>Search</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={queueSearchText}
+                      onChange={(event) => setQueueSearchText(event.target.value)}
+                      placeholder="Search Shared Value, Name, Alias, or ID"
+                      disabled={busy || loading}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
 
@@ -298,25 +375,35 @@ const ParticipantMergeQueue: React.FC<ParticipantMergeQueueProps> = ({ onBack })
               No merge candidates found. Queue updates automatically after alias
               changes and merges.
             </Alert>
+          ) : visibleQueue.length === 0 ? (
+            <Alert variant="info">
+              No queue items match the current filters.
+            </Alert>
           ) : (
-            queue.map((candidate) => (
+            visibleQueue.map((candidate) => (
               <Card className="mb-3" key={candidate.id}>
                 <Card.Header className="d-flex justify-content-between align-items-center">
                   <div>
                     Potential duplicate <Badge bg="warning">{candidate.sharedValue}</Badge>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline-primary"
-                    onClick={() => {
-                      setMergeKeepSide('left');
-                      setValidationMessage(null);
-                      setSelectedCandidate(candidate);
-                    }}
-                    disabled={busy}
-                  >
-                    Merge Participants
-                  </Button>
+                  <ButtonGroup size="sm">
+                    <Button
+                      variant="outline-primary"
+                      onClick={() => openMergeDecision(candidate, 'left')}
+                      disabled={busy}
+                      aria-label={`Keep ${candidate.left.primaryName || candidate.left.id} and merge ${candidate.right.primaryName || candidate.right.id}`}
+                    >
+                      Keep Left
+                    </Button>
+                    <Button
+                      variant="outline-primary"
+                      onClick={() => openMergeDecision(candidate, 'right')}
+                      disabled={busy}
+                      aria-label={`Keep ${candidate.right.primaryName || candidate.right.id} and merge ${candidate.left.primaryName || candidate.left.id}`}
+                    >
+                      Keep Right
+                    </Button>
+                  </ButtonGroup>
                 </Card.Header>
                 <Card.Body>
                   <Row>

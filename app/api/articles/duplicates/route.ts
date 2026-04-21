@@ -4,12 +4,108 @@ import { detectDuplicates } from '../../../../lib/components/utils';
 import * as schema from '../../../../lib/db/schema';
 import { mapDuplicateMatchDtos } from '../utils';
 
+type DuplicateRequestPayload = {
+  newsReportUrl?: string | null;
+  newsReportHeadline?: string | null;
+  author?: string | null;
+  victimName?: string;
+  victimAlias?: string | string[];
+  dateOfDeath?: string;
+  placeOfDeathProvince?: string;
+  placeOfDeathTown?: string;
+  perpetratorName?: string;
+  perpetratorAlias?: string | string[];
+  victims?: schema.Victim[];
+  perpetrators?: schema.Perpetrator[];
+};
+
+const toArray = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
+
+const groupByArticleId = <T>(
+  records: T[],
+  getArticleId: (record: T) => string,
+): Map<string, T[]> => {
+  const groupedRecords = new Map<string, T[]>();
+  records.forEach((record) => {
+    const articleId = getArticleId(record);
+    const grouped = groupedRecords.get(articleId) ?? [];
+    grouped.push(record);
+    groupedRecords.set(articleId, grouped);
+  });
+  return groupedRecords;
+};
+
+const toAliasList = (
+  aliasValue: string | string[] | undefined,
+  relationAliases: string[],
+  relationNames: string[],
+): string[] => {
+  const requestAliases = toArray<string>(aliasValue);
+  let aliasesFromRequest: string[] = [];
+  if (requestAliases.length > 0) {
+    aliasesFromRequest = requestAliases;
+  } else if (typeof aliasValue === 'string' && aliasValue.length > 0) {
+    aliasesFromRequest = [aliasValue];
+  }
+
+  return [
+    ...aliasesFromRequest,
+    ...relationAliases,
+    ...relationNames,
+  ];
+};
+
+const buildDuplicateCandidate = (
+  article: Partial<schema.Article> & DuplicateRequestPayload,
+  victims: schema.Victim[],
+  perpetrators: schema.Perpetrator[],
+) => {
+  // Legacy duplicate fields are singular, so we project the first related record
+  // into those fields while preserving full relation arrays for event-level checks.
+  const [firstVictim] = victims;
+  const [firstPerpetrator] = perpetrators;
+  const victimAliases = victims
+    .map((victim) => victim.victimAlias)
+    .filter((alias): alias is string => typeof alias === 'string' && alias.length > 0);
+  const victimNamesAsAlias = victims
+    .map((victim) => victim.victimName)
+    .filter((name): name is string => typeof name === 'string' && name.length > 0);
+  const perpetratorAliases = perpetrators
+    .map((perpetrator) => perpetrator.perpetratorAlias)
+    .filter((alias): alias is string => typeof alias === 'string' && alias.length > 0);
+  const perpetratorNamesAsAlias = perpetrators
+    .map((perpetrator) => perpetrator.perpetratorName)
+    .filter((name): name is string => typeof name === 'string' && name.length > 0);
+
+  return {
+    ...article,
+    victimName: article.victimName ?? firstVictim?.victimName,
+    victimAlias: toAliasList(
+      article.victimAlias,
+      victimAliases,
+      victimNamesAsAlias,
+    ),
+    dateOfDeath: article.dateOfDeath ?? firstVictim?.dateOfDeath,
+    placeOfDeathProvince:
+      article.placeOfDeathProvince ?? firstVictim?.placeOfDeathProvince,
+    placeOfDeathTown: article.placeOfDeathTown ?? firstVictim?.placeOfDeathTown,
+    perpetratorName: article.perpetratorName ?? firstPerpetrator?.perpetratorName,
+    perpetratorAlias: toAliasList(
+      article.perpetratorAlias,
+      perpetratorAliases,
+      perpetratorNamesAsAlias,
+    ),
+    victims,
+    perpetrators,
+  };
+};
+
 /**
  * POST /api/articles/duplicates - Detect duplicate articles
  */
 export async function POST(request: NextRequest) {
   try {
-    const articleData = await request.json();
+    const articleData = (await request.json()) as DuplicateRequestPayload;
 
     if (
       !articleData.newsReportUrl ||
@@ -32,11 +128,40 @@ export async function POST(request: NextRequest) {
     await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
-    // Get all existing articles for comparison
+    // Get all existing records for comparison
     const existingArticles = await db.select().from(schema.articles);
+    const existingVictims = await db.select().from(schema.victims);
+    const existingPerpetrators = await db.select().from(schema.perpetrators);
+
+    const victimsByArticleId = groupByArticleId(
+      existingVictims,
+      (victim) => victim.articleId,
+    );
+    const perpetratorsByArticleId = groupByArticleId(
+      existingPerpetrators,
+      (perpetrator) => perpetrator.articleId,
+    );
+
+    const existingCandidates = existingArticles
+      .map((article) =>
+        buildDuplicateCandidate(
+          article,
+          victimsByArticleId.get(article.id) ?? [],
+          perpetratorsByArticleId.get(article.id) ?? [],
+        ),
+      )
+      .filter((c): c is typeof c & { id: string } => typeof c.id === 'string');
+
+    const requestVictims = toArray<schema.Victim>(articleData.victims);
+    const requestPerpetrators = toArray<schema.Perpetrator>(articleData.perpetrators);
+    const candidate = buildDuplicateCandidate(
+      articleData,
+      requestVictims,
+      requestPerpetrators,
+    );
 
     // Detect potential duplicates
-    const duplicates = detectDuplicates(articleData, existingArticles);
+    const duplicates = detectDuplicates(candidate, existingCandidates);
     const duplicateDtos = mapDuplicateMatchDtos(duplicates);
 
     return NextResponse.json({

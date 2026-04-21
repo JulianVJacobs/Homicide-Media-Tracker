@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { and, eq, inArray, like, or, sql, type SQL } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import type { ActorPayload } from '../../../lib/contracts/plugin-api-contract';
 import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
 import {
   actors,
@@ -13,6 +14,11 @@ import {
   type NewActorAlias,
   type NewActorIdentifier,
 } from '../../../lib/db/schema';
+import {
+  createPluginResource,
+  isWorkbenchPluginApiEnabled,
+  listPluginResource,
+} from '../../../lib/workbench/plugin-api-client';
 import { splitAliases } from '../participant/[role]/utils';
 
 const ensureServerDatabase = async () => {
@@ -60,7 +66,6 @@ const normaliseAliasInput = (rawAliases: unknown): string[] => {
 
 export async function GET(request: Request) {
   try {
-    const db = await ensureServerDatabase();
     const url = new URL(request.url);
     const search = (url.searchParams.get('search') || '').trim();
     const parsedLimit = Number.parseInt(
@@ -75,6 +80,37 @@ export async function GET(request: Request) {
     const offset = Number.isNaN(parsedOffset) ? 0 : parsedOffset;
     const status = (url.searchParams.get('status') || '').trim();
 
+    if (isWorkbenchPluginApiEnabled()) {
+      const { items } = await listPluginResource<ActorPayload>('actors', {
+        search,
+        status,
+        limit,
+        offset,
+      });
+      return NextResponse.json({
+        success: true,
+        data: items.map((item) => ({
+          ...item,
+          status:
+            typeof (item as Record<string, unknown>).status === 'string'
+              ? (item as Record<string, string>).status
+              : 'active',
+          schemaProfileId:
+            typeof (item as Record<string, unknown>).schemaProfileId === 'string'
+              ? (item as Record<string, string>).schemaProfileId
+              : null,
+          identifiers: [
+            {
+              namespace: 'primary_name',
+              value: item.canonicalLabel,
+              isPrimary: true,
+            },
+          ],
+        })),
+      });
+    }
+
+    const db = await ensureServerDatabase();
     const whereConditions: SQL[] = [];
     if (status) {
       whereConditions.push(eq(actors.status, status));
@@ -150,7 +186,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const db = await ensureServerDatabase();
     const payload = (await request.json()) as Record<string, unknown>;
     const canonicalLabel =
       typeof payload.canonicalLabel === 'string'
@@ -195,6 +230,38 @@ export async function POST(request: Request) {
       updatedAt: now,
     };
     const aliasValues = normaliseAliasInput(payload.aliases);
+
+    if (isWorkbenchPluginApiEnabled()) {
+      const created = await createPluginResource<
+        Omit<ActorPayload, 'id'>,
+        ActorPayload
+      >('actors', {
+        canonicalLabel,
+        actorKind,
+        aliases: aliasValues,
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: {
+            ...created,
+            status,
+            schemaProfileId,
+            identifiers: [
+              {
+                namespace: 'primary_name',
+                value: created.canonicalLabel,
+                isPrimary: true,
+              },
+            ],
+          },
+        },
+        { status: 201 },
+      );
+    }
+
+    const db = await ensureServerDatabase();
     const aliasRows: NewActorAlias[] = aliasValues.map((alias) => ({
       id: uuidv4(),
       actorId: id,

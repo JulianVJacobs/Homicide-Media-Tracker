@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
+import {
+  normalizeReplayOperations,
+  type ReplayResult,
+  replayOfflineOperations,
+} from './replay';
+
+const replayCache = new Map<string, ReplayResult>();
+// Best-effort in-memory de-duplication for short retry windows.
 
 /**
  * GET /api/sync - Get sync configuration and status
@@ -120,11 +128,60 @@ export async function DELETE() {
 /**
  * PATCH /api/sync - Process sync queue
  */
-export async function PATCH() {
+export async function PATCH(request: NextRequest) {
   try {
-    // Only call processSyncQueue if running on server (type assertion)
-
     if (dbm instanceof DatabaseManagerServer) {
+      let replayPayload: unknown = null;
+
+      try {
+        replayPayload = await request.json();
+      } catch {
+        replayPayload = null;
+      }
+
+      const replayOperations = normalizeReplayOperations(
+        replayPayload &&
+          typeof replayPayload === 'object' &&
+          replayPayload !== null &&
+          'operations' in replayPayload
+          ? (replayPayload as { operations?: unknown }).operations
+          : [],
+      );
+
+      if (replayOperations.length > 0) {
+        const config = dbm.getConfig();
+        const { ackedQueueIds, results } = await replayOfflineOperations(
+          replayOperations,
+          {
+            requestOrigin: request.nextUrl.origin,
+            remoteBaseUrl: config.remote?.url,
+            remoteAuthToken: config.remote?.authToken,
+            forwardedHeaders: {
+              authorization: request.headers.get('authorization') ?? undefined,
+              cookie: request.headers.get('cookie') ?? undefined,
+            },
+            replayCache,
+          },
+        );
+        const replayed = results.filter((result) => result.status === 'replayed');
+        const duplicates = results.filter(
+          (result) => result.status === 'duplicate',
+        );
+        const failed = results.filter((result) => result.status === 'failed');
+
+        return NextResponse.json({
+          success: failed.length === 0,
+          message: 'Replay batch processed',
+          counts: {
+            replayed: replayed.length,
+            duplicate: duplicates.length,
+            failed: failed.length,
+          },
+          ackedQueueIds,
+          results,
+        });
+      }
+
       await dbm.processSyncQueue();
       return NextResponse.json({
         success: true,

@@ -1,4 +1,4 @@
-import { detectDuplicates } from './utils';
+import { detectDuplicates, groupArticlesByEvent } from './utils';
 
 describe('detectDuplicates', () => {
   it('returns explainability fields for URL matches', () => {
@@ -95,5 +95,155 @@ describe('detectDuplicates', () => {
     expect(matches[0].explainability).toContain('similar');
     expect(matches[0].scoring.totalWeightedScore).toBeGreaterThan(0);
     expect(matches[0].scoring.weightedContributions).toHaveLength(4);
+  });
+
+  it('matches event-level duplicates for victim name and overlapping death dates', () => {
+    const matches = detectDuplicates(
+      {
+        newsReportUrl: 'https://example.com/source-a',
+        newsReportHeadline: 'Incident story from outlet A',
+        author: 'Reporter A',
+        victims: [
+          {
+            victimName: 'Nomusa Dlamini',
+            dateOfDeath: '2026-01-10',
+          },
+        ],
+      },
+      [
+        {
+          id: 'article-4',
+          newsReportUrl: 'https://example.com/source-b',
+          newsReportHeadline: 'Different outlet text',
+          author: 'Reporter B',
+          victims: [
+            {
+              victimName: 'nomusa dlamini',
+              dateOfDeath: '2026-01-10 to 2026-01-12',
+            },
+          ],
+        },
+      ],
+    );
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      id: 'article-4',
+      matchType: 'name',
+      confidence: 'high',
+      matchReason: 'victim_name_and_date_overlap',
+    });
+    expect(matches[0].matchedFields).toEqual(
+      expect.arrayContaining(['victimName', 'dateOfDeath']),
+    );
+  });
+
+  it('matches medium-confidence duplicates for victim name and death location', () => {
+    const matches = detectDuplicates(
+      {
+        newsReportUrl: 'https://example.com/a',
+        newsReportHeadline: 'Story from outlet A',
+        victims: [
+          {
+            victimName: 'Ayanda Nkosi',
+            placeOfDeathProvince: 'Gauteng',
+            placeOfDeathTown: 'Soweto',
+          },
+        ],
+      },
+      [
+        {
+          id: 'article-5',
+          newsReportUrl: 'https://example.com/b',
+          newsReportHeadline: 'Story from outlet B',
+          victims: [
+            {
+              victimName: 'ayanda nkosi',
+              placeOfDeathProvince: 'gauteng',
+              placeOfDeathTown: 'soweto',
+            },
+          ],
+        },
+      ],
+    );
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      id: 'article-5',
+      matchType: 'name',
+      confidence: 'medium',
+      matchReason: 'victim_name_and_location_match',
+    });
+  });
+
+  it('matches medium-confidence duplicates for suspect and victim name overlap', () => {
+    const matches = detectDuplicates(
+      {
+        newsReportUrl: 'https://example.com/alpha',
+        newsReportHeadline: 'Outlet alpha version',
+        victims: [{ victimName: 'Thabo Mokoena' }],
+        perpetrators: [{ perpetratorName: 'Sipho Ndlovu' }],
+      },
+      [
+        {
+          id: 'article-6',
+          newsReportUrl: 'https://example.com/bravo',
+          newsReportHeadline: 'Outlet bravo version',
+          victims: [{ victimName: 'thabo mokoena' }],
+          perpetrators: [{ perpetratorName: 'sipho ndlovu' }],
+        },
+      ],
+    );
+
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      id: 'article-6',
+      matchType: 'name',
+      confidence: 'medium',
+      matchReason: 'victim_and_suspect_name_match',
+    });
+  });
+});
+
+describe('groupArticlesByEvent', () => {
+  it('groups articles that share victim and approximate event identity', () => {
+    const groups = groupArticlesByEvent(
+      [
+        { id: 'article-1' },
+        { id: 'article-2' },
+        { id: 'article-3' },
+      ],
+      [
+        {
+          articleId: 'article-1',
+          victimName: 'Nomsa Khumalo',
+          dateOfDeath: '2026-02-14',
+          placeOfDeathProvince: 'Gauteng',
+          placeOfDeathTown: 'Johannesburg',
+        },
+        {
+          articleId: 'article-2',
+          victimName: 'nomsa khumalo',
+          dateOfDeath: '2026-02-14',
+          placeOfDeathProvince: 'gauteng',
+          placeOfDeathTown: 'johannesburg',
+        },
+        {
+          articleId: 'article-3',
+          victimName: 'Different Victim',
+          dateOfDeath: '2026-02-14',
+          placeOfDeathProvince: 'Gauteng',
+          placeOfDeathTown: 'Johannesburg',
+        },
+      ],
+      [],
+    );
+
+    expect(groups).toHaveLength(2);
+    const groupedPair = groups.find((group) => group.articles.length === 2);
+    expect(groupedPair).toBeDefined();
+    expect(groupedPair?.articles.map((article) => article.id)).toEqual(
+      expect.arrayContaining(['article-1', 'article-2']),
+    );
   });
 });

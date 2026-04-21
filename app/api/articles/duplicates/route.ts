@@ -4,12 +4,80 @@ import { detectDuplicates } from '../../../../lib/components/utils';
 import * as schema from '../../../../lib/db/schema';
 import { mapDuplicateMatchDtos } from '../utils';
 
+type DuplicateRequestPayload = {
+  newsReportUrl?: string;
+  newsReportHeadline?: string;
+  author?: string;
+  victimName?: string;
+  victimAlias?: string | string[];
+  dateOfDeath?: string;
+  placeOfDeathProvince?: string;
+  placeOfDeathTown?: string;
+  perpetratorName?: string;
+  perpetratorAlias?: string | string[];
+  victims?: schema.Victim[];
+  perpetrators?: schema.Perpetrator[];
+};
+
+const toArray = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
+
+const buildDuplicateCandidate = (
+  article: Partial<schema.Article> & DuplicateRequestPayload,
+  victims: schema.Victim[],
+  perpetrators: schema.Perpetrator[],
+) => {
+  const [firstVictim] = victims;
+  const [firstPerpetrator] = perpetrators;
+  const victimAliases = victims
+    .map((victim) => victim.victimAlias)
+    .filter((alias): alias is string => typeof alias === 'string' && alias.length > 0);
+  const victimNamesAsAlias = victims
+    .map((victim) => victim.victimName)
+    .filter((name): name is string => typeof name === 'string' && name.length > 0);
+  const perpetratorAliases = perpetrators
+    .map((perpetrator) => perpetrator.perpetratorAlias)
+    .filter((alias): alias is string => typeof alias === 'string' && alias.length > 0);
+  const perpetratorNamesAsAlias = perpetrators
+    .map((perpetrator) => perpetrator.perpetratorName)
+    .filter((name): name is string => typeof name === 'string' && name.length > 0);
+
+  return {
+    ...article,
+    victimName: article.victimName ?? firstVictim?.victimName,
+    victimAlias: [
+      ...(toArray<string>(article.victimAlias).length > 0
+        ? toArray<string>(article.victimAlias)
+        : article.victimAlias
+          ? [article.victimAlias]
+          : []),
+      ...victimAliases,
+      ...victimNamesAsAlias,
+    ],
+    dateOfDeath: article.dateOfDeath ?? firstVictim?.dateOfDeath,
+    placeOfDeathProvince:
+      article.placeOfDeathProvince ?? firstVictim?.placeOfDeathProvince,
+    placeOfDeathTown: article.placeOfDeathTown ?? firstVictim?.placeOfDeathTown,
+    perpetratorName: article.perpetratorName ?? firstPerpetrator?.perpetratorName,
+    perpetratorAlias: [
+      ...(toArray<string>(article.perpetratorAlias).length > 0
+        ? toArray<string>(article.perpetratorAlias)
+        : article.perpetratorAlias
+          ? [article.perpetratorAlias]
+          : []),
+      ...perpetratorAliases,
+      ...perpetratorNamesAsAlias,
+    ],
+    victims,
+    perpetrators,
+  };
+};
+
 /**
  * POST /api/articles/duplicates - Detect duplicate articles
  */
 export async function POST(request: NextRequest) {
   try {
-    const articleData = await request.json();
+    const articleData = (await request.json()) as DuplicateRequestPayload;
 
     if (
       !articleData.newsReportUrl ||
@@ -32,11 +100,43 @@ export async function POST(request: NextRequest) {
     await dbm.ensureDatabaseInitialised();
     const db = dbm.getLocal();
 
-    // Get all existing articles for comparison
+    // Get all existing records for comparison
     const existingArticles = await db.select().from(schema.articles);
+    const existingVictims = await db.select().from(schema.victims);
+    const existingPerpetrators = await db.select().from(schema.perpetrators);
+
+    const victimsByArticleId = new Map<string, schema.Victim[]>();
+    existingVictims.forEach((victim) => {
+      const grouped = victimsByArticleId.get(victim.articleId) ?? [];
+      grouped.push(victim);
+      victimsByArticleId.set(victim.articleId, grouped);
+    });
+
+    const perpetratorsByArticleId = new Map<string, schema.Perpetrator[]>();
+    existingPerpetrators.forEach((perpetrator) => {
+      const grouped = perpetratorsByArticleId.get(perpetrator.articleId) ?? [];
+      grouped.push(perpetrator);
+      perpetratorsByArticleId.set(perpetrator.articleId, grouped);
+    });
+
+    const existingCandidates = existingArticles.map((article) =>
+      buildDuplicateCandidate(
+        article,
+        victimsByArticleId.get(article.id) ?? [],
+        perpetratorsByArticleId.get(article.id) ?? [],
+      ),
+    );
+
+    const requestVictims = toArray<schema.Victim>(articleData.victims);
+    const requestPerpetrators = toArray<schema.Perpetrator>(articleData.perpetrators);
+    const candidate = buildDuplicateCandidate(
+      articleData,
+      requestVictims,
+      requestPerpetrators,
+    );
 
     // Detect potential duplicates
-    const duplicates = detectDuplicates(articleData, existingArticles);
+    const duplicates = detectDuplicates(candidate, existingCandidates);
     const duplicateDtos = mapDuplicateMatchDtos(duplicates);
 
     return NextResponse.json({

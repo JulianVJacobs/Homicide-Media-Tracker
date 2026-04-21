@@ -7,6 +7,7 @@ import {
 } from './replay';
 
 const replayCache = new Map<string, ReplayResult>();
+// Best-effort in-memory de-duplication for short retry windows.
 
 /**
  * GET /api/sync - Get sync configuration and status
@@ -162,10 +163,20 @@ export async function PATCH(request: NextRequest) {
             replayCache,
           },
         );
+        const replayed = results.filter((result) => result.status === 'replayed');
+        const duplicates = results.filter(
+          (result) => result.status === 'duplicate',
+        );
+        const failed = results.filter((result) => result.status === 'failed');
 
         return NextResponse.json({
-          success: results.every((result) => result.status !== 'failed'),
+          success: failed.length === 0,
           message: 'Replay batch processed',
+          counts: {
+            replayed: replayed.length,
+            duplicate: duplicates.length,
+            failed: failed.length,
+          },
           ackedQueueIds,
           results,
         });

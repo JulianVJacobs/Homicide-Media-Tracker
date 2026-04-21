@@ -9,6 +9,7 @@ describe('sync replay bridge', () => {
       { method: 'POST', endpoint: '/api/events', body: { id: '1' } },
       { method: 'GET', endpoint: '/api/events' },
       { method: 'POST', endpoint: '/api/sync' },
+      { method: 'DELETE', endpoint: '/api/events/event-1', body: { force: true } },
       'invalid',
     ]);
 
@@ -50,20 +51,32 @@ describe('sync replay bridge', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://plugin.example/api/events',
+      'https://plugin.example/api/workbench/sync/batch',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
           'X-Offline-Replay': '1',
-          'X-Idempotency-Key': 'req-1',
+        }),
+        body: JSON.stringify({
+          operations: [
+            {
+              requestId: 'req-1',
+              method: 'POST',
+              endpoint: '/api/events',
+              body: { id: 'event-1' },
+            },
+          ],
         }),
       }),
     );
-    expect(result.ackedQueueIds).toEqual([1, 2]);
-    expect(result.results.map((entry) => entry.status)).toEqual([
-      'replayed',
-      'duplicate',
-    ]);
+    expect([...result.ackedQueueIds].sort((left, right) => left - right)).toEqual(
+      [1, 2],
+    );
+    expect(
+      result.results
+        .map((entry) => entry.status)
+        .sort((left, right) => left.localeCompare(right)),
+    ).toEqual(['duplicate', 'replayed']);
   });
 
   it('applies forwarded authorization to replayed requests', async () => {
@@ -92,7 +105,7 @@ describe('sync replay bridge', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:3000/api/events/event-1',
+      'http://localhost:3000/api/workbench/sync/batch',
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: 'Bearer lane-06-acl-token',

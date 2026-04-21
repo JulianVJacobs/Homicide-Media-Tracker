@@ -3,7 +3,9 @@ const API_CACHE = 'api-cache-v1';
 const RUNTIME_CACHE = 'runtime-cache-v1';
 const OFFLINE_QUEUE_DB = 'offline-post-queue';
 const OFFLINE_QUEUE_STORE = 'queue';
+const OFFLINE_QUEUE_DB_VERSION = 2;
 const OFFLINE_SYNC_ENDPOINT = '/api/sync';
+let offlineRequestCounter = 0;
 
 const supportsIndexedDB = () => {
   try {
@@ -162,7 +164,7 @@ function storePostRequest(request) {
   }
   return request.clone().json().then(body => {
     return new Promise((resolve, reject) => {
-      const open = indexedDB.open(OFFLINE_QUEUE_DB, 2);
+      const open = indexedDB.open(OFFLINE_QUEUE_DB, OFFLINE_QUEUE_DB_VERSION);
       open.onupgradeneeded = () => {
         if (!open.result.objectStoreNames.contains(OFFLINE_QUEUE_STORE)) {
           open.result.createObjectStore(OFFLINE_QUEUE_STORE, { keyPath: 'id', autoIncrement: true });
@@ -175,7 +177,8 @@ function storePostRequest(request) {
         const requestId =
           typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
             ? crypto.randomUUID()
-            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            // Fallback format: <timestamp>-<counter>-<random>.
+            : `${Date.now()}-${offlineRequestCounter++}-${Math.random().toString(16).slice(2)}`;
         tx.objectStore(OFFLINE_QUEUE_STORE).add({
           endpoint: `${endpointUrl.pathname}${endpointUrl.search}`,
           method: request.method,
@@ -203,7 +206,7 @@ function syncQueuedPosts() {
     return Promise.resolve();
   }
   return new Promise((resolve, reject) => {
-    const open = indexedDB.open(OFFLINE_QUEUE_DB, 2);
+    const open = indexedDB.open(OFFLINE_QUEUE_DB, OFFLINE_QUEUE_DB_VERSION);
     open.onupgradeneeded = () => {
       if (!open.result.objectStoreNames.contains(OFFLINE_QUEUE_STORE)) {
         open.result.createObjectStore(OFFLINE_QUEUE_STORE, { keyPath: 'id', autoIncrement: true });

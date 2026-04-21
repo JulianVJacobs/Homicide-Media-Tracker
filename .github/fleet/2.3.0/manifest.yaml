@@ -94,13 +94,17 @@ lanes:
   - laneId: 02-article-form
     role: worker
     branch: lane/2.3.0/02-article-form
-    prNumber: null
-    status: planned
+    prNumber: 38
+    status: active
     readiness: ready
     ownedSurface:
       - lib/components/article-form.tsx
     blockers: []
-    verification: []
+    verification:
+      - multi-author add/remove UI behavior verified manually
+      - "Other" author toggle disables inputs and shows dropdown options
+      - platform datalist includes seeded XML fallback values
+      - npm run lint passes
 
   - laneId: 03-victim-form
     role: worker

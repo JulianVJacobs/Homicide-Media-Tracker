@@ -121,13 +121,20 @@ lanes:
   - laneId: 04-suspect-form
     role: worker
     branch: lane/2.3.0/04-suspect-form
-    prNumber: null
-    status: planned
+    prNumber: 41
+    status: active
     readiness: ready
     ownedSurface:
       - lib/components/perpetrator-form.tsx
     blockers: []
-    verification: []
+    verification:
+      - suspect status cascade verified (identified -> arrested -> charged)
+      - dynamic charges add/remove and sentencing conditional reveals verified
+      - unknown suspect name checkbox defaults and disable behavior verified
+      - alias inputs serialize to JSON array for submission
+      - backward compatible conviction/sentence fallback populated from first charge
+      - npm run lint passes
+      - screenshot: https://github.com/user-attachments/assets/c7ac54bc-19a9-4e74-8e03-91e043c4973f
 
   - laneId: 05-participant-form
     role: worker

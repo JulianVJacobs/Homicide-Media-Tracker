@@ -42,7 +42,6 @@ export async function GET(request: Request) {
     if (isWorkbenchPluginApiEnabled()) {
       const { items, total } = await listPluginResource<VictimPayload>('victims', {
         search,
-        articleId,
         eventId: articleId,
         limit,
         offset,

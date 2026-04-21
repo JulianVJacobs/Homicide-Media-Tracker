@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import type {
   ActorPayload,
-  ParticipantPayload,
   PerpetratorPayload,
   VictimPayload,
 } from '../../../../lib/contracts/plugin-api-contract';
@@ -25,7 +24,7 @@ const pluginResourceByRole = (role: string) => {
   if (role === 'victim') return 'victims' as const;
   if (role === 'perpetrator') return 'perpetrators' as const;
   if (role === 'participant') return 'actors' as const;
-  return 'participants' as const;
+  return null;
 };
 
 // Dynamic participant API route by role
@@ -36,6 +35,12 @@ export async function GET(
   if (isWorkbenchPluginApiEnabled()) {
     const role = params.role;
     const resource = pluginResourceByRole(role);
+    if (!resource) {
+      return NextResponse.json(
+        { success: false, error: 'Unsupported participant role' },
+        { status: 400 },
+      );
+    }
     const parsedLimit = Number.parseInt(
       request.nextUrl.searchParams.get('limit') || '50',
       10,
@@ -149,6 +154,12 @@ export async function POST(
   if (isWorkbenchPluginApiEnabled()) {
     const role = params.role;
     const resource = pluginResourceByRole(role);
+    if (!resource) {
+      return NextResponse.json(
+        { success: false, error: 'Unsupported participant role' },
+        { status: 400 },
+      );
+    }
     const body = (await request.json()) as Record<string, unknown>;
 
     if (resource === 'victims') {
@@ -238,18 +249,6 @@ export async function POST(
       });
     }
 
-    const created = await createPluginResource<
-      Omit<ParticipantPayload, 'id'>,
-      ParticipantPayload
-    >('participants', {
-      eventId: typeof body.eventId === 'string' ? body.eventId : '',
-      actorId: typeof body.actorId === 'string' ? body.actorId : '',
-      role: typeof body.role === 'string' ? body.role : role,
-    });
-    return NextResponse.json({
-      success: true,
-      data: { ...created, role: created.role || role },
-    });
   }
 
   if (!(dbm instanceof DatabaseManagerServer))

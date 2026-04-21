@@ -35,7 +35,7 @@ const buildResourceUrl = (
 
   const url = new URL(`${baseUrl}/${resource}`);
   for (const [key, value] of Object.entries(query)) {
-    if (value === undefined || value === null) continue;
+    if (value === undefined) continue;
     url.searchParams.set(key, String(value));
   }
   return url.toString();
@@ -59,6 +59,7 @@ export const listPluginResource = async <TItem>(
     headers: {
       Accept: 'application/json',
     },
+    // Plugin-backed list data should always be fresh in the workbench.
     cache: 'no-store',
   });
 

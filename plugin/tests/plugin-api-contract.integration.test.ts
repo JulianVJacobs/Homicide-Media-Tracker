@@ -2,8 +2,10 @@ import { registerPluginRoutes } from '../routes/register-plugin-routes';
 import { PluginScaffold } from '../scaffold/plugin-scaffold';
 import type {
   ActorPayload,
+  ClaimArchivalLinkPayload,
   ClaimRecordPayload,
   EventPayload,
+  PluginUserContext,
   PerpetratorPayload,
   ParticipantPayload,
   PluginDomainServices,
@@ -53,23 +55,55 @@ describe('plugin API contract routes', () => {
     actorId: 'actor-1',
     role: 'witness',
   };
+  const claimLinkSeed: ClaimArchivalLinkPayload = {
+    id: 'link-1',
+    claimId: 'claim-1',
+    linkedRecordType: 'authority_record',
+    linkedRecordId: 'QUBIT-AR-1',
+  };
 
-  const services: PluginDomainServices = {
-    actors: createListService(actorSeed, (input) => ({ id: 'actor-2', ...input })),
-    events: createListService(eventSeed, (input) => ({ id: 'event-2', ...input })),
-    claims: createListService(claimSeed, (input) => ({ id: 'claim-2', ...input })),
-    victims: createListService(victimSeed, (input) => ({ id: 'victim-2', ...input })),
-    perpetrators: createListService(perpetratorSeed, (input) => ({
-      id: 'perp-2',
-      ...input,
-    })),
-    participants: createListService(participantSeed, (input) => ({
-      id: 'participant-2',
-      ...input,
-    })),
+  const buildTestServices = (): PluginDomainServices => {
+    const linkageStore: ClaimArchivalLinkPayload[] = [claimLinkSeed];
+
+    return {
+      actors: createListService(actorSeed, (input) => ({ id: 'actor-2', ...input })),
+      events: createListService(eventSeed, (input) => ({ id: 'event-2', ...input })),
+      claims: createListService(claimSeed, (input) => ({ id: 'claim-2', ...input })),
+      claimArchivalLinks: {
+        listByClaimId: jest.fn(
+          async (claimId: string, _context?: PluginUserContext) => ({
+            items: linkageStore.filter((link) => link.claimId === claimId),
+            total: linkageStore.filter((link) => link.claimId === claimId).length,
+          }),
+        ),
+        create: jest.fn(
+          async (
+            input: Omit<ClaimArchivalLinkPayload, 'id'>,
+            _context?: PluginUserContext,
+          ) => {
+            const payload = {
+              id: `link-${linkageStore.length + 1}`,
+              ...input,
+            };
+            linkageStore.push(payload);
+            return payload;
+          },
+        ),
+      },
+      victims: createListService(victimSeed, (input) => ({ id: 'victim-2', ...input })),
+      perpetrators: createListService(perpetratorSeed, (input) => ({
+        id: 'perp-2',
+        ...input,
+      })),
+      participants: createListService(participantSeed, (input) => ({
+        id: 'participant-2',
+        ...input,
+      })),
+    };
   };
 
   const scaffold = new PluginScaffold();
+  const services = buildTestServices();
   registerPluginRoutes(scaffold, services);
 
   it.each([
@@ -82,7 +116,7 @@ describe('plugin API contract routes', () => {
   ] as const)('GET %s returns list contract shape', async (path, expectedItem) => {
     const response = await scaffold.dispatch('GET', path, {
       query: { limit: '10', offset: '0' },
-      auth: { userId: 'user-1' },
+      auth: { userId: 'user-1', permissions: [`${path.slice(1)}:read`] },
     });
 
     expect(response.status).toBe(200);
@@ -118,7 +152,7 @@ describe('plugin API contract routes', () => {
   ] as const)('POST %s returns entity contract shape', async (path, input) => {
     const response = await scaffold.dispatch('POST', path, {
       body: input,
-      auth: { userId: 'user-1' },
+      auth: { userId: 'user-1', permissions: [`${path.slice(1)}:create`] },
     });
 
     expect(response.status).toBe(201);
@@ -127,6 +161,88 @@ describe('plugin API contract routes', () => {
       data: {
         id: expect.any(String),
         ...input,
+      },
+    });
+  });
+
+  it('rejects unauthorized requests and accepts authorized requests', async () => {
+    const unauthorized = await scaffold.dispatch('GET', '/actors', {
+      auth: { userId: 'user-1' },
+    });
+    expect(unauthorized.status).toBe(403);
+
+    const authorized = await scaffold.dispatch('GET', '/actors', {
+      auth: { userId: 'user-1', permissions: ['actors:read'] },
+    });
+    expect(authorized.status).toBe(200);
+  });
+
+  it('binds authenticated user context into service operations', async () => {
+    await scaffold.dispatch('GET', '/events', {
+      auth: {
+        userId: 'user-ctx-1',
+        roles: ['editor'],
+        permissions: ['events:read'],
+        credential: { id: 42 },
+      },
+      query: { limit: '5' },
+    });
+
+    expect(services.events.list).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        userId: 'user-ctx-1',
+        roles: ['editor'],
+        permissions: ['events:read'],
+        credential: { id: 42 },
+      }),
+    );
+  });
+
+  it('persists and retrieves claim archival linkage associations', async () => {
+    const createResponse = await scaffold.dispatch('POST', '/claim-linkages', {
+      auth: { userId: 'user-1', permissions: ['claims:linkages:create'] },
+      body: {
+        claimId: 'claim-1',
+        linkedRecordType: 'archival_description',
+        linkedRecordId: 'QUBIT-IO-44',
+      },
+    });
+
+    expect(createResponse.status).toBe(201);
+    expect(createResponse.body).toMatchObject({
+      success: true,
+      data: {
+        claimId: 'claim-1',
+        linkedRecordType: 'archival_description',
+        linkedRecordId: 'QUBIT-IO-44',
+      },
+    });
+
+    const listResponse = await scaffold.dispatch('GET', '/claim-linkages', {
+      auth: { userId: 'user-1', permissions: ['claims:linkages:read'] },
+      query: {
+        claimId: 'claim-1',
+      },
+    });
+
+    expect(listResponse.status).toBe(200);
+    expect(listResponse.body).toMatchObject({
+      success: true,
+      data: {
+        items: expect.arrayContaining([
+          expect.objectContaining({
+            claimId: 'claim-1',
+            linkedRecordType: 'authority_record',
+            linkedRecordId: 'QUBIT-AR-1',
+          }),
+          expect.objectContaining({
+            claimId: 'claim-1',
+            linkedRecordType: 'archival_description',
+            linkedRecordId: 'QUBIT-IO-44',
+          }),
+        ]),
+        total: 2,
       },
     });
   });

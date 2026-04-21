@@ -40,6 +40,16 @@ export const registerPluginRoutes = (
     path: '/claims',
     handler: controllers.claims.create,
   });
+  plugin.registerRoute({
+    method: 'GET',
+    path: '/claim-linkages',
+    handler: controllers.claimArchivalLinks.list,
+  });
+  plugin.registerRoute({
+    method: 'POST',
+    path: '/claim-linkages',
+    handler: controllers.claimArchivalLinks.create,
+  });
 
   plugin.registerRoute({
     method: 'GET',

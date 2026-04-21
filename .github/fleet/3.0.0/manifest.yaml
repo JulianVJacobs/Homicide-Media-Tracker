@@ -114,15 +114,18 @@ lanes:
   - laneId: 06-acl-record-linkage
     role: worker
     branch: lane/3.0.0/06-acl-record-linkage
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 34
+    status: active
+    readiness: ready
     ownedSurface:
       - AtoM ACL integration and user-context enforcement
       - archival record linkage entry points
-    blockers:
-      - waits for lane 04 API auth hooks
-    verification: []
+    blockers: []
+    verification:
+      - plugin ACL gate implemented with QubitAcl-compatible permission delegation and explicit deny-by-default
+      - authenticated user context bound into plugin service operations for read/write handlers
+      - claim archival linkage endpoints added for authority/archival-description references with persistence/retrieval tests
+      - npm run lint passes
 
   - laneId: 07-offline-sync-bridge
     role: worker

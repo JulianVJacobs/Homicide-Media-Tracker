@@ -3,6 +3,8 @@ export type PluginHttpMethod = 'GET' | 'POST';
 export interface PluginAuthContext {
   userId?: string;
   roles?: string[];
+  permissions?: string[];
+  credential?: Record<string, unknown>;
 }
 
 export interface PluginHttpRequest<

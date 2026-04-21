@@ -49,14 +49,28 @@ const toInt = (value: string | undefined, fallback: number): number => {
   return Number.isNaN(parsed) ? fallback : parsed;
 };
 
+const toBoundedInt = (
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number => Math.min(max, Math.max(min, toInt(value, fallback)));
+
 const toListQuery = (request: PluginHttpRequest): ListQuery => ({
   search: request.query?.search,
-  limit: toInt(request.query?.limit, 25),
-  offset: toInt(request.query?.offset, 0),
+  limit: toBoundedInt(request.query?.limit, 25, 1, 100),
+  offset: toBoundedInt(request.query?.offset, 0, 0, Number.MAX_SAFE_INTEGER),
 });
 
-const parseBody = <T>(request: PluginHttpRequest): T =>
-  (request.body ?? {}) as T;
+const parseBody = <T>(
+  request: PluginHttpRequest,
+): { ok: true; value: T } | { ok: false } => {
+  if (!request.body || typeof request.body !== 'object') {
+    return { ok: false };
+  }
+
+  return { ok: true, value: request.body as T };
+};
 
 const unauthorizedResponse = (): PluginHttpResponse<PluginApiResponse<unknown>> => ({
   status: 403,
@@ -65,6 +79,17 @@ const unauthorizedResponse = (): PluginHttpResponse<PluginApiResponse<unknown>> 
     error: {
       code: 'forbidden',
       message: 'Permission denied',
+    },
+  },
+});
+
+const badRequestResponse = (): PluginHttpResponse<PluginApiResponse<unknown>> => ({
+  status: 400,
+  body: {
+    success: false,
+    error: {
+      code: 'invalid_request',
+      message: 'Request body must be an object payload',
     },
   },
 });
@@ -104,8 +129,9 @@ export const createResourceControllers = (
       if (!(await permissionCheck(request.auth, 'actors:create'))) {
         return unauthorizedResponse();
       }
-      const payload = parseBody<CreateInputByResource['actors']>(request);
-      return createResponse(await services.actors.create(payload));
+      const parsedBody = parseBody<CreateInputByResource['actors']>(request);
+      if (!parsedBody.ok) return badRequestResponse();
+      return createResponse(await services.actors.create(parsedBody.value));
     },
   },
   events: {
@@ -120,8 +146,9 @@ export const createResourceControllers = (
       if (!(await permissionCheck(request.auth, 'events:create'))) {
         return unauthorizedResponse();
       }
-      const payload = parseBody<CreateInputByResource['events']>(request);
-      return createResponse(await services.events.create(payload));
+      const parsedBody = parseBody<CreateInputByResource['events']>(request);
+      if (!parsedBody.ok) return badRequestResponse();
+      return createResponse(await services.events.create(parsedBody.value));
     },
   },
   claims: {
@@ -136,8 +163,9 @@ export const createResourceControllers = (
       if (!(await permissionCheck(request.auth, 'claims:create'))) {
         return unauthorizedResponse();
       }
-      const payload = parseBody<CreateInputByResource['claims']>(request);
-      return createResponse(await services.claims.create(payload));
+      const parsedBody = parseBody<CreateInputByResource['claims']>(request);
+      if (!parsedBody.ok) return badRequestResponse();
+      return createResponse(await services.claims.create(parsedBody.value));
     },
   },
   victims: {
@@ -152,8 +180,9 @@ export const createResourceControllers = (
       if (!(await permissionCheck(request.auth, 'victims:create'))) {
         return unauthorizedResponse();
       }
-      const payload = parseBody<CreateInputByResource['victims']>(request);
-      return createResponse(await services.victims.create(payload));
+      const parsedBody = parseBody<CreateInputByResource['victims']>(request);
+      if (!parsedBody.ok) return badRequestResponse();
+      return createResponse(await services.victims.create(parsedBody.value));
     },
   },
   perpetrators: {
@@ -168,8 +197,9 @@ export const createResourceControllers = (
       if (!(await permissionCheck(request.auth, 'perpetrators:create'))) {
         return unauthorizedResponse();
       }
-      const payload = parseBody<CreateInputByResource['perpetrators']>(request);
-      return createResponse(await services.perpetrators.create(payload));
+      const parsedBody = parseBody<CreateInputByResource['perpetrators']>(request);
+      if (!parsedBody.ok) return badRequestResponse();
+      return createResponse(await services.perpetrators.create(parsedBody.value));
     },
   },
   participants: {
@@ -184,8 +214,9 @@ export const createResourceControllers = (
       if (!(await permissionCheck(request.auth, 'participants:create'))) {
         return unauthorizedResponse();
       }
-      const payload = parseBody<CreateInputByResource['participants']>(request);
-      return createResponse(await services.participants.create(payload));
+      const parsedBody = parseBody<CreateInputByResource['participants']>(request);
+      if (!parsedBody.ok) return badRequestResponse();
+      return createResponse(await services.participants.create(parsedBody.value));
     },
   },
 });

@@ -97,7 +97,14 @@ describe('plugin API contract routes', () => {
 
   it.each([
     ['/actors', { canonicalLabel: 'New Actor', actorKind: 'person', aliases: [] }],
-    ['/events', { title: 'New Event', occurredOn: null, location: null }],
+    [
+      '/events',
+      {
+        title: 'New Event',
+        occurredOn: '2026-02-11',
+        location: 'Cape Town',
+      },
+    ],
     [
       '/claims',
       { eventId: 'event-1', recordType: 'claim', summary: 'Claim summary' },

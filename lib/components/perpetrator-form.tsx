@@ -51,8 +51,10 @@ type PerpetratorFieldKeys = Extract<
 
 type PerpetratorFormValues = Pick<NewPerpetrator, PerpetratorFieldKeys> & {
   articleId?: string | null;
-  charges?: string | null;
+  charges?: string;
 };
+
+const UNKNOWN_NAME = 'Unknown';
 
 const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   onSubmit,
@@ -169,10 +171,10 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   const handleUnknownNameToggle = (checked: boolean) => {
     setIsUnknownName(checked);
     if (checked) {
-      handleChange('perpetratorName', 'Unknown');
+      handleChange('perpetratorName', UNKNOWN_NAME);
       return;
     }
-    if ((currentPerpetrator.perpetratorName ?? '').trim() === 'Unknown') {
+    if ((currentPerpetrator.perpetratorName ?? '').trim() === UNKNOWN_NAME) {
       handleChange('perpetratorName', '');
     }
   };
@@ -188,7 +190,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
       const perpetratorToSubmit: PerpetratorFormValues = {
         ...currentPerpetrator,
         perpetratorName: isUnknownName
-          ? 'Unknown'
+          ? UNKNOWN_NAME
           : (currentPerpetrator.perpetratorName ?? '').trim(),
         perpetratorAlias: serializeAliases(aliases),
         charges: JSON.stringify(preparedCharges),
@@ -487,7 +489,12 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
                           size="sm"
                           type="button"
                           onClick={() => {
-                            setCharges((prev) => prev.filter((_, i) => i !== index));
+                            setCharges((prev) => {
+                              const next = prev.filter((_, i) => i !== index);
+                              return next.length > 0
+                                ? next
+                                : [createDefaultChargeEntry()];
+                            });
                           }}
                           aria-label={`Remove charge ${index + 1}`}
                         >

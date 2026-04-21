@@ -81,8 +81,8 @@ lanes:
     role: worker
     branch: lane/2.3.0/01-schema-migrations
     prNumber: 37
-    status: active
-    readiness: ready
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/db/schema.ts (new fields + migration SQL)
     blockers: []
@@ -95,8 +95,8 @@ lanes:
     role: worker
     branch: lane/2.3.0/02-article-form
     prNumber: 38
-    status: active
-    readiness: ready
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/article-form.tsx
     blockers: []
@@ -109,21 +109,20 @@ lanes:
   - laneId: 03-victim-form
     role: worker
     branch: lane/2.3.0/03-victim-form
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 39
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/victim-form.tsx
-    blockers:
-      - waits for lane 01 schema migrations
+    blockers: []
     verification: []
 
   - laneId: 04-suspect-form
     role: worker
     branch: lane/2.3.0/04-suspect-form
     prNumber: 41
-    status: active
-    readiness: ready
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/perpetrator-form.tsx
     blockers: []
@@ -140,8 +139,8 @@ lanes:
     role: worker
     branch: lane/2.3.0/05-participant-form
     prNumber: 42
-    status: active
-    readiness: ready
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/participant-form.tsx
     blockers: []
@@ -155,8 +154,8 @@ lanes:
     role: worker
     branch: lane/2.3.0/06-input-homicide
     prNumber: 43
-    status: active
-    readiness: ready
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/input-homicide.tsx
     blockers: []
@@ -174,9 +173,9 @@ lanes:
   - laneId: 07-merge-queue
     role: worker
     branch: lane/2.3.0/07-merge-queue
-    prNumber: null
-    status: planned
-    readiness: ready
+    prNumber: 44
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/utils.ts (detectDuplicates)
       - app/api/articles/duplicates/route.ts
@@ -186,12 +185,13 @@ lanes:
   - laneId: 08-regression
     role: worker
     branch: lane/2.3.0/08-regression
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 45
+    status: merged
+    readiness: merged
     ownedSurface:
       - __tests__/ or *.test.ts regression suite additions
       - cutover readiness report
-    blockers:
-      - waits for lanes 01 through 07 to merge
-    verification: []
+    blockers: []
+    verification:
+      - all prerequisite lanes 01-07 merged before this lane
+      - baseline test suite 79 tests across 24 suites pass after merge

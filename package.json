@@ -59,13 +59,9 @@
     "test": "jest"
   },
   "dependencies": {
-    "@electron/notarize": "^2.3.2",
     "@libsql/client": "^0.5.6",
     "dexie": "^4.2.0",
     "drizzle-orm": "^0.30.10",
-    "electron-debug": "^3.2.0",
-    "electron-log": "^4.4.8",
-    "electron-updater": "^6.1.4",
     "localtunnel": "^2.0.2",
     "next": "^14.2.32",
     "react": "^18.3.1",
@@ -109,7 +105,6 @@
     "drizzle-kit": "^0.20.18",
     "electron": "^38.0.0",
     "electron-builder": "^24.13.3",
-    "electron-devtools-installer": "^3.2.0",
     "electronmon": "^2.0.2",
     "eslint": "^8.49.0",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -160,10 +155,14 @@
     "webpack-bundle-analyzer": "^4.9.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.2.2",
-    "webpack-merge": "^5.9.0"
+    "webpack-merge": "^5.9.0",
+    "electron-log": "^4.4.8",
+    "@electron/notarize": "^2.3.2"
   },
   "browserslist": [
-    "electron >= 31.0.0"
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions"
   ],
   "prettier": {
     "singleQuote": true,

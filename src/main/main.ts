@@ -9,23 +9,12 @@
  */
 import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
-import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { spawn, ChildProcess } from 'child_process';
 import http from 'http';
 import net from 'net';
-import MenuBuilder from './menu';
 import { dbm } from '../../lib/db/server';
 import { type DomainSeedDefinition } from '../../lib/db/domain-seed';
-
-class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    log.transports.console.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
 
 let mainWindow: BrowserWindow | null = null;
 let nextServer: ChildProcess | null = null;
@@ -335,37 +324,7 @@ const registerIpcHandlers = () => {
   });
 };
 
-if (process.env.NODE_ENV === 'production') {
-  import('source-map-support').then((module) => module.install());
-}
-
-const isDebug =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
-if (isDebug) {
-  import('electron-debug').then((module) => module.default());
-}
-
-const installExtensions = async () => {
-  const { default: installExtension, REACT_DEVELOPER_TOOLS } = await import(
-    'electron-devtools-installer'
-  );
-
-  const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  const extensions = [REACT_DEVELOPER_TOOLS];
-
-  return Promise.all(
-    extensions.map((extension) => installExtension(extension, forceDownload)),
-  ).catch((error) => {
-    console.log('Failed to install devtools extensions:', error);
-  });
-};
-
 const createWindow = async (): Promise<void> => {
-  if (isDebug) {
-    await installExtensions();
-  }
-
   // Initialise database first - with enhanced packaging support
   try {
     log.info('Initializing local database...');
@@ -448,18 +407,12 @@ const createWindow = async (): Promise<void> => {
     mainWindow = null;
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
-
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {
     shell.openExternal(edata.url);
     return { action: 'deny' };
   });
 
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
 };
 
 /**

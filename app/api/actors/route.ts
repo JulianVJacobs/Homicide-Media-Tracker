@@ -91,8 +91,14 @@ export async function GET(request: Request) {
         success: true,
         data: items.map((item) => ({
           ...item,
-          status: 'active',
-          schemaProfileId: null,
+          status:
+            typeof (item as Record<string, unknown>).status === 'string'
+              ? (item as Record<string, string>).status
+              : 'active',
+          schemaProfileId:
+            typeof (item as Record<string, unknown>).schemaProfileId === 'string'
+              ? (item as Record<string, string>).schemaProfileId
+              : null,
           identifiers: [
             {
               namespace: 'primary_name',

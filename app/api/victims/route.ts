@@ -48,14 +48,11 @@ export async function GET(request: Request) {
         offset,
       });
 
-      let data = items.map((item) => ({
+      const data = items.map((item) => ({
         id: item.id,
         articleId: item.eventId,
         victimName: item.name,
       }));
-      if (articleId) {
-        data = data.filter((item) => item.articleId === articleId);
-      }
       if (id) {
         const found = data.find((item) => item.id === id) ?? null;
         return NextResponse.json({ success: true, data: found });

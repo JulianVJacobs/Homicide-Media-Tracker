@@ -35,7 +35,7 @@ const buildResourceUrl = (
 
   const url = new URL(`${baseUrl}/${resource}`);
   for (const [key, value] of Object.entries(query)) {
-    if (value === undefined || value === '') continue;
+    if (value === undefined || value === null) continue;
     url.searchParams.set(key, String(value));
   }
   return url.toString();

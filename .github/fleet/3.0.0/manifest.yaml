@@ -72,15 +72,17 @@ lanes:
   - laneId: 03-backend-domain-port
     role: worker
     branch: lane/3.0.0/03-backend-domain-port
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: pending
+    status: active
+    readiness: ready
     ownedSurface:
       - plugin-side actor/event/claim/profile persistence
       - plugin domain services and data mapping
-    blockers:
-      - waits for lane 02 plugin scaffold
-    verification: []
+    blockers: []
+    verification:
+      - plugin domain service read/write mappings added under plugin/src/domain
+      - npm run test -- plugin/src/domain/services.test.ts --runInBand
+      - npm run lint
 
   - laneId: 04-plugin-api-contract
     role: worker

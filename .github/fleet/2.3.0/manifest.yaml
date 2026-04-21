@@ -98,14 +98,22 @@ lanes:
   - laneId: 06-input-homicide
     role: worker
     branch: lane/2.3.0/06-input-homicide
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 43
+    status: active
+    readiness: ready
     ownedSurface:
       - lib/components/input-homicide.tsx
-    blockers:
-      - waits for lanes 02, 03, 04, 05
-    verification: []
+    blockers: []
+    verification:
+      - Step 3 renamed to Event Details in step nav, card header, and progress tracker
+      - Optional notes textarea added to Event Details and persisted as details.notes in event payload
+      - Step 4 Review added outside progress bar/nav with clickable section jump-backs
+      - Save Homicide Case moved to Review step; Event Details primary action now Review
+      - Submission from Review resets form state and returns to step 1
+      - Suspect label updated in progress/review summary surfaces
+      - npm run test passes
+      - npm run lint passes
+      - screenshot: https://github.com/user-attachments/assets/c84f275a-d288-4604-831d-96058f31d623
 
   - laneId: 07-merge-queue
     role: worker

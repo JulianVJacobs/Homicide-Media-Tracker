@@ -35,6 +35,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
   >([]);
   // Defensive: never set to undefined/null
   const [typeOfMurder, setTypeOfMurder] = useState('');
+  const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -169,6 +170,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
           perpetrators,
           otherParticipants,
           typeOfMurder,
+          notes,
           createdAt: new Date().toISOString(),
         },
       };
@@ -184,6 +186,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
       setPerpetrators([]);
       setOtherParticipants([]);
       setTypeOfMurder('');
+      setNotes('');
       setCurrentStep(1);
     } catch (error) {
       console.error('Error saving homicide case:', error);
@@ -243,11 +246,12 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                       : 'text-muted'
                   }
                 >
-                  ✓ Participants (V:{victims.length} / P:{perpetrators.length}
+                  ✓ Participants (V:{victims.length} / Suspect(s):
+                  {perpetrators.length}
                   {' / '}O:{otherParticipants.length})
                 </small>
                 <small className={typeOfMurder ? 'text-success' : 'text-muted'}>
-                  ✓ Murder Type {typeOfMurder ? '(Complete)' : '(Incomplete)'}
+                  ✓ Event Details {typeOfMurder ? '(Complete)' : '(Incomplete)'}
                 </small>
               </div>
             </Card.Body>
@@ -280,7 +284,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                     !articleData || victims.length === 0 || perpetrators.length === 0
                   }
                 >
-                  3. Final Details
+                  3. Event Details
                 </button>
               </div>
             </Card.Body>
@@ -309,11 +313,11 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
             />
           )}
 
-          {/* Step 3: Final Details and Submit */}
+          {/* Step 3: Event Details */}
           {currentStep === 3 && (
             <Card className="mb-4">
               <Card.Header>
-                <h4 className="mb-0">Final Details & Submit</h4>
+                <h4 className="mb-0">Event Details</h4>
               </Card.Header>
               <Card.Body>
                 <Row>
@@ -333,6 +337,18 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                     </select>
                   </Col>
                 </Row>
+                <Row className="mt-3">
+                  <Col md={12}>
+                    <label className="form-label">Notes</label>
+                    <textarea
+                      className="form-control"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Miscellaneous details or observations derived from this article"
+                      rows={4}
+                    />
+                  </Col>
+                </Row>
 
                 {/* Summary */}
                 {isReadyToSubmit && (
@@ -346,8 +362,8 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                       <strong>Victims:</strong> {victims.length} victim(s)
                     </p>
                     <p>
-                      <strong>Perpetrators:</strong> {perpetrators.length}{' '}
-                      perpetrator(s)
+                      <strong>Suspects:</strong> {perpetrators.length}{' '}
+                      suspect(s)
                     </p>
                     {articleData?.newsReportPlatform && (
                       <p>
@@ -358,6 +374,11 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                     <p>
                       <strong>Type of Murder:</strong> {typeOfMurder}
                     </p>
+                    {notes.trim() && (
+                      <p>
+                        <strong>Notes:</strong> {notes}
+                      </p>
+                    )}
                     <p>
                       <strong>Date of Publication:</strong>{' '}
                       {articleData?.dateOfPublication}
@@ -365,12 +386,185 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                   </Alert>
                 )}
 
-                <div className="d-flex justify-content-end gap-2 mt-4">
+                <div className="d-flex justify-content-between gap-2 mt-4">
                   <Button
-                    variant="outline-primary"
+                    variant="outline-secondary"
                     onClick={() => setCurrentStep(2)}
                   >
-                    Back to Participants
+                    Previous Step
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => setCurrentStep(4)}
+                    disabled={!isReadyToSubmit}
+                    size="lg"
+                  >
+                    Review
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          )}
+
+          {/* Step 4: Review */}
+          {currentStep === 4 && (
+            <Card className="mb-4">
+              <Card.Header>
+                <h4 className="mb-0">Review</h4>
+              </Card.Header>
+              <Card.Body>
+                <Card className="mb-3">
+                  <Card.Header>
+                    <Button
+                      variant="link"
+                      className="p-0 text-decoration-none text-start w-100"
+                      onClick={() => setCurrentStep(1)}
+                    >
+                      Article Details
+                    </Button>
+                  </Card.Header>
+                  <Card.Body>
+                    <p className="mb-1">
+                      <strong>Headline:</strong>{' '}
+                      {articleData?.newsReportHeadline || '-'}
+                    </p>
+                    <p className="mb-1">
+                      <strong>Platform:</strong>{' '}
+                      {articleData?.newsReportPlatform || '-'}
+                    </p>
+                    <p className="mb-1">
+                      <strong>Date:</strong> {articleData?.dateOfPublication || '-'}
+                    </p>
+                    <p className="mb-0">
+                      <strong>Authors:</strong>{' '}
+                      {articleData?.newsReportAuthors || '-'}
+                    </p>
+                  </Card.Body>
+                </Card>
+
+                <Card className="mb-3">
+                  <Card.Header>
+                    <Button
+                      variant="link"
+                      className="p-0 text-decoration-none text-start w-100"
+                      onClick={() => setCurrentStep(2)}
+                    >
+                      Victims
+                    </Button>
+                  </Card.Header>
+                  <Card.Body>
+                    {victims.length > 0 ? (
+                      victims.map((victim, index) => (
+                        <div key={`${victim.victimName || 'victim'}-${index}`}>
+                          <p className="mb-1">
+                            <strong>{index + 1}.</strong>
+                          </p>
+                          {Object.entries(victim).map(([key, value]) => (
+                            <p className="mb-1" key={key}>
+                              <strong>{key}:</strong> {String(value ?? '-')}
+                            </p>
+                          ))}
+                          {index < victims.length - 1 && <hr />}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="mb-0">No victims added.</p>
+                    )}
+                  </Card.Body>
+                </Card>
+
+                <Card className="mb-3">
+                  <Card.Header>
+                    <Button
+                      variant="link"
+                      className="p-0 text-decoration-none text-start w-100"
+                      onClick={() => setCurrentStep(2)}
+                    >
+                      Suspect(s)
+                    </Button>
+                  </Card.Header>
+                  <Card.Body>
+                    {perpetrators.length > 0 ? (
+                      perpetrators.map((suspect, index) => (
+                        <div
+                          key={`${suspect.perpetratorName || 'suspect'}-${index}`}
+                        >
+                          <p className="mb-1">
+                            <strong>{index + 1}.</strong>
+                          </p>
+                          {Object.entries(suspect).map(([key, value]) => (
+                            <p className="mb-1" key={key}>
+                              <strong>{key}:</strong> {String(value ?? '-')}
+                            </p>
+                          ))}
+                          {index < perpetrators.length - 1 && <hr />}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="mb-0">No suspects added.</p>
+                    )}
+                  </Card.Body>
+                </Card>
+
+                <Card className="mb-3">
+                  <Card.Header>
+                    <Button
+                      variant="link"
+                      className="p-0 text-decoration-none text-start w-100"
+                      onClick={() => setCurrentStep(2)}
+                    >
+                      Other Participants
+                    </Button>
+                  </Card.Header>
+                  <Card.Body>
+                    {otherParticipants.length > 0 ? (
+                      otherParticipants.map((participant, index) => (
+                        <div
+                          key={`${participant.participantName || 'participant'}-${index}`}
+                        >
+                          <p className="mb-1">
+                            <strong>{index + 1}.</strong>
+                          </p>
+                          {Object.entries(participant).map(([key, value]) => (
+                            <p className="mb-1" key={key}>
+                              <strong>{key}:</strong> {String(value ?? '-')}
+                            </p>
+                          ))}
+                          {index < otherParticipants.length - 1 && <hr />}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="mb-0">No other participants added.</p>
+                    )}
+                  </Card.Body>
+                </Card>
+
+                <Card>
+                  <Card.Header>
+                    <Button
+                      variant="link"
+                      className="p-0 text-decoration-none text-start w-100"
+                      onClick={() => setCurrentStep(3)}
+                    >
+                      Event Details
+                    </Button>
+                  </Card.Header>
+                  <Card.Body>
+                    <p className="mb-1">
+                      <strong>Type of Murder:</strong> {typeOfMurder || '-'}
+                    </p>
+                    <p className="mb-0">
+                      <strong>Notes:</strong> {notes.trim() || '-'}
+                    </p>
+                  </Card.Body>
+                </Card>
+
+                <div className="d-flex justify-content-between gap-2 mt-4">
+                  <Button
+                    variant="outline-secondary"
+                    onClick={() => setCurrentStep(3)}
+                  >
+                    Previous Step
                   </Button>
                   <Button
                     variant="primary"

@@ -124,15 +124,18 @@ lanes:
   - laneId: 07-offline-sync-bridge
     role: worker
     branch: lane/3.0.0/07-offline-sync-bridge
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 35
+    status: active
+    readiness: ready
     ownedSurface:
       - workbench offline queue and replay semantics
       - plugin sync bridge endpoint integration
-    blockers:
-      - waits for lanes 05 and 06
-    verification: []
+    blockers: []
+    verification:
+      - npm run lint passes
+      - npm run test passes
+      - offline queue replays through PATCH /api/sync batch bridge
+      - replay requestId de-duplication verified by app/api/sync/replay.test.ts
 
   - laneId: 08-regression-migration
     role: worker

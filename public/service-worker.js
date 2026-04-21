@@ -1,6 +1,9 @@
 const STATIC_CACHE = 'news-media-cache-v1';
 const API_CACHE = 'api-cache-v1';
 const RUNTIME_CACHE = 'runtime-cache-v1';
+const OFFLINE_QUEUE_DB = 'offline-post-queue';
+const OFFLINE_QUEUE_STORE = 'queue';
+const OFFLINE_SYNC_ENDPOINT = '/api/sync';
 
 const supportsIndexedDB = () => {
   try {
@@ -71,7 +74,11 @@ self.addEventListener('fetch', event => {
     return;
   }
   // Intercept all API POST requests
-  if (event.request.method === 'POST' && url.pathname.startsWith('/api/')) {
+  if (
+    event.request.method === 'POST' &&
+    url.pathname.startsWith('/api/') &&
+    url.pathname !== OFFLINE_SYNC_ENDPOINT
+  ) {
     event.respondWith((async () => {
       try {
         // Try to send request online
@@ -155,14 +162,26 @@ function storePostRequest(request) {
   }
   return request.clone().json().then(body => {
     return new Promise((resolve, reject) => {
-      const open = indexedDB.open('offline-post-queue', 1);
+      const open = indexedDB.open(OFFLINE_QUEUE_DB, 2);
       open.onupgradeneeded = () => {
-        open.result.createObjectStore('queue', { keyPath: 'id', autoIncrement: true });
+        if (!open.result.objectStoreNames.contains(OFFLINE_QUEUE_STORE)) {
+          open.result.createObjectStore(OFFLINE_QUEUE_STORE, { keyPath: 'id', autoIncrement: true });
+        }
       };
       open.onsuccess = () => {
         const db = open.result;
-        const tx = db.transaction('queue', 'readwrite');
-        tx.objectStore('queue').add({ url: request.url, method: request.method, body });
+        const tx = db.transaction(OFFLINE_QUEUE_STORE, 'readwrite');
+        const endpointUrl = new URL(request.url);
+        const requestId =
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        tx.objectStore(OFFLINE_QUEUE_STORE).add({
+          endpoint: `${endpointUrl.pathname}${endpointUrl.search}`,
+          method: request.method,
+          body,
+          requestId,
+        });
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
       };
@@ -184,25 +203,52 @@ function syncQueuedPosts() {
     return Promise.resolve();
   }
   return new Promise((resolve, reject) => {
-    const open = indexedDB.open('offline-post-queue', 1);
+    const open = indexedDB.open(OFFLINE_QUEUE_DB, 2);
+    open.onupgradeneeded = () => {
+      if (!open.result.objectStoreNames.contains(OFFLINE_QUEUE_STORE)) {
+        open.result.createObjectStore(OFFLINE_QUEUE_STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
     open.onsuccess = () => {
       const db = open.result;
-      const tx = db.transaction('queue', 'readwrite');
-      const store = tx.objectStore('queue');
+      const tx = db.transaction(OFFLINE_QUEUE_STORE, 'readwrite');
+      const store = tx.objectStore(OFFLINE_QUEUE_STORE);
       const getAll = store.getAll();
       getAll.onsuccess = async () => {
-        const posts = getAll.result;
-        for (const post of posts) {
-          try {
-            await fetch(post.url, {
-              method: post.method,
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(post.body)
-            });
-            store.delete(post.id);
-          } catch (err) {
-            // If still offline, keep in queue
+        const posts = getAll.result.sort((left, right) => left.id - right.id);
+        if (posts.length === 0) {
+          resolve();
+          return;
+        }
+        try {
+          const replayResponse = await fetch(OFFLINE_SYNC_ENDPOINT, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              operations: posts.map(post => ({
+                queueId: post.id,
+                requestId: post.requestId,
+                method: post.method,
+                endpoint: post.endpoint,
+                body: post.body
+              }))
+            })
+          });
+
+          if (!replayResponse.ok) {
+            resolve();
+            return;
           }
+
+          const replayResult = await replayResponse.json().catch(() => null);
+          const ackedQueueIds = Array.isArray(replayResult?.ackedQueueIds)
+            ? replayResult.ackedQueueIds
+            : [];
+          for (const queueId of ackedQueueIds) {
+            store.delete(queueId);
+          }
+        } catch (err) {
+          // If still offline, keep in queue
         }
         resolve();
       };

@@ -17,6 +17,7 @@ import {
 export interface OtherParticipantFormValues {
   participantName: string;
   participantAlias: string;
+  participantRole: string;
 }
 
 interface ParticipantFormProps {
@@ -54,7 +55,9 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
   const [otherForm, setOtherForm] = useState<OtherParticipantFormValues>({
     participantName: '',
     participantAlias: '',
+    participantRole: '',
   });
+  const [otherEditIndex, setOtherEditIndex] = useState<number | null>(null);
 
   const otherIsValid = useMemo(
     () => Boolean(otherForm.participantName.trim()),
@@ -99,7 +102,7 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
                   onChange={(e) => setParticipantType(e.target.value as ParticipantType)}
                 >
                   <option value="victim">Victim</option>
-                  <option value="perpetrator">Perpetrator</option>
+                  <option value="perpetrator">Suspect</option>
                   <option value="other">Other</option>
                 </Form.Select>
               </Form.Group>
@@ -160,7 +163,15 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
                 <Button
                   variant="outline-danger"
                   size="sm"
-                  onClick={onClearOtherParticipants}
+                  onClick={() => {
+                    onClearOtherParticipants();
+                    setOtherEditIndex(null);
+                    setOtherForm({
+                      participantName: '',
+                      participantAlias: '',
+                      participantRole: '',
+                    });
+                  }}
                 >
                   Clear All Others
                 </Button>
@@ -173,10 +184,26 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
                 <strong>{otherParticipants.length} other participant(s) added:</strong>
                 <ListGroup variant="flush" className="mt-2">
                   {otherParticipants.map((participant, index) => (
-                    <ListGroup.Item key={index} className="px-0">
+                    <ListGroup.Item
+                      key={index}
+                      action
+                      className="px-0"
+                      onClick={() => {
+                        setOtherForm({
+                          participantName: participant.participantName ?? '',
+                          participantAlias: participant.participantAlias ?? '',
+                          participantRole: participant.participantRole ?? '',
+                        });
+                        setOtherEditIndex(index);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <strong>{participant.participantName}</strong>
                       {participant.participantAlias
                         ? ` - ${participant.participantAlias}`
+                        : ''}
+                      {participant.participantRole
+                        ? ` | Role: ${participant.participantRole}`
                         : ''}
                     </ListGroup.Item>
                   ))}
@@ -220,18 +247,67 @@ const ParticipantForm: React.FC<ParticipantFormProps> = ({
                   </Form.Group>
                 </Col>
               </Row>
+              <Row>
+                <Col md={12}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Role</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={otherForm.participantRole}
+                      onChange={(e) =>
+                        setOtherForm((prev) => ({
+                          ...prev,
+                          participantRole: e.target.value,
+                        }))
+                      }
+                      placeholder="Ad hoc role descriptor (e.g. Witness, Neighbour)"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-              <div className="d-flex justify-content-end">
+              <div className="d-flex justify-content-end gap-2">
+                {otherEditIndex !== null && (
+                  <Button
+                    variant="outline-secondary"
+                    onClick={() => {
+                      setOtherForm({
+                        participantName: '',
+                        participantAlias: '',
+                        participantRole: '',
+                      });
+                      setOtherEditIndex(null);
+                    }}
+                  >
+                    Cancel Edit
+                  </Button>
+                )}
                 <Button
                   variant="primary"
                   onClick={() => {
                     if (!otherIsValid) return;
-                    onSubmitOther(otherForm);
-                    setOtherForm({ participantName: '', participantAlias: '' });
+                    if (otherEditIndex === null) {
+                      onSubmitOther(otherForm);
+                    } else {
+                      const updatedParticipants = otherParticipants.map(
+                        (participant, index) =>
+                          index === otherEditIndex ? otherForm : participant,
+                      );
+                      onClearOtherParticipants();
+                      updatedParticipants.forEach((participant) =>
+                        onSubmitOther(participant),
+                      );
+                    }
+                    setOtherForm({
+                      participantName: '',
+                      participantAlias: '',
+                      participantRole: '',
+                    });
+                    setOtherEditIndex(null);
                   }}
                   disabled={!otherIsValid}
                 >
-                  Add Other Participant
+                  {otherEditIndex === null ? 'Add Other Participant' : 'Update Participant'}
                 </Button>
               </div>
             </Form>

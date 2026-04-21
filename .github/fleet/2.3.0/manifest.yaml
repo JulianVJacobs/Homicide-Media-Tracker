@@ -8,6 +8,47 @@ baseBranch: origin/main
 phaseBranch: phase/2.3.0
 launchDate: 2026-04-21
 note: 3.0.0 fleet is paused until this phase merges. Conductor to notify 3.0.0 conductor of schema/surface changes after final PR lands.
+coordination:
+  activeTargetBranch: copilot/phase-2-3-0
+  latestStatusUpdate: 2026-04-21
+  notes:
+    - lane readiness updated per conductor review comment
+    - all worker PR targets set to copilot/phase-2-3-0
+governance:
+  laneBoundaryPolicy:
+    - one branch per lane
+    - one PR per lane into phase/2.3.0
+  scopeIsolation:
+    enforce: true
+    policy: reject PRs touching surfaces owned by other lanes
+  mergeOrder:
+    - step: 1
+      lanes:
+        - 01-schema-migrations
+      rule: no dependency, merge first after green
+    - step: 2
+      lanes:
+        - 02-article-form
+        - 03-victim-form
+        - 04-suspect-form
+        - 07-merge-queue
+      rule: parallel lanes, all depend on 01-schema-migrations
+    - step: 3
+      lanes:
+        - 05-participant-form
+      rule: depends on 04-suspect-form
+    - step: 4
+      lanes:
+        - 06-input-homicide
+      rule: depends on 02-article-form, 03-victim-form, 04-suspect-form, and 05-participant-form
+    - step: 5
+      lanes:
+        - 08-regression
+      rule: final gate, depends on lanes 01 through 07
+  stopConditions:
+    - do not open final PR until 08-regression is merged and sign-off comment is present
+    - do not merge worker PRs with unresolved scope violations
+    - do not modify worker-owned source surfaces from conductor lane
 finalPr:
   number: null
   status: not-created
@@ -39,96 +80,118 @@ lanes:
   - laneId: 01-schema-migrations
     role: worker
     branch: lane/2.3.0/01-schema-migrations
-    prNumber: null
-    status: planned
-    readiness: waiting
+    prNumber: 37
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/db/schema.ts (new fields + migration SQL)
     blockers: []
-    verification: []
+    verification:
+      - npm run lint (pass)
+      - migration SQL uses ADD COLUMN IF NOT EXISTS for new additive columns
+      - NewVictim/NewPerpetrator infer inserts updated via schema fields
 
   - laneId: 02-article-form
     role: worker
     branch: lane/2.3.0/02-article-form
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 38
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/article-form.tsx
-    blockers:
-      - waits for lane 01 schema migrations
-    verification: []
+    blockers: []
+    verification:
+      - multi-author add/remove UI behavior verified manually
+      - "Other" author toggle disables inputs and shows dropdown options
+      - platform datalist includes seeded XML fallback values
+      - npm run lint passes
 
   - laneId: 03-victim-form
     role: worker
     branch: lane/2.3.0/03-victim-form
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 39
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/victim-form.tsx
-    blockers:
-      - waits for lane 01 schema migrations
+    blockers: []
     verification: []
 
   - laneId: 04-suspect-form
     role: worker
     branch: lane/2.3.0/04-suspect-form
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 41
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/perpetrator-form.tsx
-    blockers:
-      - waits for lane 01 schema migrations
-    verification: []
+    blockers: []
+    verification:
+      - suspect status cascade verified (identified -> arrested -> charged)
+      - dynamic charges add/remove and sentencing conditional reveals verified
+      - unknown suspect name checkbox defaults and disable behavior verified
+      - alias inputs serialize to JSON array for submission
+      - backward compatible conviction/sentence fallback populated from first charge
+      - npm run lint passes
+      - screenshot: https://github.com/user-attachments/assets/c7ac54bc-19a9-4e74-8e03-91e043c4973f
 
   - laneId: 05-participant-form
     role: worker
     branch: lane/2.3.0/05-participant-form
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 42
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/participant-form.tsx
-    blockers:
-      - waits for lane 04 suspect form (renamed type export)
-    verification: []
+    blockers: []
+    verification:
+      - Participant type selector shows Suspect label while preserving value perpetrator
+      - Other participant role field added, persists in form values, and displays in list
+      - Other participant list supports click-to-edit, update in place, and cancel edit reset
+      - npm run lint passes
 
   - laneId: 06-input-homicide
     role: worker
     branch: lane/2.3.0/06-input-homicide
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 43
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/input-homicide.tsx
-    blockers:
-      - waits for lanes 02, 03, 04, 05
-    verification: []
+    blockers: []
+    verification:
+      - Step 3 renamed to Event Details in step nav, card header, and progress tracker
+      - Optional notes textarea added to Event Details and persisted as details.notes in event payload
+      - Step 4 Review added outside progress bar/nav with clickable section jump-backs
+      - Save Homicide Case moved to Review step; Event Details primary action now Review
+      - Submission from Review resets form state and returns to step 1
+      - Suspect label updated in progress/review summary surfaces
+      - npm run test passes
+      - npm run lint passes
+      - screenshot: https://github.com/user-attachments/assets/c84f275a-d288-4604-831d-96058f31d623
 
   - laneId: 07-merge-queue
     role: worker
     branch: lane/2.3.0/07-merge-queue
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 44
+    status: merged
+    readiness: merged
     ownedSurface:
       - lib/components/utils.ts (detectDuplicates)
       - app/api/articles/duplicates/route.ts
-    blockers:
-      - waits for lane 01 schema migrations
+    blockers: []
     verification: []
 
   - laneId: 08-regression
     role: worker
     branch: lane/2.3.0/08-regression
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 45
+    status: merged
+    readiness: merged
     ownedSurface:
       - __tests__/ or *.test.ts regression suite additions
       - cutover readiness report
-    blockers:
-      - waits for lanes 01 through 07 to merge
-    verification: []
+    blockers: []
+    verification:
+      - all prerequisite lanes 01-07 merged before this lane
+      - baseline test suite 79 tests across 24 suites pass after merge

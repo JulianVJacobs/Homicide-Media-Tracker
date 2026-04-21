@@ -26,6 +26,219 @@ interface ArticleFormProps {
   initialData?: Partial<ArticleFormValues> | null;
 }
 
+// Intentionally includes every paragraph text value from docs/news-outlets-and-platforms-list.xml.
+const NEWS_OUTLET_SEED_OPTIONS = [
+  'Homicide Tracker List of titles for drop-down',
+  'News Titles and Platforms Included in Media Survey',
+  '100punt6',
+  'AFRIKANER',
+  'ALBERTON RECORD',
+  'ALGOA FM',
+  'ALLAFRICA',
+  'BARBERTON TIMES',
+  'BEDFORDVIEW EDENVALE NEWS',
+  'BEELD',
+  'BEELD NAWEEK',
+  'BENONI CITY TIMES',
+  'BIZCOMMUNITY',
+  'BLOEMFONTEIN COURANT',
+  'BOKSBURG ADVERTISER',
+  'BOLAND GAZETTE / KLEINMOND GAZETTE',
+  'BOSVELD REVIEW',
+  'BURGER (DIE BURGER)',
+  'BUSINESS DAY',
+  'CAPE ARGUS',
+  'CAPE TIMES',
+  'CARLETONVILLE HERALD',
+  'CAXTON NEWS SERVICE',
+  'CHANNEL24',
+  'CHATSWORTH RISING SUN',
+  'CITIZEN',
+  'CITIZEN SATURDAY',
+  'CITY PRESS',
+  'COSMOPOLITAN',
+  'CX PRESS',
+  'DAILY DISPATCH (also: Dispatch)',
+  'DAILY MAVERICK',
+  'DAILY NEWS',
+  'DAILY SUN',
+  'DAILY VOICE',
+  'DAILY VOX',
+  'DESTINY',
+  'DESTINY CONNECT',
+  'DIAMOND FIELDS ADVERTISER',
+  'DIE HOORN',
+  'DIE POS',
+  'DIE SON',
+  'DRUM',
+  'EASTERN CAPE TODAY',
+  'EAST COAST RADIO',
+  'EDGE COMMUNITY NEWS',
+  'ENCA',
+  'EP HERALD',
+  'EWN',
+  'EXPRESS',
+  'FAR NORTH BULLETIN',
+  'FARMER\'S WEEKLY',
+  'FINWEEK',
+  'FREE STATE TIMES',
+  'GEORGE HERALD',
+  'GROCOTTS',
+  'GROUNDUP',
+  'HEARTFM',
+  'HERALD',
+  'HOEVELDER/HIGHVELDER',
+  'HUISGENOOT',
+  'IAFRICA',
+  'IKAMVA',
+  'INDEPENDENT ON SATURDAY',
+  'IOL',
+  'ISIZULU24',
+  'ISOLEZWE',
+  'IZINDABA24',
+  'JACARANDA FM',
+  'JBAY NEWS',
+  'KATHU GAZETTE',
+  'KEMPTON EXPRESS',
+  'KERKBODE',
+  'KFM',
+  'KNYSNA PLETT HERALD',
+  'KOUGA EXPRESS',
+  'KROON NUUS',
+  'KRUGERSDORP NEWS',
+  'LADYSMITH GAZETTE',
+  'LAEVELD BULLETIN',
+  'LANDBOUWEEKBLAD',
+  'LEADERSHIP',
+  'LENASIA NEWS',
+  'LIMPOPO MIRROR',
+  'LOOK LOCAL',
+  'LOWVELDER',
+  'MAIL & GUARDIAN',
+  'MAHALA',
+  'MAMBA GIRL',
+  'MAMBA ONLINE',
+  'MARIE CLAIRE ONLINE',
+  'MERCURY (Natal Mercury)',
+  'METRO NEWSPAPER',
+  'MIDDELBURG OBSERVER',
+  'MOPANI HERALD',
+  'MOSSEL BAY ADVERTISER',
+  'MPUMALANGA NEWS',
+  'MTHATHA EXPRESS',
+  'MWEB',
+  'NATAL WITNESS (Witness)',
+  'NETWERK24',
+  'NEWS24',
+  'NORTHERN NEWS',
+  'OFM',
+  'OPPIDAN PRESS',
+  'OUDTSHOORN COURANT',
+  'OVERSTRAND HERALD',
+  'PARYS GAZETTE',
+  'PE EXPRESS',
+  'PE EXPRESS INDABA',
+  'PEOPLE MAGAZINE',
+  'PEOPLE\'S POST',
+  'PEOPLE\'S POST ATHLONE',
+  'PEOPLE\'S POST WOODSTOCK',
+  'PERDEBY',
+  'PLATINUM WEEKLY',
+  'POLOKWANE OBSERVER',
+  'POST',
+  'POTCHEFSTROOM HERALD',
+  'PRETORIA NEWS',
+  'PRETORIA NEWS WEEKEND',
+  'R NEWS',
+  'RANDFONTEIN HERALD',
+  'RAPPORT',
+  'REKORD MOOT',
+  'REKORD PRETORIA NORTH',
+  'RIDGE TIMES',
+  'RISING SUN CHATSWORTH',
+  'ROSEBANK KILLARNEY GAZETTE',
+  'SABC',
+  'SANDTON CHRONICLE',
+  'SARIE',
+  'SATURDAY ARGUS',
+  'SATURDAY INDEPENDENT',
+  'SATURDAY STAR',
+  'SATURDAY VOLKSBLAD',
+  'SEDIBENG STAR/STER',
+  'SERVAMUS',
+  'SOMERSET BUDGET',
+  'SOUTH COAST HERALD',
+  'SOUTHERN COURIER',
+  'SOUTHLAND SUN',
+  'SOWETAN',
+  'SPRINGS ADVERTISER',
+  'STAR (THE STAR)',
+  'STEELBURGER',
+  'SUNDAY ARGUS',
+  'SUNDAY INDEPENDENT',
+  'SUNDAY TIMES',
+  'SUNDAY TRIBUNE',
+  'SUNDAY WORLD',
+  'THE BEAT',
+  'THE NEW AGE (TNA)',
+  'TIMES (THE TIMES)',
+  'TLOKWE NEWS',
+  'TNA FREE STATE',
+  'TRIBUNE',
+  'TYGERBURGER',
+  'VAALWEEKBLAD',
+  'VISTA NEWS',
+  'VOCFM',
+  'VOLKSBLAD',
+  'VROUEKEUR',
+  'VRYSTAAT',
+  'VUTHA NEWS',
+  'WOMEN24',
+  'WEEKEND ARGUS',
+  'WEEKEND POST',
+  'WESLANDER',
+  'WEST CAPE NEWS (WCN)',
+  'WINTERVELDT NEWS',
+  'WITBANK NEWS',
+  'WITNESS',
+  'WITS VUVUZELA',
+  'WORCESTER STANDARD',
+  'YOU',
+  'ZOUTNET',
+  'ZOUTPANSBURGER',
+  'ZULULAND OBSERVER',
+] as const;
+
+const AUTHOR_OTHER_OPTIONS = ['Undisclosed', 'Anonymous', 'Unknown'] as const;
+type AuthorOtherOption = (typeof AUTHOR_OTHER_OPTIONS)[number];
+
+const buildAuthorState = (value?: string | null) => {
+  const normalized = value?.trim() ?? '';
+  const matchedOtherOption = AUTHOR_OTHER_OPTIONS.find(
+    (option) => option === normalized,
+  );
+  if (matchedOtherOption) {
+    return {
+      authorValues: [''],
+      isAuthorOther: true,
+      authorOtherValue: matchedOtherOption,
+    };
+  }
+
+  const authorValues = normalized
+    ? normalized
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0)
+    : [''];
+
+  return {
+    authorValues,
+    isAuthorOther: false,
+    authorOtherValue: AUTHOR_OTHER_OPTIONS[0],
+  };
+};
+
 const buildInitialState = (
   initialData?: Partial<ArticleFormValues> | null,
 ): ArticleFormValues => ({
@@ -41,14 +254,34 @@ const buildInitialState = (
 });
 
 const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
+  const initialAuthorState = buildAuthorState(initialData?.author);
   const [formData, setFormData] = useState<ArticleFormValues>(
     buildInitialState(initialData),
   );
 
   const [isValid, setIsValid] = useState(false);
-  const [outletOptions, setOutletOptions] = useState<string[]>([]);
+  const [outletOptions, setOutletOptions] = useState<string[]>(
+    () => [...NEWS_OUTLET_SEED_OPTIONS],
+  );
   const [outletLoading, setOutletLoading] = useState(false);
   const [outletSaving, setOutletSaving] = useState(false);
+  const [authorValues, setAuthorValues] = useState<string[]>(
+    initialAuthorState.authorValues,
+  );
+  const [isAuthorOther, setIsAuthorOther] = useState<boolean>(
+    initialAuthorState.isAuthorOther,
+  );
+  const [authorOtherValue, setAuthorOtherValue] = useState<AuthorOtherOption>(
+    initialAuthorState.authorOtherValue,
+  );
+  const serializedAuthors = useMemo(
+    () =>
+      authorValues
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0)
+        .join(', '),
+    [authorValues],
+  );
 
   useEffect(() => {
     // Validate required fields
@@ -66,12 +299,26 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
           .trim() !== ''
       );
     });
-    setIsValid(allRequiredFilled);
-  }, [formData]);
+    const authorIsValid =
+      isAuthorOther ||
+      authorValues.some((value) => value.trim().length > 0);
+    setIsValid(allRequiredFilled && authorIsValid);
+  }, [formData, authorValues, isAuthorOther]);
 
   useEffect(() => {
     setFormData(buildInitialState(initialData));
+    const authorState = buildAuthorState(initialData?.author);
+    setAuthorValues(authorState.authorValues);
+    setIsAuthorOther(authorState.isAuthorOther);
+    setAuthorOtherValue(authorState.authorOtherValue);
   }, [initialData]);
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      author: isAuthorOther ? authorOtherValue : serializedAuthors,
+    }));
+  }, [isAuthorOther, authorOtherValue, serializedAuthors]);
 
   useEffect(() => {
     let ignore = false;
@@ -96,7 +343,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
           const options = payload.data.filter(
             (item): item is string => typeof item === 'string' && item.trim().length > 0,
           );
-          setOutletOptions(options);
+          setOutletOptions(
+            options.length > 0 ? options : [...NEWS_OUTLET_SEED_OPTIONS],
+          );
         }
       } catch (error) {
         if (process.env.NODE_ENV !== 'production') {
@@ -118,6 +367,20 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
 
   const handleChange = (field: keyof ArticleFormValues, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+  const handleAuthorValueChange = (index: number, value: string) => {
+    setAuthorValues((prev) =>
+      prev.map((entry, entryIndex) => (entryIndex === index ? value : entry)),
+    );
+  };
+  const handleAddAuthor = () => {
+    setAuthorValues((prev) => [...prev, '']);
+  };
+  const handleRemoveAuthor = (index: number) => {
+    setAuthorValues((prev) => {
+      const next = prev.filter((_, entryIndex) => entryIndex !== index);
+      return next.length > 0 ? next : [''];
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -309,13 +572,69 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
           <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Author</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={formData.author}
-                  onChange={(e) => handleChange('author', e.target.value)}
-                  placeholder="Author name"
+                <Form.Label>Authors</Form.Label>
+                {authorValues.map((authorValue, index) => (
+                  <div key={`author-${index}`} className="d-flex gap-2 mb-2">
+                    <Form.Control
+                      type="text"
+                      value={authorValue}
+                      onChange={(e) =>
+                        handleAuthorValueChange(index, e.target.value)
+                      }
+                      placeholder="Author name"
+                      disabled={isAuthorOther}
+                    />
+                    {index > 0 && (
+                      <Button
+                        variant="outline-danger"
+                        type="button"
+                        onClick={() => handleRemoveAuthor(index)}
+                        aria-label={`Remove author ${index + 1}`}
+                        disabled={isAuthorOther}
+                      >
+                        ×
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  type="button"
+                  onClick={handleAddAuthor}
+                  disabled={isAuthorOther}
+                >
+                  + Add Author
+                </Button>
+                <Form.Check
+                  type="checkbox"
+                  id="author-other-checkbox"
+                  className="mt-3"
+                  label="Other"
+                  checked={isAuthorOther}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsAuthorOther(checked);
+                    if (checked) {
+                      setAuthorOtherValue(AUTHOR_OTHER_OPTIONS[0]);
+                    }
+                  }}
                 />
+                {isAuthorOther && (
+                  <Form.Select
+                    className="mt-2"
+                    value={authorOtherValue}
+                    onChange={(e) =>
+                      setAuthorOtherValue(e.target.value as AuthorOtherOption)
+                    }
+                  >
+                    {AUTHOR_OTHER_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </Form.Select>
+                )}
               </Form.Group>
             </Col>
             <Col md={6}>

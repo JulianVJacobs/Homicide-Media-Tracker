@@ -81,38 +81,44 @@ lanes:
   - laneId: 03-backend-domain-port
     role: worker
     branch: lane/3.0.0/03-backend-domain-port
-    prNumber: null
+    prNumber: 31
     status: ready-to-merge
     readiness: ready-to-merge
     ownedSurface:
       - plugin-side actor/event/claim/profile persistence
       - plugin domain services and data mapping
     blockers: []
-    verification: []
+    verification:
+      - scope review passed: plugin/src/domain/ only — no cross-lane violations
+      - conductor approved: 2026-04-21 (merge sequence position 1)
 
   - laneId: 04-plugin-api-contract
     role: worker
     branch: lane/3.0.0/04-plugin-api-contract
-    prNumber: null
+    prNumber: 32
     status: ready-to-merge
     readiness: ready-to-merge
     ownedSurface:
       - plugin API controllers and routes
       - contract-compatible payload mapping
     blockers: []
-    verification: []
+    verification:
+      - scope review passed: plugin/auth, plugin/contracts, plugin/controllers, plugin/routes, plugin/scaffold — no cross-lane violations
+      - conductor approved: 2026-04-21 (merge sequence position 2; unblocks lane 06)
 
   - laneId: 05-workbench-bridge
     role: worker
     branch: lane/3.0.0/05-workbench-bridge
-    prNumber: null
+    prNumber: 33
     status: ready-to-merge
     readiness: ready-to-merge
     ownedSurface:
       - workbench integration adapters and API clients
       - plugin/API data-boundary transition in Next workbench
     blockers: []
-    verification: []
+    verification:
+      - scope review passed: app/api/actors, app/api/participant, app/api/perpetrators, app/api/victims, lib/workbench/, lib/contracts/ — no cross-lane violations
+      - conductor approved: 2026-04-21 (merge sequence position 3)
 
   - laneId: 06-acl-record-linkage
     role: worker
@@ -130,14 +136,16 @@ lanes:
   - laneId: 07-offline-sync-bridge
     role: worker
     branch: lane/3.0.0/07-offline-sync-bridge
-    prNumber: null
+    prNumber: 35
     status: ready-to-merge
     readiness: ready-to-merge
     ownedSurface:
       - workbench offline queue and replay semantics
       - plugin sync bridge endpoint integration
     blockers: []
-    verification: []
+    verification:
+      - scope review passed: app/api/sync/, lib/utils/cache-manager.ts, public/service-worker.js — no cross-lane violations
+      - conductor approved: 2026-04-21 (merge sequence position 4; can merge in parallel with 03/04/05)
 
   - laneId: 08-regression-migration
     role: worker

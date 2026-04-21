@@ -21,6 +21,23 @@ type DuplicateRequestPayload = {
 
 const toArray = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 
+const toAliasList = (
+  aliasValue: string | string[] | undefined,
+  relationAliases: string[],
+  relationNames: string[],
+): string[] => {
+  const requestAliases = toArray<string>(aliasValue);
+  return [
+    ...(requestAliases.length > 0
+      ? requestAliases
+      : aliasValue
+        ? [aliasValue]
+        : []),
+    ...relationAliases,
+    ...relationNames,
+  ];
+};
+
 const buildDuplicateCandidate = (
   article: Partial<schema.Article> & DuplicateRequestPayload,
   victims: schema.Victim[],
@@ -44,29 +61,21 @@ const buildDuplicateCandidate = (
   return {
     ...article,
     victimName: article.victimName ?? firstVictim?.victimName,
-    victimAlias: [
-      ...(toArray<string>(article.victimAlias).length > 0
-        ? toArray<string>(article.victimAlias)
-        : article.victimAlias
-          ? [article.victimAlias]
-          : []),
-      ...victimAliases,
-      ...victimNamesAsAlias,
-    ],
+    victimAlias: toAliasList(
+      article.victimAlias,
+      victimAliases,
+      victimNamesAsAlias,
+    ),
     dateOfDeath: article.dateOfDeath ?? firstVictim?.dateOfDeath,
     placeOfDeathProvince:
       article.placeOfDeathProvince ?? firstVictim?.placeOfDeathProvince,
     placeOfDeathTown: article.placeOfDeathTown ?? firstVictim?.placeOfDeathTown,
     perpetratorName: article.perpetratorName ?? firstPerpetrator?.perpetratorName,
-    perpetratorAlias: [
-      ...(toArray<string>(article.perpetratorAlias).length > 0
-        ? toArray<string>(article.perpetratorAlias)
-        : article.perpetratorAlias
-          ? [article.perpetratorAlias]
-          : []),
-      ...perpetratorAliases,
-      ...perpetratorNamesAsAlias,
-    ],
+    perpetratorAlias: toAliasList(
+      article.perpetratorAlias,
+      perpetratorAliases,
+      perpetratorNamesAsAlias,
+    ),
     victims,
     perpetrators,
   };

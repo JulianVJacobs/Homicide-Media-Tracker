@@ -346,8 +346,11 @@ interface EventDuplicateMatch {
 }
 
 const EVENT_SIGNAL_SCORE: Record<EventSignalCode, number> = {
+  // High-confidence signal: same victim plus matching/overlapping date range.
   victim_name_and_date_overlap: 0.8,
+  // Medium-confidence signal: same victim plus matching province/town.
   victim_name_and_location_match: 0.55,
+  // Medium-confidence signal: same victim plus same suspect.
   victim_and_suspect_name_match: 0.5,
 };
 
@@ -662,6 +665,8 @@ const detectEventLevelDuplicate = (
   }
 
   const score = roundScore(
+    // Additive scoring is intentional so independent signals stack confidence;
+    // values are capped at 1.0 for compatibility with similarity semantics.
     Math.min(
       1,
       eventSignalHits.reduce((total, signal) => total + signal.score, 0),
@@ -768,6 +773,8 @@ export function detectDuplicates(
         ...signalScores,
         name: Math.max(signalScores.name, eventDuplicate.score),
       };
+      // Keep matchType as "name" to preserve the current API contract; matchReason
+      // carries event-specific signal codes until a dedicated "event" type is added.
       matches.push({
         id: existing.id,
         similarity: eventDuplicate.score,
@@ -894,10 +901,13 @@ const inferEventKey = (
     const fallbackId = typeof article.id === 'string' ? article.id : 'unknown-article';
     return `article:${fallbackId}`;
   }
+  const locationKnown = !!province && !!town;
+  const fallbackId = typeof article.id === 'string' ? article.id : 'unknown-article';
+  const locationToken = locationKnown
+    ? `${province}|${town}`
+    : `unknown-location|${fallbackId}`;
 
-  return [victimName, dateBucket, province || 'unknown-province', town || 'unknown-town']
-    .join('|')
-    .toLowerCase();
+  return [victimName, dateBucket, locationToken].join('|').toLowerCase();
 };
 
 const buildApproximateDateBucket = (value: DateLike): string => {

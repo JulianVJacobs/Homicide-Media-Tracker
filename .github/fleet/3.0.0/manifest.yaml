@@ -175,13 +175,17 @@ lanes:
     role: worker
     branch: lane/3.0.0/04-plugin-api-contract
     prNumber: 32
-    status: ready-to-merge
-    readiness: ready-to-merge
+    status: merged
+    readiness: merged
     ownedSurface:
       - plugin API controllers and routes
       - contract-compatible payload mapping
     blockers: []
     verification:
+      - plugin routes registered via scaffold for actor, event, claim, victim, perpetrator, participant
+      - auth boundary hooks stubbed using checkPermission on each endpoint
+      - integration tests verify list/create payload contract shapes for all plugin endpoints
+      - npm run lint passes
       - scope review passed: plugin/auth, plugin/contracts, plugin/controllers, plugin/routes, plugin/scaffold — no cross-lane violations
       - conductor approved: 2026-04-21 (merge sequence position 2; unblocks lane 06)
 

@@ -7,6 +7,15 @@ mergePolicy: eager-after-green
 baseBranch: origin/main
 phaseBranch: phase/3.0.0
 launchDate: 2026-04-21
+governance:
+  laneBoundaryPolicy:
+    - one branch per lane
+    - one PR per lane into phase/3.0.0
+  scopeIsolation:
+    - reject PRs that touch surfaces owned by another lane
+  stopConditions:
+    - do not open final PR until lane 08-regression-migration is merged with sign-off recorded
+    - do not merge worker PRs with unresolved scope violations
 finalPr:
   number: null
   status: not-created
@@ -46,14 +55,90 @@ lanes:
     role: worker
     branch: lane/3.0.0/01-electron-debloat
     prNumber: null
-    status: planned
+    status: in-progress
     readiness: waiting
     ownedSurface:
       - Electron main/preload runtime surfaces
       - IPC dependency retirement from strategic path
       - desktop-only integration path de-bloat
     blockers: []
-    verification: []
+    verification:
+      - secondary-scan report reviewed and verified by conductor 2026-04-21
+      - all code claims confirmed against actual files
+    conductorApprovedItems:
+      approved:
+        - id: A1
+          entity: src/main/util.ts (resolveHtmlPath)
+          decision: DELETE ENTIRE FILE
+          rationale: Confirmed zero callers. grep returns only the file itself. main.ts does not import ./util. Pure dead code.
+          risk: none
+        - id: A2
+          entity: AppUpdater class + electron-updater import in src/main/main.ts
+          decision: REMOVE class, autoUpdater import, new AppUpdater() call
+          rationale: Confirmed. AppUpdater lines 21-28; only consumer is new AppUpdater() at line 459. electron-log stays (used throughout main.ts logging).
+          risk: none
+          packageChanges:
+            - remove electron-updater from package.json dependencies
+            - remove electron-updater from release/app/package.json dependencies
+        - id: A3
+          entity: electron-debug import + installExtensions() + isDebug flag in main.ts
+          decision: REMOVE all three
+          rationale: Confirmed. isDebug used only at lines 342 (electron-debug) and 362 (installExtensions in createWindow). electron-devtools-installer only referenced inside installExtensions.
+          risk: none
+          packageChanges:
+            - remove electron-debug from package.json dependencies
+            - remove electron-debug from release/app/package.json dependencies
+            - remove electron-devtools-installer from package.json devDependencies
+        - id: A4
+          entity: source-map-support production block in src/main/main.ts lines 335-337
+          decision: REMOVE
+          rationale: Confirmed dynamic import block under NODE_ENV=production guard. Not in package.json (transitive only). Next.js handles its own source maps.
+          risk: none
+        - id: A5
+          entity: src/main/menu.ts (entire file) + MenuBuilder import and usage in main.ts
+          decision: DELETE menu.ts; REMOVE import line 17 and usage lines 448-449 from main.ts
+          rationale: Confirmed menu.ts imported only in main.ts. Zero callers outside main.ts. Standard boilerplate OS-menu scaffold.
+          risk: none
+        - id: B1
+          entity: "lib/db/server.ts — static `import { app } from 'electron'` line 6"
+          decision: REPLACE with guarded dynamic require (HIGH priority — cross-lane)
+          rationale: Static import at line 6 will throw if electron is not resolvable in a web/Docker/CI Node.js process. Logic guards at lines 77-85 are correct but the import itself is the failure point. All API routes import dbm from this file. Fix with const electronApp = (() => { try { return require('electron')?.app; } catch { return null; } })(); then replace app?. with electronApp?. at lines 77-85. Keep ElectronProcess type alias.
+          crossLaneFlag: FLAG-1 — must land before lanes 02-05 add new API routes using dbm
+          risk: low if fix applied correctly; HIGH if left unfixed
+        - id: C1
+          entity: "next.config.js experimental.serverComponentsExternalPackages: ['electron'] line 9"
+          decision: REMOVE (implement after B1 fix lands)
+          rationale: After B1 dynamic-require fix no static electron import remains in shared code. The directive becomes moot.
+          risk: none
+        - id: E1
+          entity: "package.json production dependencies — 4 Electron-exclusive entries"
+          decision: per-package actions
+          actions:
+            - "electron-updater: REMOVE from dependencies (code gone via A2); also remove from release/app/package.json"
+            - "electron-debug: REMOVE from dependencies (code gone via A3); also remove from release/app/package.json"
+            - "electron-log: MOVE to devDependencies in package.json; must stay in release/app/package.json for packaged Electron runtime"
+            - "@electron/notarize: MOVE to devDependencies in package.json (build/packaging tool; used only in scripts/notarize.js)"
+          risk: none for web path
+        - id: E3
+          entity: "package.json browserslist — electron >= 31.0.0"
+          decision: UPDATE to web targets
+          newValue: "['last 2 Chrome versions', 'last 2 Firefox versions', 'last 2 Safari versions']"
+          crossLaneFlag: FLAG-3 — prerequisite for correct PostCSS/Autoprefixer output in plugin iframe context
+          risk: none on existing web functionality
+      deferred:
+        - id: C2
+          entity: next.config.js webpack fallback block
+          reason: Standard Next.js web practice; harmless; not Electron-exclusive. Keep.
+        - id: D1
+          entity: lib/platform.ts isElectron() and lib/components/system-information.tsx callsites
+          reason: lib/components/ is shared workbench surface owned by lane 05. Lane 01 must not touch it. Lane 05 should neutralise isElectron conditional blocks at lines 101 and 150-164 when reworking that component for plugin iframe context.
+          crossLaneFlag: FLAG-2 — lane 05 action required
+        - id: F1-F7
+          entity: "webpack.main.config.js, webpack.preload.config.js, scripts/, tsconfig.electron.json, .vscode/launch.json, release/app/"
+          reason: Packaging pipeline still active. Removing now would break npm run package.* scripts. Retire in a dedicated lane after phase 3.
+        - id: G1-G2
+          entity: "assets/entitlements.mac.plist, assets/icon.icns, assets/icon.ico"
+          reason: Packaging assets; harmless to web path. Delete only when macOS/Windows packaging is formally retired.
 
   - laneId: 02-plugin-scaffold
     role: worker
@@ -66,47 +151,50 @@ lanes:
       - plugin route registration and health endpoint
       - plugin config wiring
     blockers:
-      - waits for lane 01 de-bloat baseline
+      - awaiting lane 01 (in-progress)
     verification: []
 
   - laneId: 03-backend-domain-port
     role: worker
     branch: lane/3.0.0/03-backend-domain-port
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 31
+    status: ready-to-merge
+    readiness: ready-to-merge
     ownedSurface:
       - plugin-side actor/event/claim/profile persistence
       - plugin domain services and data mapping
-    blockers:
-      - waits for lane 02 plugin scaffold
-    verification: []
+    blockers: []
+    verification:
+      - scope review passed: plugin/src/domain/ only — no cross-lane violations
+      - conductor approved: 2026-04-21 (merge sequence position 1)
 
   - laneId: 04-plugin-api-contract
     role: worker
     branch: lane/3.0.0/04-plugin-api-contract
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 32
+    status: ready-to-merge
+    readiness: ready-to-merge
     ownedSurface:
       - plugin API controllers and routes
       - contract-compatible payload mapping
-    blockers:
-      - waits for lane 03 backend domain services
-    verification: []
+    blockers: []
+    verification:
+      - scope review passed: plugin/auth, plugin/contracts, plugin/controllers, plugin/routes, plugin/scaffold — no cross-lane violations
+      - conductor approved: 2026-04-21 (merge sequence position 2; unblocks lane 06)
 
   - laneId: 05-workbench-bridge
     role: worker
     branch: lane/3.0.0/05-workbench-bridge
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 33
+    status: ready-to-merge
+    readiness: ready-to-merge
     ownedSurface:
       - workbench integration adapters and API clients
       - plugin/API data-boundary transition in Next workbench
-    blockers:
-      - waits for lane 04 plugin API contract stability
-    verification: []
+    blockers: []
+    verification:
+      - scope review passed: app/api/actors, app/api/participant, app/api/perpetrators, app/api/victims, lib/workbench/, lib/contracts/ — no cross-lane violations
+      - conductor approved: 2026-04-21 (merge sequence position 3)
 
   - laneId: 06-acl-record-linkage
     role: worker
@@ -118,21 +206,22 @@ lanes:
       - AtoM ACL integration and user-context enforcement
       - archival record linkage entry points
     blockers:
-      - waits for lane 04 API auth hooks
+      - awaiting lane 04 (ready-to-merge; merge lane 04 first)
     verification: []
 
   - laneId: 07-offline-sync-bridge
     role: worker
     branch: lane/3.0.0/07-offline-sync-bridge
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 35
+    status: ready-to-merge
+    readiness: ready-to-merge
     ownedSurface:
       - workbench offline queue and replay semantics
       - plugin sync bridge endpoint integration
-    blockers:
-      - waits for lanes 05 and 06
-    verification: []
+    blockers: []
+    verification:
+      - scope review passed: app/api/sync/, lib/utils/cache-manager.ts, public/service-worker.js — no cross-lane violations
+      - conductor approved: 2026-04-21 (merge sequence position 4; can merge in parallel with 03/04/05)
 
   - laneId: 08-regression-migration
     role: worker
@@ -145,5 +234,11 @@ lanes:
       - migration rehearsal artifacts
       - cutover readiness report
     blockers:
-      - waits for lanes 01 through 07 to merge
+      - awaiting lane 01 (in-progress)
+      - awaiting lane 02 (blocked on lane 01)
+      - awaiting lane 03 (ready-to-merge)
+      - awaiting lane 04 (ready-to-merge)
+      - awaiting lane 05 (ready-to-merge)
+      - awaiting lane 06 (blocked on lane 04)
+      - awaiting lane 07 (ready-to-merge)
     verification: []

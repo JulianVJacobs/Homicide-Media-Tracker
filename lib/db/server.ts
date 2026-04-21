@@ -33,13 +33,17 @@ import {
 import {
   HOMICIDE_DEFAULT_DOMAIN_SEED,
   type DomainSeedDefinition,
+  type DomainSeedSqlClient,
   applyDomainSeed,
 } from './domain-seed';
 
-const electronApp: { getPath: (name: string) => string; isPackaged?: boolean } | null = (() => {
+type ElectronAppLike = Pick<import('electron').App, 'getPath' | 'isPackaged'>;
+
+const electronApp: ElectronAppLike | null = (() => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return (require('electron') as typeof import('electron'))?.app ?? null;
+    return ((require('electron') as typeof import('electron'))?.app ??
+      null) as ElectronAppLike | null;
   } catch {
     return null;
   }
@@ -64,6 +68,24 @@ export interface DatabaseConfig {
 }
 
 class DatabaseManagerServer {
+  private getDomainSeedClient(): DomainSeedSqlClient | null {
+    if (!this.localClient) {
+      return null;
+    }
+
+    return {
+      execute: (statement) => {
+        if (typeof statement === 'string') {
+          return this.localClient!.execute(statement);
+        }
+        return this.localClient!.execute({
+          sql: statement.sql,
+          args: (statement.args ?? []) as unknown as import('@libsql/client').InArgs,
+        });
+      },
+    };
+  }
+
   private domainSeedRegistry = new Map<string, DomainSeedDefinition>([
     [HOMICIDE_DEFAULT_DOMAIN_SEED.domainKey, HOMICIDE_DEFAULT_DOMAIN_SEED],
   ]);
@@ -187,10 +209,11 @@ class DatabaseManagerServer {
     applied: boolean;
   }> {
     this.domainSeedRegistry.set(seed.domainKey, seed);
-    if (!this.localClient) {
+    const domainSeedClient = this.getDomainSeedClient();
+    if (!domainSeedClient) {
       return { applied: false };
     }
-    await applyDomainSeed(this.localClient, seed);
+    await applyDomainSeed(domainSeedClient, seed);
     return { applied: true };
   }
 
@@ -209,11 +232,12 @@ class DatabaseManagerServer {
   }
 
   private async seedRegisteredDomainSeeds(): Promise<void> {
-    if (!this.localClient) {
+    const domainSeedClient = this.getDomainSeedClient();
+    if (!domainSeedClient) {
       return;
     }
     for (const seed of this.domainSeedRegistry.values()) {
-      await applyDomainSeed(this.localClient, seed);
+      await applyDomainSeed(domainSeedClient, seed);
     }
   }
 

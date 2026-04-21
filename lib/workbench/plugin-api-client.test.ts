@@ -3,6 +3,14 @@ import {
   isWorkbenchPluginApiEnabled,
   listPluginResource,
 } from './plugin-api-client';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 
 describe('plugin-api-client', () => {
   const originalEnv = process.env;
@@ -29,17 +37,20 @@ describe('plugin-api-client', () => {
   });
 
   it('lists resources from plugin API', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        success: true,
-        data: {
-          items: [{ id: 'a1' }],
-          total: 1,
-        },
-      }),
-    } as Response);
+    const fetchMock = jest.fn(async () =>
+      ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            items: [{ id: 'a1' }],
+            total: 1,
+          },
+        }),
+      }) as Response,
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
 
     const result = await listPluginResource<{ id: string }>('actors', {
       search: 'john',
@@ -47,21 +58,24 @@ describe('plugin-api-client', () => {
     });
 
     expect(result).toEqual({ items: [{ id: 'a1' }], total: 1 });
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       'http://plugin.local/api/actors?search=john&limit=10',
       expect.objectContaining({ method: 'GET' }),
     );
   });
 
   it('creates resources through plugin API', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 201,
-      json: async () => ({
-        success: true,
-        data: { id: 'v1', eventId: 'e1', name: 'Jane' },
-      }),
-    } as Response);
+    const fetchMock = jest.fn(async () =>
+      ({
+        ok: true,
+        status: 201,
+        json: async () => ({
+          success: true,
+          data: { id: 'v1', eventId: 'e1', name: 'Jane' },
+        }),
+      }) as Response,
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
 
     const result = await createPluginResource<
       { eventId: string; name: string },
@@ -69,21 +83,24 @@ describe('plugin-api-client', () => {
     >('victims', { eventId: 'e1', name: 'Jane' });
 
     expect(result).toEqual({ id: 'v1', eventId: 'e1', name: 'Jane' });
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       'http://plugin.local/api/victims',
       expect.objectContaining({ method: 'POST' }),
     );
   });
 
   it('throws a plugin error response message', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 403,
-      json: async () => ({
-        success: false,
-        error: { code: 'forbidden', message: 'Permission denied' },
-      }),
-    } as Response);
+    const fetchMock = jest.fn(async () =>
+      ({
+        ok: false,
+        status: 403,
+        json: async () => ({
+          success: false,
+          error: { code: 'forbidden', message: 'Permission denied' },
+        }),
+      }) as Response,
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
 
     await expect(listPluginResource('actors')).rejects.toThrow(
       'Permission denied',

@@ -2,6 +2,7 @@ import {
   normalizeReplayOperations,
   replayOfflineOperations,
 } from './replay';
+import { describe, expect, it, jest } from '@jest/globals';
 
 describe('sync replay bridge', () => {
   it('filters invalid replay operations', () => {
@@ -19,11 +20,13 @@ describe('sync replay bridge', () => {
   });
 
   it('replays queued operations once and de-duplicates repeat request ids', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      statusText: 'OK',
-    });
+    const fetchMock = jest.fn(async () =>
+      ({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+      }) as Response,
+    );
     const replayCache = new Map();
     const operations = normalizeReplayOperations([
       {
@@ -80,11 +83,13 @@ describe('sync replay bridge', () => {
   });
 
   it('applies forwarded authorization to replayed requests', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 204,
-      statusText: 'No Content',
-    });
+    const fetchMock = jest.fn(async () =>
+      ({
+        ok: true,
+        status: 204,
+        statusText: 'No Content',
+      }) as Response,
+    );
     const operations = normalizeReplayOperations([
       {
         queueId: 1,

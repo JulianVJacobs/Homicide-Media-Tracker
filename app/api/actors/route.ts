@@ -92,12 +92,14 @@ export async function GET(request: Request) {
         data: items.map((item) => ({
           ...item,
           status:
-            typeof (item as Record<string, unknown>).status === 'string'
-              ? (item as Record<string, string>).status
+            typeof (item as unknown as Record<string, unknown>).status ===
+            'string'
+              ? (item as unknown as Record<string, string>).status
               : 'active',
           schemaProfileId:
-            typeof (item as Record<string, unknown>).schemaProfileId === 'string'
-              ? (item as Record<string, string>).schemaProfileId
+            typeof (item as unknown as Record<string, unknown>)
+              .schemaProfileId === 'string'
+              ? (item as unknown as Record<string, string>).schemaProfileId
               : null,
           identifiers: [
             {

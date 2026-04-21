@@ -48,6 +48,8 @@ export async function GET(request: Request) {
         'perpetrators',
         {
           search,
+          articleId,
+          eventId: articleId,
           limit,
           offset,
         },

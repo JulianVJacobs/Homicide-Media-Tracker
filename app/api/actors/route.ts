@@ -83,14 +83,13 @@ export async function GET(request: Request) {
     if (isWorkbenchPluginApiEnabled()) {
       const { items } = await listPluginResource<ActorPayload>('actors', {
         search,
+        status,
         limit,
         offset,
       });
-
-      const filtered = status ? [] : items;
       return NextResponse.json({
         success: true,
-        data: filtered.map((item) => ({
+        data: items.map((item) => ({
           ...item,
           status: 'active',
           schemaProfileId: null,

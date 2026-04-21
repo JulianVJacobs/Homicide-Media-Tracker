@@ -142,13 +142,15 @@ export async function POST(request: NextRequest) {
       (perpetrator) => perpetrator.articleId,
     );
 
-    const existingCandidates = existingArticles.map((article) =>
-      buildDuplicateCandidate(
-        article,
-        victimsByArticleId.get(article.id) ?? [],
-        perpetratorsByArticleId.get(article.id) ?? [],
-      ),
-    );
+    const existingCandidates = existingArticles
+      .map((article) =>
+        buildDuplicateCandidate(
+          article,
+          victimsByArticleId.get(article.id) ?? [],
+          perpetratorsByArticleId.get(article.id) ?? [],
+        ),
+      )
+      .filter((c): c is typeof c & { id: string } => typeof c.id === 'string');
 
     const requestVictims = toArray<schema.Victim>(articleData.victims);
     const requestPerpetrators = toArray<schema.Perpetrator>(articleData.perpetrators);

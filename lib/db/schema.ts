@@ -82,8 +82,13 @@ export const victims = sqliteTable('victims', {
   sexualAssault: text('sexual_assault'),
   genderOfVictim: text('gender_of_victim'),
   raceOfVictim: text('race_of_victim'),
+  nationality: text('nationality'),
   ageOfVictim: integer('age_of_victim'),
   ageRangeOfVictim: text('age_range_of_victim'),
+  ageDescriptor: text('age_descriptor'),
+  dateOfDeathMode: text('date_of_death_mode'),
+  dateOfDeathEnd: text('date_of_death_end'),
+  victimAliases: text('victim_aliases'),
   modeOfDeathSpecific: text('mode_of_death_specific'),
   modeOfDeathGeneral: text('mode_of_death_general'),
   typeOfMurder: text('type_of_murder'),
@@ -111,8 +116,13 @@ export const migrationVictims = `CREATE TABLE IF NOT EXISTS victims (
   sexual_assault TEXT,
   gender_of_victim TEXT,
   race_of_victim TEXT,
+  nationality TEXT,
   age_of_victim INTEGER,
   age_range_of_victim TEXT,
+  age_descriptor TEXT,
+  date_of_death_mode TEXT,
+  date_of_death_end TEXT,
+  victim_aliases TEXT,
   mode_of_death_specific TEXT,
   mode_of_death_general TEXT,
   type_of_murder TEXT,
@@ -132,6 +142,7 @@ export const perpetrators = sqliteTable('perpetrators', {
   articleId: text('article_id').notNull(),
   perpetratorName: text('perpetrator_name'),
   perpetratorAlias: text('perpetrator_alias'),
+  suspectAliases: text('suspect_aliases'),
   mergedIntoId: text('merged_into_id'),
   mergedAt: text('merged_at'),
   mergeAudit: text('merge_audit', { mode: 'json' }),
@@ -140,6 +151,7 @@ export const perpetrators = sqliteTable('perpetrators', {
   suspectIdentified: text('suspect_identified'),
   suspectArrested: text('suspect_arrested'),
   suspectCharged: text('suspect_charged'),
+  charges: text('charges'),
   conviction: text('conviction'),
   sentence: text('sentence'),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
@@ -154,6 +166,7 @@ export const migrationPerpetrators = `CREATE TABLE IF NOT EXISTS perpetrators (
   article_id TEXT NOT NULL,
   perpetrator_name TEXT,
   perpetrator_alias TEXT,
+  suspect_aliases TEXT,
   merged_into_id TEXT,
   merged_at TEXT,
   merge_audit TEXT,
@@ -162,6 +175,7 @@ export const migrationPerpetrators = `CREATE TABLE IF NOT EXISTS perpetrators (
   suspect_identified TEXT,
   suspect_arrested TEXT,
   suspect_charged TEXT,
+  charges TEXT,
   conviction TEXT,
   sentence TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -717,6 +731,13 @@ export const migrationVictimMergeAuditColumn = `ALTER TABLE victims ADD COLUMN m
 export const migrationPerpetratorMergeAuditColumn = `ALTER TABLE perpetrators ADD COLUMN merge_audit TEXT`;
 export const migrationVictimPromotionAuditColumn = `ALTER TABLE victims ADD COLUMN promotion_audit TEXT`;
 export const migrationPerpetratorPromotionAuditColumn = `ALTER TABLE perpetrators ADD COLUMN promotion_audit TEXT`;
+export const migrationVictimNationalityColumn = `ALTER TABLE victims ADD COLUMN IF NOT EXISTS nationality TEXT`;
+export const migrationVictimAgeDescriptorColumn = `ALTER TABLE victims ADD COLUMN IF NOT EXISTS age_descriptor TEXT`;
+export const migrationVictimDateOfDeathModeColumn = `ALTER TABLE victims ADD COLUMN IF NOT EXISTS date_of_death_mode TEXT`;
+export const migrationVictimDateOfDeathEndColumn = `ALTER TABLE victims ADD COLUMN IF NOT EXISTS date_of_death_end TEXT`;
+export const migrationVictimAliasesColumn = `ALTER TABLE victims ADD COLUMN IF NOT EXISTS victim_aliases TEXT`;
+export const migrationPerpetratorAliasesColumn = `ALTER TABLE perpetrators ADD COLUMN IF NOT EXISTS suspect_aliases TEXT`;
+export const migrationPerpetratorChargesColumn = `ALTER TABLE perpetrators ADD COLUMN IF NOT EXISTS charges TEXT`;
 // NOTE: merge_audit and promotion_audit are JSON-serialized payloads stored as TEXT.
 
 export const migrationBackfillVictimsToActors = `INSERT OR IGNORE INTO actor (
@@ -910,6 +931,13 @@ export const migrations = [
   migrationPerpetratorMergeAuditColumn,
   migrationVictimPromotionAuditColumn,
   migrationPerpetratorPromotionAuditColumn,
+  migrationVictimNationalityColumn,
+  migrationVictimAgeDescriptorColumn,
+  migrationVictimDateOfDeathModeColumn,
+  migrationVictimDateOfDeathEndColumn,
+  migrationVictimAliasesColumn,
+  migrationPerpetratorAliasesColumn,
+  migrationPerpetratorChargesColumn,
   migrationSchemaProfiles,
   migrationSchemaFields,
   migrationBackfillVictimsToActors,

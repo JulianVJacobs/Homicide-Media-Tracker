@@ -4,12 +4,6 @@ const nextConfig = {
   // In development, run normally for better dev experience
   // ...(process.env.NODE_ENV === 'production' && { output: 'standalone' }),
 
-  // Experimental features for better Electron integration
-  experimental: {
-    serverComponentsExternalPackages: ['electron'],
-  },
-  // productionBrowserSourceMaps: true,
-
   // Configure webpack for Electron compatibility
   webpack: (config, { isServer, dev }) => {
     // Don't bundle these packages - they'll be available in the Electron environment

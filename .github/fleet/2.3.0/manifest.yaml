@@ -80,13 +80,16 @@ lanes:
   - laneId: 01-schema-migrations
     role: worker
     branch: lane/2.3.0/01-schema-migrations
-    prNumber: null
-    status: planned
+    prNumber: 37
+    status: active
     readiness: ready
     ownedSurface:
       - lib/db/schema.ts (new fields + migration SQL)
     blockers: []
-    verification: []
+    verification:
+      - npm run lint (pass)
+      - migration SQL uses ADD COLUMN IF NOT EXISTS for new additive columns
+      - NewVictim/NewPerpetrator infer inserts updated via schema fields
 
   - laneId: 02-article-form
     role: worker

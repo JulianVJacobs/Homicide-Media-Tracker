@@ -1,4 +1,5 @@
 export * from './auth/checkPermission';
+export * from './auth/user-context';
 export * from './bootstrap';
 export * from './contracts/http';
 export * from './contracts/plugin-api-contract';

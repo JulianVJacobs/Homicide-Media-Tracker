@@ -23,6 +23,14 @@ describe('role/profile visibility helpers', () => {
     ]);
   });
 
+  it('applies editor role restrictions for conviction fields', () => {
+    expect(resolveVisibleFieldGroups('perpetrator', { role: 'editor' })).toEqual([
+      'coreIdentity',
+      'relationship',
+      'suspectStatus',
+    ]);
+  });
+
   it('applies profile visibility overrides when profile context is present', () => {
     expect(
       resolveVisibleFieldGroups(

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Card,
   Form,
@@ -15,6 +15,10 @@ import {
   type RoleProfileContext,
   useConstraintEvaluation,
 } from './role-visibility';
+import {
+  buildVisibleFieldSet,
+  filterRequiredFieldsByVisibility,
+} from './participant-field-visibility';
 
 interface PerpetratorFormProps {
   onSubmit: (data: PerpetratorFormValues) => void;
@@ -22,6 +26,7 @@ interface PerpetratorFormProps {
   onClearPerpetrators: () => void;
   requiredFields?: readonly string[];
   roleProfileContext?: RoleProfileContext;
+  visibleFieldGroups?: readonly string[];
 }
 
 type PerpetratorFieldKeys = Extract<
@@ -46,6 +51,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   onClearPerpetrators,
   requiredFields,
   roleProfileContext,
+  visibleFieldGroups,
 }) => {
   // Default data for dev/testing
   const RESET_DATA: PerpetratorFormValues = {
@@ -61,11 +67,41 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
   const [currentPerpetrator, setCurrentPerpetrator] =
     useState<PerpetratorFormValues>(RESET_DATA);
 
+  const groupVisibility = useMemo(
+    () => ({
+      coreIdentity:
+        !visibleFieldGroups || visibleFieldGroups.includes('coreIdentity'),
+      relationship:
+        !visibleFieldGroups || visibleFieldGroups.includes('relationship'),
+      suspectStatus:
+        !visibleFieldGroups || visibleFieldGroups.includes('suspectStatus'),
+      conviction:
+        !visibleFieldGroups || visibleFieldGroups.includes('conviction'),
+    }),
+    [visibleFieldGroups],
+  );
+
+  const visibleFields = useMemo(
+    () =>
+      buildVisibleFieldSet(groupVisibility, {
+        coreIdentity: ['perpetratorName', 'perpetratorAlias'],
+        relationship: ['perpetratorRelationshipToVictim'],
+        suspectStatus: ['suspectIdentified', 'suspectArrested', 'suspectCharged'],
+        conviction: ['conviction', 'sentence'],
+      }),
+    [groupVisibility],
+  );
+
+  const effectiveRequiredFields = useMemo(
+    () => filterRequiredFieldsByVisibility(requiredFields, visibleFields),
+    [requiredFields, visibleFields],
+  );
+
   const constraintState = useConstraintEvaluation(
     currentPerpetrator as Record<string, unknown>,
     'perpetrator',
     roleProfileContext,
-    { requiredFields },
+    { requiredFields: effectiveRequiredFields },
   );
   const isValid = constraintState.isValid;
 
@@ -150,143 +186,151 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
         )}
 
         <Form>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Perpetrator Name *</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentPerpetrator.perpetratorName ?? ''}
-                  onChange={(e) =>
-                    handleChange('perpetratorName', e.target.value)
-                  }
-                  placeholder="Full name or 'Unknown' if not identified"
-                  required
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Alias</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentPerpetrator.perpetratorAlias ?? ''}
-                  onChange={(e) =>
-                    handleChange('perpetratorAlias', e.target.value)
-                  }
-                  placeholder="Known alias/nickname"
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+          {groupVisibility.coreIdentity && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Perpetrator Name *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={currentPerpetrator.perpetratorName ?? ''}
+                    onChange={(e) =>
+                      handleChange('perpetratorName', e.target.value)
+                    }
+                    placeholder="Full name or 'Unknown' if not identified"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Alias</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={currentPerpetrator.perpetratorAlias ?? ''}
+                    onChange={(e) =>
+                      handleChange('perpetratorAlias', e.target.value)
+                    }
+                    placeholder="Known alias/nickname"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Relationship to Victim</Form.Label>
-                <Form.Select
-                  value={
-                    currentPerpetrator.perpetratorRelationshipToVictim ?? ''
-                  }
-                  onChange={(e) =>
-                    handleChange(
-                      'perpetratorRelationshipToVictim',
-                      e.target.value,
-                    )
-                  }
-                >
-                  {relationshipOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
+          {groupVisibility.relationship && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Relationship to Victim</Form.Label>
+                  <Form.Select
+                    value={
+                      currentPerpetrator.perpetratorRelationshipToVictim ?? ''
+                    }
+                    onChange={(e) =>
+                      handleChange(
+                        'perpetratorRelationshipToVictim',
+                        e.target.value,
+                      )
+                    }
+                  >
+                    {relationshipOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
-          <Row>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Suspect Identified</Form.Label>
-                <Form.Select
-                  value={currentPerpetrator.suspectIdentified ?? ''}
-                  onChange={(e) =>
-                    handleChange('suspectIdentified', e.target.value)
-                  }
-                >
-                  {yesNoOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Suspect Arrested</Form.Label>
-                <Form.Select
-                  value={currentPerpetrator.suspectArrested ?? ''}
-                  onChange={(e) =>
-                    handleChange('suspectArrested', e.target.value)
-                  }
-                >
-                  {yesNoOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group className="mb-3">
-                <Form.Label>Suspect Charged</Form.Label>
-                <Form.Select
-                  value={currentPerpetrator.suspectCharged ?? ''}
-                  onChange={(e) =>
-                    handleChange('suspectCharged', e.target.value)
-                  }
-                >
-                  {yesNoOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
+          {groupVisibility.suspectStatus && (
+            <Row>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Suspect Identified</Form.Label>
+                  <Form.Select
+                    value={currentPerpetrator.suspectIdentified ?? ''}
+                    onChange={(e) =>
+                      handleChange('suspectIdentified', e.target.value)
+                    }
+                  >
+                    {yesNoOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Suspect Arrested</Form.Label>
+                  <Form.Select
+                    value={currentPerpetrator.suspectArrested ?? ''}
+                    onChange={(e) =>
+                      handleChange('suspectArrested', e.target.value)
+                    }
+                  >
+                    {yesNoOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Suspect Charged</Form.Label>
+                  <Form.Select
+                    value={currentPerpetrator.suspectCharged ?? ''}
+                    onChange={(e) =>
+                      handleChange('suspectCharged', e.target.value)
+                    }
+                  >
+                    {yesNoOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Conviction</Form.Label>
-                <Form.Select
-                  value={currentPerpetrator.conviction ?? ''}
-                  onChange={(e) => handleChange('conviction', e.target.value)}
-                >
-                  {convictionOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Sentence</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={currentPerpetrator.sentence ?? ''}
-                  onChange={(e) => handleChange('sentence', e.target.value)}
-                  placeholder="e.g., Life imprisonment, 15 years, etc."
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+          {groupVisibility.conviction && (
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Conviction</Form.Label>
+                  <Form.Select
+                    value={currentPerpetrator.conviction ?? ''}
+                    onChange={(e) => handleChange('conviction', e.target.value)}
+                  >
+                    {convictionOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Sentence</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={currentPerpetrator.sentence ?? ''}
+                    onChange={(e) => handleChange('sentence', e.target.value)}
+                    placeholder="e.g., Life imprisonment, 15 years, etc."
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
           <div className="d-flex justify-content-end">
             <Button

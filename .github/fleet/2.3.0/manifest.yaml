@@ -109,13 +109,21 @@ lanes:
   - laneId: 03-victim-form
     role: worker
     branch: lane/2.3.0/03-victim-form
-    prNumber: 39
+    prNumber: 47
     status: merged
     readiness: merged
     ownedSurface:
       - lib/components/victim-form.tsx
     blockers: []
-    verification: []
+    verification:
+      - aliases converted to dynamic multi-value field and serialized to victimAliases JSON
+      - race and nationality controls split with Unknown/Other support
+      - age unknown toggle and age descriptor dropdown added; age range derived from age
+      - date of death exact/approximate/unknown modes implemented with dateOfDeathMode/dateOfDeathEnd
+      - location type switched to datalist input with add-new behavior
+      - npm run lint passed
+      - npm run test passed
+      - screenshot: https://github.com/user-attachments/assets/51161d8b-dcfb-4825-b0e0-e1bdd80afd8a
 
   - laneId: 04-suspect-form
     role: worker

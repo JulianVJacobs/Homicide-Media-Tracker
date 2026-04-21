@@ -7,6 +7,15 @@ mergePolicy: eager-after-green
 baseBranch: origin/main
 phaseBranch: phase/3.0.0
 launchDate: 2026-04-21
+governance:
+  laneBoundaryPolicy:
+    - one branch per lane
+    - one PR per lane into phase/3.0.0
+  scopeIsolation:
+    - reject PRs that touch surfaces owned by another lane
+  stopConditions:
+    - do not open final PR until lane 08-regression-migration is merged with sign-off recorded
+    - do not merge worker PRs with unresolved scope violations
 finalPr:
   number: null
   status: not-created

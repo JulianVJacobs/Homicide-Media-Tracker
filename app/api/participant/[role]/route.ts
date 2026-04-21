@@ -102,18 +102,10 @@ export async function GET(
       });
     }
 
-    const { items } = await listPluginResource<ParticipantPayload>(
-      'participants',
-      {
-        search,
-        limit,
-        offset,
-      },
+    return NextResponse.json(
+      { success: false, error: 'Unsupported participant role' },
+      { status: 400 },
     );
-    return NextResponse.json({
-      success: true,
-      data: items.map((item) => ({ ...item, role: item.role || role })),
-    });
   }
 
   if (!(dbm instanceof DatabaseManagerServer))
@@ -248,6 +240,11 @@ export async function POST(
         data: { ...created, role },
       });
     }
+
+    return NextResponse.json(
+      { success: false, error: 'Unsupported participant role' },
+      { status: 400 },
+    );
 
   }
 

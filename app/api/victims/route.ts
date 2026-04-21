@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { and, eq, isNull, like, sql, type SQL } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import type { VictimPayload } from '../../../lib/contracts/plugin-api-contract';
 import { dbm, DatabaseManagerServer } from '../../../lib/db/server';
 import { victims, type Victim, type NewVictim } from '../../../lib/db/schema';
 import { prepareVictimPayload } from '../../../lib/utils/transformers';
+import {
+  createPluginResource,
+  isWorkbenchPluginApiEnabled,
+  listPluginResource,
+} from '../../../lib/workbench/plugin-api-client';
 import { coerceVictim } from './utils';
 
 const ensureServerDatabase = async () => {
@@ -18,7 +24,6 @@ const ensureServerDatabase = async () => {
 
 export async function GET(request: Request) {
   try {
-    const db = await ensureServerDatabase();
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
     const articleId = url.searchParams.get('articleId') || '';
@@ -34,6 +39,38 @@ export async function GET(request: Request) {
     const limit = Number.isNaN(parsedLimit) ? 50 : parsedLimit;
     const offset = Number.isNaN(parsedOffset) ? 0 : parsedOffset;
 
+    if (isWorkbenchPluginApiEnabled()) {
+      const { items, total } = await listPluginResource<VictimPayload>('victims', {
+        search,
+        limit,
+        offset,
+      });
+
+      let data = items.map((item) => ({
+        id: item.id,
+        articleId: item.eventId,
+        victimName: item.name,
+      }));
+      if (articleId) {
+        data = data.filter((item) => item.articleId === articleId);
+      }
+      if (id) {
+        const found = data.find((item) => item.id === id) ?? null;
+        return NextResponse.json({ success: true, data: found });
+      }
+      return NextResponse.json({
+        success: true,
+        data,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + limit < total,
+        },
+      });
+    }
+
+    const db = await ensureServerDatabase();
     if (id) {
       const existing = await db
         .select()
@@ -114,7 +151,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const db = await ensureServerDatabase();
     const payload = await request.json();
     const { data: victimData, validation } = prepareVictimPayload(payload);
 
@@ -142,6 +178,47 @@ export async function POST(request: Request) {
       );
     }
 
+    if (isWorkbenchPluginApiEnabled()) {
+      const name =
+        (typeof coerced.victimName === 'string' && coerced.victimName.trim()) ||
+        (typeof coerced.victimAlias === 'string' && coerced.victimAlias.trim()) ||
+        '';
+
+      if (!name) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Victim name is required',
+            warnings: validation.warnings,
+          },
+          { status: 400 },
+        );
+      }
+
+      const created = await createPluginResource<
+        Omit<VictimPayload, 'id'>,
+        VictimPayload
+      >('victims', {
+        eventId: coerced.articleId,
+        name,
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: {
+            id: created.id,
+            articleId: created.eventId,
+            victimName: created.name,
+          },
+          message: 'Victim created successfully',
+          warnings: validation.warnings,
+        },
+        { status: 201 },
+      );
+    }
+
+    const db = await ensureServerDatabase();
     const now = new Date().toISOString();
     const newVictim: NewVictim = {
       id: uuidv4(),

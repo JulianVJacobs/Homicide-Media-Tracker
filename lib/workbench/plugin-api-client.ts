@@ -1,0 +1,104 @@
+import type {
+  PluginApiListResponse,
+  PluginApiResponse,
+} from '../contracts/plugin-api-contract';
+
+export type WorkbenchPluginResource =
+  | 'actors'
+  | 'events'
+  | 'claims'
+  | 'victims'
+  | 'perpetrators'
+  | 'participants';
+
+const toConfiguredBaseUrl = (): string | null => {
+  const raw =
+    process.env.WORKBENCH_PLUGIN_API_BASE_URL ||
+    process.env.PLUGIN_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_PLUGIN_API_BASE_URL ||
+    '';
+  const base = raw.trim();
+  return base ? base.replace(/\/+$/, '') : null;
+};
+
+export const isWorkbenchPluginApiEnabled = (): boolean =>
+  Boolean(toConfiguredBaseUrl());
+
+const buildResourceUrl = (
+  resource: WorkbenchPluginResource,
+  query: Record<string, string | number | undefined> = {},
+): string => {
+  const baseUrl = toConfiguredBaseUrl();
+  if (!baseUrl) {
+    throw new Error('Workbench plugin API base URL is not configured');
+  }
+
+  const url = new URL(`${baseUrl}/${resource}`);
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === '') continue;
+    url.searchParams.set(key, String(value));
+  }
+  return url.toString();
+};
+
+const parseJson = async <T>(response: Response): Promise<T> => {
+  return (await response.json()) as T;
+};
+
+const toPluginErrorMessage = (
+  payload: { success: false; error: { message?: string } } | undefined,
+  fallback: string,
+): string => payload?.error?.message || fallback;
+
+export const listPluginResource = async <TItem>(
+  resource: WorkbenchPluginResource,
+  query: Record<string, string | number | undefined> = {},
+): Promise<{ items: TItem[]; total: number }> => {
+  const response = await fetch(buildResourceUrl(resource, query), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  const payload = await parseJson<PluginApiListResponse<TItem>>(response);
+
+  if (!response.ok || !payload.success) {
+    throw new Error(
+      toPluginErrorMessage(
+        payload.success ? undefined : payload,
+        `Plugin API list request failed with status ${response.status}`,
+      ),
+    );
+  }
+
+  return payload.data;
+};
+
+export const createPluginResource = async <TInput, TEntity>(
+  resource: WorkbenchPluginResource,
+  body: TInput,
+): Promise<TEntity> => {
+  const response = await fetch(buildResourceUrl(resource), {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const payload = await parseJson<PluginApiResponse<TEntity>>(response);
+
+  if (!response.ok || !payload.success) {
+    throw new Error(
+      toPluginErrorMessage(
+        payload.success ? undefined : payload,
+        `Plugin API create request failed with status ${response.status}`,
+      ),
+    );
+  }
+
+  return payload.data;
+};

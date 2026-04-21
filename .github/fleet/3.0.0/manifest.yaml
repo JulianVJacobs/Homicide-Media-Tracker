@@ -98,15 +98,17 @@ lanes:
   - laneId: 05-workbench-bridge
     role: worker
     branch: lane/3.0.0/05-workbench-bridge
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 33
+    status: active
+    readiness: ready
     ownedSurface:
       - workbench integration adapters and API clients
       - plugin/API data-boundary transition in Next workbench
-    blockers:
-      - waits for lane 04 plugin API contract stability
-    verification: []
+    blockers: []
+    verification:
+      - plugin API adapters added under lib/contracts and lib/workbench
+      - actor/victim/perpetrator/participant online routes use plugin API when configured
+      - npm run lint passed
 
   - laneId: 06-acl-record-linkage
     role: worker

@@ -29,4 +29,3 @@ describe('checkPermission', () => {
     expect(check).toHaveBeenCalledWith('update', { id: 7 });
   });
 });
-

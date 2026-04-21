@@ -33,10 +33,6 @@ export const checkPermission = async (
     return false;
   }
 
-  if (hasRoleOverride(authContext)) {
-    return true;
-  }
-
   if (authContext.permissions?.includes(permission)) {
     return true;
   }
@@ -53,5 +49,5 @@ export const checkPermission = async (
     return qubitAcl.isGranted(mappedPermission, credential);
   }
 
-  return false;
+  return hasRoleOverride(authContext);
 };

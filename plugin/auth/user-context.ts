@@ -4,9 +4,8 @@ import type { PluginUserContext } from '../contracts/plugin-api-contract';
 export const bindUserContext = (
   authContext: PluginAuthContext | undefined,
 ): PluginUserContext => ({
-  userId: authContext?.userId,
+  userId: authContext?.userId ?? null,
   roles: authContext?.roles ?? [],
   permissions: authContext?.permissions ?? [],
   credential: authContext?.credential,
 });
-

@@ -59,7 +59,7 @@ export interface ListResult<TItem> {
 }
 
 export interface PluginUserContext {
-  userId?: string;
+  userId: string | null;
   roles: string[];
   permissions: string[];
   credential?: Record<string, unknown>;

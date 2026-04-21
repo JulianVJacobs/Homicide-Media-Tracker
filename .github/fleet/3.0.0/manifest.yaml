@@ -54,7 +54,7 @@ lanes:
   - laneId: 01-electron-debloat
     role: worker
     branch: lane/3.0.0/01-electron-debloat
-    prNumber: null
+    prNumber: 29
     status: in-progress
     readiness: waiting
     ownedSurface:

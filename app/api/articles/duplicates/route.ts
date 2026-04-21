@@ -5,9 +5,9 @@ import * as schema from '../../../../lib/db/schema';
 import { mapDuplicateMatchDtos } from '../utils';
 
 type DuplicateRequestPayload = {
-  newsReportUrl?: string;
-  newsReportHeadline?: string;
-  author?: string;
+  newsReportUrl?: string | null;
+  newsReportHeadline?: string | null;
+  author?: string | null;
   victimName?: string;
   victimAlias?: string | string[];
   dateOfDeath?: string;

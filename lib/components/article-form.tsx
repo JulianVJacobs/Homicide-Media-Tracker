@@ -233,7 +233,7 @@ const buildAuthorState = (value?: string | null) => {
     : [''];
 
   return {
-    authorValues: authorValues.length > 0 ? authorValues : [''],
+    authorValues,
     isAuthorOther: false,
     authorOtherValue: AUTHOR_OTHER_OPTIONS[0],
   };

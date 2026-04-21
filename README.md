@@ -8,7 +8,7 @@ This single README combines development guidance from the project and an older b
 
 ## Roadmap
 
-**Current version: 2.1.0 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**
+**Current version: 2.2.0 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**
 
 Checkbox legend:
 
@@ -16,11 +16,12 @@ Checkbox legend:
 - `[ ]` planned and not yet completed
 - `[>]` deferred/re-scoped to a different semver target (no standalone release at original line)
 
-**Status update (2026-04-20):**
+**Status update (2026-04-21):**
 
 - ✅ Phase 3 integration merge completed on `origin/main` (Lima final integration PR #13, India PR #14, with Juliet/Kilo integrated in Lima merge flow).
 - ✅ Fleet `2.1.0` completed and closed on `origin/main` (final PR `#17`, post-merge worker branch cleanup complete).
-- 🟠 Phase 2 closeout launch: fleet `2.2.0` is the active execution slice to complete remaining `2.x` scope before Phase 3.
+- ✅ Fleet `2.2.0` completed and closed on `origin/main` (final PR `#22`, integrated verification passed; remaining `origin/copilot/220-*` worker branches still need cleanup).
+- 🟡 Next execution focus: `3.0.x` graph explorer and `3.1.x` statistical reproducibility, now that the Phase 2 dependency gate is closed.
 
 ### **Foundation: Participant Management (1.x.x releases)**
 
@@ -59,41 +60,27 @@ Sequencing note: `2.2.x` should be completed before `3.0.x`/`3.1.x` under the cu
 
 ### Most Recent Fleet Execution (canonical schema)
 
-- Proposed planned version: `2.1.0`
-- Approval state: approved and completed (closed 2026-04-20)
-- Phase branch: `phase/2.1.0`
-- Merge policy: eager worker merge into `phase/2.1.0` after verification, then one final PR to `origin/main`
+- Proposed planned version: `2.2.0`
+- Approval state: approved and completed (closed 2026-04-21)
+- Phase branch: `phase/2.2.0`
+- Merge policy: eager-after-green into `phase/2.2.0`, then one final PR to `origin/main`
 - Lane identity format: `[<planned-version>][<agent-id>-<short-name>] <task-description>`
 - Conductor lane id reserved: `00`
 - Launch state: closed
 - Completed lanes:
-  - `[2.1.0][00-conductor] Integrate phase 2.1.0 fleet`
-  - `[2.1.0][01-profile-admin-ui] Build schema profile administration UI`
-  - `[2.1.0][02-role-visibility] Implement role-based field visibility and constraints`
-  - `[2.1.0][03-domain-seed-support] Add homicide default + custom domain seed lifecycle`
-  - `[2.1.0][04-regression-verification] Verify backward compatibility and end-to-end role/profile flows`
-
-- Final PR: `#17` merged to `origin/main`
-- Cleanup: remaining `origin/copilot/*` worker branches deleted after merge
-
-- Historical note: legacy phonetic lane labels were used in earlier phases and are now archived-only references.
-
-### Active Fleet Execution (phase 2 closeout)
-
-- Planned version: `2.2.0`
-- Approval state: approved and active (initiated 2026-04-20)
-- Allowed change class: minor (additive closeout for remaining `2.x` roadmap scope)
-- Phase goal: complete remaining Phase 2 deliverables before Phase 3 dependency gate
-- Phase branch: `phase/2.2.0`
-- Merge policy: eager-after-green into `phase/2.2.0`, then one final PR to `origin/main`
-- Conductor lane:
   - `[2.2.0][00-conductor] Integrate phase 2.2.0 closeout fleet`
-- Worker lanes:
   - `[2.2.0][01-identity-core] Reuse alias/promotion logic for actors and add multi-field duplicate scoring`
   - `[2.2.0][02-scoring-explainability] Add candidate scoring explainability surfaces and API outputs`
   - `[2.2.0][03-merge-queue-ui] Build actor merge queue and promotion workflow UI`
   - `[2.2.0][04-role-attrs-outlet] Complete role-specific attributes and ship outlet searchable combobox`
   - `[2.2.0][05-regression-verification] Verify end-to-end closeout behavior on integrated phase branch`
+
+- Final PR: `#22` merged to `origin/main`
+- Manifest lifecycle: `.github/fleet/2.2.0/manifest.yaml` deleted before final PR per fleet policy
+- Verification: integrated lint + test baseline passed during closeout sign-off
+- Cleanup: remaining `origin/copilot/220-*` worker branches are still pending deletion
+
+- Historical note: legacy phonetic lane labels were used in earlier phases and are now archived-only references.
 
 Generalize the participant model into a core Event–Actor–Role ontology. Introduce annotation events with configurable profiles, role-based claims, and prepare for AtoM plugin integration.
 
@@ -109,16 +96,17 @@ Generalize the participant model into a core Event–Actor–Role ontology. Intr
   - [x] Add role-based claims and evidence
     - [x] `claim`: assertions on actors/roles with confidence and source evidence
     - [x] `claim_evidence`: link claims to article mentions with coder metadata
-- [ ] **2.1.x — Multi-Domain Profile Support**
+- [x] **2.1.x — Multi-Domain Profile Support**
   - [x] Implement admin UI for profile definition
   - [x] Support homicide (preloaded default) + custom domains
   - [x] Role-based field visibility and validation
-  - [ ] Support role-specific attributes (e.g., "conviction" shows for Perpetrator; "contact" for Witness)
-- [ ] **2.2.x — Identity Resolution & Merge at Scale**
-  - [ ] Reuse alias + promotion logic for actors
-  - [ ] Enhance duplicate matching for multi-field scoring
-  - [ ] Provide explainability for candidate scoring
-  - [ ] Build actor merge queue and promotion UI
+  - [x] Support role-specific attributes (e.g., "conviction" shows for Perpetrator; "contact" for Witness)
+  - [x] Support searchable news outlet selection with add-new matching behavior
+- [x] **2.2.x — Identity Resolution & Merge at Scale**
+  - [x] Reuse alias + promotion logic for actors
+  - [x] Enhance duplicate matching for multi-field scoring
+  - [x] Provide explainability for candidate scoring
+  - [x] Build actor merge queue and promotion UI
 
 ---
 

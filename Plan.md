@@ -134,14 +134,16 @@
 - `2.1.0` multi-domain profile support fleet completed and merged.
 - Final integrated verification passed: lint + test green on integrated branch.
 - Post-merge branch cleanup completed for remaining `origin/copilot/*` worker branches.
+- `2.2.0` Phase 2 closeout fleet completed and merged.
+- Integrated closeout verification passed: regression readiness sign-off plus full lint/test baseline on merged phase content.
+- Manifest cleanup completed per fleet policy before the final PR.
 
 ### Next candidates
 
-- `[2.0.1][01-outlet-combobox]` searchable news outlet reference list feature (self-contained).
-- `2.2.x` identity resolution and merge at scale.
-- `3.0.x` graph explorer and `3.1.x` statistical reproducibility roadmap items, after `2.2.x` unless explicitly scoped to unresolved/raw actor views.
+- `3.0.x` graph explorer and `3.1.x` statistical reproducibility roadmap items, now unblocked by completed `2.2.0` identity-resolution work.
+- Operational cleanup: delete remaining `origin/copilot/220-*` worker branches after final merge confirmation.
 
-## Active fleet proposal (Phase 2 closeout)
+## Fleet execution record (Phase 2 closeout completed)
 
 ### Fleet contract block
 
@@ -149,23 +151,26 @@
 - Planned version: `2.2.0`
 - Version rationale: closes all remaining `2.x` roadmap items (identity resolution, merge-at-scale UX, role-specific attributes, and outlet combobox) before opening Phase 3 implementation.
 - Allowed change class: minor
-- Approval status: approved by launch intent (`let's finish off phase 2`)
+- Approval status: approved and completed (closed 2026-04-21)
 - Escalation rule: if breaking API/schema migration is required, stop lane and split into `2.3.0` or re-contract as major.
 
-### Execution status snapshot (conductor update: 2026-04-20)
+### Execution record (conductor update: 2026-04-21)
 
-- Manifest source of truth: `.github/fleet/2.2.0/manifest.yaml` (updated with live PR and blocker state).
-- Lane PR inventory:
-  - `[2.2.0][01-identity-core]` → PR #23 (draft/open, blocked)
-  - `[2.2.0][02-scoring-explainability]` → PR #25 (draft/open, blocked)
-  - `[2.2.0][03-merge-queue-ui]` → PR #26 (draft/open, blocked)
-  - `[2.2.0][04-role-attrs-outlet]` → PR #24 (draft/open, blocked)
-  - `[2.2.0][05-regression-verification]` → PR #27 (draft/open, blocked)
-- Global blockers:
-  - Worker PRs currently target `main` instead of `phase/2.2.0`.
-  - Worker branches are not using canonical `lane/2.2.0/*` names.
-  - No worker lane currently has implementation diffs or completed lane-level verification evidence.
-  - Integrated verification is blocked until lanes 01-05 are merged to `phase/2.2.0`.
+- Final PR: `#22` merged to `origin/main` at `67cedec`
+- Phase branch: `phase/2.2.0`
+- Manifest lifecycle: `.github/fleet/2.2.0/manifest.yaml` deleted before the final PR per fleet policy
+- Lane merge record:
+  - `[2.2.0][01-identity-core]` merged into the phase branch at `c3141f7`
+  - `[2.2.0][02-scoring-explainability]` merged into the phase branch at `08e1956`
+  - `[2.2.0][03-merge-queue-ui]` merged into the phase branch at `60280e0`
+  - `[2.2.0][04-role-attrs-outlet]` merged into the phase branch at `dd0d07a`
+  - `[2.2.0][05-regression-verification]` merged into the phase branch at `34c1e33`
+- Integrated closeout evidence:
+  - `npm run lint` passed on the integrated phase branch
+  - `npm run test` passed on the integrated phase branch (`23` suites, `72` tests)
+  - Regression readiness report recorded no blocker in the owned verification surface
+- Remaining operational follow-up:
+  - delete surviving `origin/copilot/220-*` worker branches
 
 ### Parallel-safe lane decomposition
 
@@ -199,12 +204,13 @@
   3. `[2.2.0][03-merge-queue-ui]`
   4. `[2.2.0][04-role-attrs-outlet]`
   5. `[2.2.0][05-regression-verification]`
-  6. `[2.2.0][00-conductor]` opens one final PR from `phase/2.2.0` to `origin/main`
+  6. `[2.2.0][00-conductor]` opened the final PR from `phase/2.2.0` to `origin/main` and merged PR `#22`
 
 ### Residual risks / notes
 
 - Last known build risk remains external to fleet closure: sandbox font fetch and existing module-resolution issue in `app/api/participants/form-contract/route.ts` were previously noted.
 - Roadmap sequencing rule: under the current architecture, `2.2.x` should precede `3.0.x`/`3.1.x` because graph and reproducibility features depend on stable identity resolution, actor merge explainability, and merge-aware exports.
+- Historical CI note from closeout readiness: workflow run `24563387714` failed on `main` due to missing npm script `package` in workflow configuration, not due to the `2.2.0` lane code changes.
 
 ## Phase 3 Lima — Event-Actor-Role Integration (Completed, merged to origin/main)
 

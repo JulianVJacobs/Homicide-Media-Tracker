@@ -291,7 +291,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
   const RESET_DATA: VictimFormValues = {
     victimName: '',
     victimAlias: '',
-    victimAliases: '[]',
+    victimAliases: null,
     dateOfDeath: '',
     dateOfDeathMode: 'exact',
     dateOfDeathEnd: '',
@@ -385,21 +385,31 @@ const VictimForm: React.FC<VictimFormProps> = ({
     [requiredFields, visibleFields],
   );
 
-  const constraintInput = useMemo(
-    () => ({
-      ...currentVictim,
-      victimName: isNameUnknown ? 'Unknown' : currentVictim.victimName,
-      ageOfVictim: isAgeUnknown ? 0 : currentVictim.ageOfVictim,
-      dateOfDeath: isDateUnknown ? 'Unknown' : currentVictim.dateOfDeath,
-    }),
-    [currentVictim, isNameUnknown, isAgeUnknown, isDateUnknown],
+  const effectiveRequiredFieldsForConstraint = useMemo(
+    () =>
+      effectiveRequiredFields?.filter((field) => {
+        if (field === 'victimName' && isNameUnknown) {
+          return false;
+        }
+
+        if (field === 'ageOfVictim' && isAgeUnknown) {
+          return false;
+        }
+
+        if ((field === 'dateOfDeath' || field === 'dateOfDeathEnd') && isDateUnknown) {
+          return false;
+        }
+
+        return true;
+      }),
+    [effectiveRequiredFields, isAgeUnknown, isDateUnknown, isNameUnknown],
   );
 
   const constraintState = useConstraintEvaluation(
-    constraintInput as Record<string, unknown>,
+    currentVictim as Record<string, unknown>,
     'victim',
     roleProfileContext,
-    { requiredFields: effectiveRequiredFields },
+    { requiredFields: effectiveRequiredFieldsForConstraint },
   );
 
   const hasValidName = isNameUnknown || Boolean(currentVictim.victimName?.trim());
@@ -407,7 +417,10 @@ const VictimForm: React.FC<VictimFormProps> = ({
   const hasValidDate =
     isDateUnknown ||
     (Boolean(currentVictim.dateOfDeath) &&
-      (dateMode === 'exact' || Boolean(currentVictim.dateOfDeathEnd)));
+      (dateMode === 'exact' ||
+        (Boolean(currentVictim.dateOfDeathEnd) &&
+          new Date(currentVictim.dateOfDeath ?? '').getTime() <=
+            new Date(currentVictim.dateOfDeathEnd ?? '').getTime())));
 
   const isValid = constraintState.isValid && hasValidName && hasValidAge && hasValidDate;
 

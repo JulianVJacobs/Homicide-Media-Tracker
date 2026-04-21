@@ -26,6 +26,7 @@ interface ArticleFormProps {
   initialData?: Partial<ArticleFormValues> | null;
 }
 
+// Intentionally includes every paragraph text value from docs/news-outlets-and-platforms-list.xml.
 const NEWS_OUTLET_SEED_OPTIONS = [
   'Homicide Tracker List of titles for drop-down',
   'News Titles and Platforms Included in Media Survey',
@@ -259,9 +260,9 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
   );
 
   const [isValid, setIsValid] = useState(false);
-  const [outletOptions, setOutletOptions] = useState<string[]>([
-    ...NEWS_OUTLET_SEED_OPTIONS,
-  ]);
+  const [outletOptions, setOutletOptions] = useState<string[]>(
+    () => [...NEWS_OUTLET_SEED_OPTIONS],
+  );
   const [outletLoading, setOutletLoading] = useState(false);
   const [outletSaving, setOutletSaving] = useState(false);
   const [authorValues, setAuthorValues] = useState<string[]>(

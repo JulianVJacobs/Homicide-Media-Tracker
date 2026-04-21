@@ -139,13 +139,17 @@ lanes:
   - laneId: 05-participant-form
     role: worker
     branch: lane/2.3.0/05-participant-form
-    prNumber: null
-    status: planned
+    prNumber: 42
+    status: active
     readiness: ready
     ownedSurface:
       - lib/components/participant-form.tsx
     blockers: []
-    verification: []
+    verification:
+      - Participant type selector shows Suspect label while preserving value perpetrator
+      - Other participant role field added, persists in form values, and displays in list
+      - Other participant list supports click-to-edit, update in place, and cancel edit reset
+      - npm run lint passes
 
   - laneId: 06-input-homicide
     role: worker

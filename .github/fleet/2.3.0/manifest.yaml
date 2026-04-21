@@ -8,6 +8,41 @@ baseBranch: origin/main
 phaseBranch: phase/2.3.0
 launchDate: 2026-04-21
 note: 3.0.0 fleet is paused until this phase merges. Conductor to notify 3.0.0 conductor of schema/surface changes after final PR lands.
+governance:
+  laneBoundaryPolicy:
+    - one branch per lane
+    - one PR per lane into phase/2.3.0
+  scopeIsolation:
+    enforce: true
+    policy: reject PRs touching surfaces owned by other lanes
+  mergeOrder:
+    - step: 1
+      lanes:
+        - 01-schema-migrations
+      rule: no dependency, merge first after green
+    - step: 2
+      lanes:
+        - 02-article-form
+        - 03-victim-form
+        - 04-suspect-form
+        - 07-merge-queue
+      rule: parallel lanes, all depend on 01-schema-migrations
+    - step: 3
+      lanes:
+        - 05-participant-form
+      rule: depends on 04-suspect-form
+    - step: 4
+      lanes:
+        - 06-input-homicide
+      rule: depends on 02-article-form, 03-victim-form, 04-suspect-form, and 05-participant-form
+    - step: 5
+      lanes:
+        - 08-regression
+      rule: final gate, depends on lanes 01 through 07
+  stopConditions:
+    - do not open final PR until 08-regression is merged and sign-off comment is present
+    - do not merge worker PRs with unresolved scope violations
+    - do not modify worker-owned source surfaces from conductor lane
 finalPr:
   number: null
   status: not-created

@@ -9,23 +9,12 @@
  */
 import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
-import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { spawn, ChildProcess } from 'child_process';
 import http from 'http';
 import net from 'net';
-import MenuBuilder from './menu';
 import { dbm } from '../../lib/db/server';
 import { type DomainSeedDefinition } from '../../lib/db/domain-seed';
-
-class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    log.transports.console.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
 
 let mainWindow: BrowserWindow | null = null;
 let nextServer: ChildProcess | null = null;
@@ -196,173 +185,146 @@ const startNextServer = async (): Promise<string> => {
   }
 };
 
-// IPC handlers for enhanced desktop integration
-ipcMain.handle('get-app-version', () => {
-  return app.getVersion();
-});
+const registerIpcHandlers = () => {
+  // IPC handlers for enhanced desktop integration
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+  });
 
-ipcMain.handle('get-platform', () => {
-  return process.platform;
-});
+  ipcMain.handle('get-platform', () => {
+    return process.platform;
+  });
 
-ipcMain.handle('get-server-port', () => {
-  return serverPort;
-});
+  ipcMain.handle('get-server-port', () => {
+    return serverPort;
+  });
 
-// Database IPC handlers
-ipcMain.handle('database-status', async () => {
-  try {
-    // Check if database is initialised
-    if (!dbm.getLocal) {
+  // Database IPC handlers
+  ipcMain.handle('database-status', async () => {
+    try {
+      // Check if database is initialised
+      if (!dbm.getLocal) {
+        return {
+          isInitialised: false,
+          error:
+            'Database not initialised (running in packaged mode without database support)',
+        };
+      }
+
+      const config = dbm.getConfig();
+      return {
+        isInitialised: true,
+        syncEnabled: config.sync.enabled,
+        localPath: config.local.path,
+        remoteUrl: config.remote?.url || null,
+      };
+    } catch (error) {
       return {
         isInitialised: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  });
+
+  ipcMain.handle('database-sync', async () => {
+    try {
+      if (!dbm.getLocal) {
+        return {
+          success: false,
+          error: 'Database not initialised (running in packaged mode)',
+        };
+      }
+
+      await dbm.syncWithRemote();
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Sync failed',
+      };
+    }
+  });
+
+  ipcMain.handle('database-backup', async () => {
+    try {
+      if (!dbm.getLocal) {
+        return {
+          success: false,
+          error: 'Database not initialised (running in packaged mode)',
+        };
+      }
+
+      const backupPath = await dbm.createBackup();
+      return { success: true, backupPath };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Backup failed',
+      };
+    }
+  });
+
+  ipcMain.handle('database-domain-seeds', async () => {
+    try {
+      if (!dbm.getLocal) {
+        return {
+          success: false,
+          error: 'Database not initialised (running in packaged mode)',
+        };
+      }
+
+      return {
+        success: true,
+        data: dbm.getRegisteredDomainSeeds(),
+      };
+    } catch (error) {
+      return {
+        success: false,
         error:
-          'Database not initialised (running in packaged mode without database support)',
+          error instanceof Error ? error.message : 'Failed to list domain seeds',
       };
     }
+  });
 
-    const config = dbm.getConfig();
-    return {
-      isInitialised: true,
-      syncEnabled: config.sync.enabled,
-      localPath: config.local.path,
-      remoteUrl: config.remote?.url || null,
-    };
-  } catch (error) {
-    return {
-      isInitialised: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-});
+  ipcMain.handle(
+    'database-register-domain-seed',
+    async (_event, seed: unknown) => {
+      try {
+        if (!dbm.getLocal) {
+          return {
+            success: false,
+            error: 'Database not initialised (running in packaged mode)',
+          };
+        }
 
-ipcMain.handle('database-sync', async () => {
-  try {
-    if (!dbm.getLocal) {
-      return {
-        success: false,
-        error: 'Database not initialised (running in packaged mode)',
-      };
-    }
+        if (!isDomainSeedDefinition(seed)) {
+          return { success: false, error: 'Invalid domain seed payload' };
+        }
 
-    await dbm.syncWithRemote();
-    return { success: true };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Sync failed',
-    };
-  }
-});
-
-ipcMain.handle('database-backup', async () => {
-  try {
-    if (!dbm.getLocal) {
-      return {
-        success: false,
-        error: 'Database not initialised (running in packaged mode)',
-      };
-    }
-
-    const backupPath = await dbm.createBackup();
-    return { success: true, backupPath };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Backup failed',
-    };
-  }
-});
-
-ipcMain.handle('database-domain-seeds', async () => {
-  try {
-    if (!dbm.getLocal) {
-      return {
-        success: false,
-        error: 'Database not initialised (running in packaged mode)',
-      };
-    }
-
-    return {
-      success: true,
-      data: dbm.getRegisteredDomainSeeds(),
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to list domain seeds',
-    };
-  }
-});
-
-ipcMain.handle(
-  'database-register-domain-seed',
-  async (_event, seed: unknown) => {
-  try {
-    if (!dbm.getLocal) {
-      return {
-        success: false,
-        error: 'Database not initialised (running in packaged mode)',
-      };
-    }
-
-    if (!isDomainSeedDefinition(seed)) {
-      return { success: false, error: 'Invalid domain seed payload' };
-    }
-
-    await dbm.registerDomainSeed(seed);
-    return { success: true, data: dbm.getRegisteredDomainSeeds() };
-  } catch (error) {
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to register domain seed',
-    };
-  }
-  },
-);
-
-ipcMain.handle('show-message-box', async (_event, options) => {
-  const { dialog } = await import('electron');
-  if (mainWindow) {
-    return dialog.showMessageBox(mainWindow, options);
-  }
-  return dialog.showMessageBox(options);
-});
-
-if (process.env.NODE_ENV === 'production') {
-  import('source-map-support').then((module) => module.install());
-}
-
-const isDebug =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
-if (isDebug) {
-  import('electron-debug').then((module) => module.default());
-}
-
-const installExtensions = async () => {
-  const { default: installExtension, REACT_DEVELOPER_TOOLS } = await import(
-    'electron-devtools-installer'
+        await dbm.registerDomainSeed(seed);
+        return { success: true, data: dbm.getRegisteredDomainSeeds() };
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to register domain seed',
+        };
+      }
+    },
   );
 
-  const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  const extensions = [REACT_DEVELOPER_TOOLS];
-
-  return Promise.all(
-    extensions.map((extension) => installExtension(extension, forceDownload)),
-  ).catch((error) => {
-    console.log('Failed to install devtools extensions:', error);
+  ipcMain.handle('show-message-box', async (_event, options) => {
+    const { dialog } = await import('electron');
+    if (mainWindow) {
+      return dialog.showMessageBox(mainWindow, options);
+    }
+    return dialog.showMessageBox(options);
   });
 };
 
 const createWindow = async (): Promise<void> => {
-  if (isDebug) {
-    await installExtensions();
-  }
-
   // Initialise database first - with enhanced packaging support
   try {
     log.info('Initializing local database...');
@@ -445,18 +407,12 @@ const createWindow = async (): Promise<void> => {
     mainWindow = null;
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
-
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {
     shell.openExternal(edata.url);
     return { action: 'deny' };
   });
 
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
 };
 
 /**
@@ -516,6 +472,7 @@ app.on('before-quit', () => {
 app
   .whenReady()
   .then(() => {
+    registerIpcHandlers();
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the

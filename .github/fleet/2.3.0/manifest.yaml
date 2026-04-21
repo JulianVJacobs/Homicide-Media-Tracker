@@ -108,7 +108,7 @@ lanes:
     ownedSurface:
       - lib/components/victim-form.tsx
     blockers:
-      - waits for lane 01
+      - waits for lane 01 schema migrations
     verification: []
 
   - laneId: 04-suspect-form
@@ -166,11 +166,5 @@ lanes:
       - __tests__/ or *.test.ts regression suite additions
       - cutover readiness report
     blockers:
-      - waits for lane 01
-      - waits for lane 02
-      - waits for lane 03
-      - waits for lane 04
-      - waits for lane 05
-      - waits for lane 06
-      - waits for lane 07
+      - waits for lanes 01 through 07 to merge
     verification: []

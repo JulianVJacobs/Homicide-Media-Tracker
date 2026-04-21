@@ -246,8 +246,7 @@ const InputHomicide: React.FC<InputHomicideProps> = ({ onBack }) => {
                       : 'text-muted'
                   }
                 >
-                  ✓ Participants (V:{victims.length} / Suspect(s):
-                  {perpetrators.length}
+                  ✓ Participants (V:{victims.length} / Suspect(s):{perpetrators.length}
                   {' / '}O:{otherParticipants.length})
                 </small>
                 <small className={typeOfMurder ? 'text-success' : 'text-muted'}>

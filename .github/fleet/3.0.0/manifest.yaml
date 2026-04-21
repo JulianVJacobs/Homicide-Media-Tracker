@@ -85,15 +85,18 @@ lanes:
   - laneId: 04-plugin-api-contract
     role: worker
     branch: lane/3.0.0/04-plugin-api-contract
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 32
+    status: active
+    readiness: ready
     ownedSurface:
       - plugin API controllers and routes
       - contract-compatible payload mapping
-    blockers:
-      - waits for lane 03 backend domain services
-    verification: []
+    blockers: []
+    verification:
+      - plugin routes registered via scaffold for actor, event, claim, victim, perpetrator, participant
+      - auth boundary hooks stubbed using checkPermission on each endpoint
+      - integration tests verify list/create payload contract shapes for all plugin endpoints
+      - npm run lint passes
 
   - laneId: 05-workbench-bridge
     role: worker

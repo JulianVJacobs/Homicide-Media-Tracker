@@ -3,7 +3,6 @@ import { eq } from 'drizzle-orm';
 import { createClient } from '@libsql/client';
 import path from 'path';
 import fs from 'fs';
-import { app } from 'electron';
 import {
   articles,
   victims,
@@ -36,6 +35,15 @@ import {
   type DomainSeedDefinition,
   applyDomainSeed,
 } from './domain-seed';
+
+const electronApp: { getPath: (name: string) => string; isPackaged?: boolean } | null = (() => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return (require('electron') as typeof import('electron'))?.app ?? null;
+  } catch {
+    return null;
+  }
+})();
 
 type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
 
@@ -74,12 +82,12 @@ class DatabaseManagerServer {
 
   constructor() {
     // Determine correct data path for packaged vs dev mode
-    let userDataPath = app?.getPath('userData') ?? './data';
+    let userDataPath = electronApp?.getPath('userData') ?? './data';
     const resourcesPath =
       typeof process !== 'undefined'
         ? (process as ElectronProcess).resourcesPath
         : undefined;
-    if (app?.isPackaged && resourcesPath) {
+    if (electronApp?.isPackaged && resourcesPath) {
       // In packaged mode, use resourcesPath for DB location if needed
       userDataPath = resourcesPath;
     }

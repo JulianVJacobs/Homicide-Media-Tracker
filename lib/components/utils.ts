@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 type NullableString = string | null | undefined;
 type UnknownRecord = Record<string, unknown>;
+type DateLike = NullableString | Date;
 
 export type ArticleInput = UnknownRecord & {
   newsReportUrl?: NullableString;
@@ -38,6 +39,8 @@ export type PerpetratorInput = UnknownRecord & {
   sentence?: NullableString;
 };
 
+// Supports both legacy article-level fields and richer event-level fields so
+// duplicate detection can run for older payloads and relation-enriched payloads.
 interface DuplicateCandidate {
   id?: string;
   newsReportUrl?: NullableString;
@@ -48,6 +51,24 @@ interface DuplicateCandidate {
   participantAlias?: NullableString | NullableString[];
   victimName?: NullableString;
   victimAlias?: NullableString | NullableString[];
+  dateOfDeath?: DateLike;
+  placeOfDeathProvince?: NullableString;
+  placeOfDeathTown?: NullableString;
+  perpetratorName?: NullableString;
+  perpetratorAlias?: NullableString | NullableString[];
+  victims?: EventVictimCandidate[];
+  perpetrators?: EventPerpetratorCandidate[];
+}
+
+interface EventVictimCandidate {
+  victimName?: NullableString;
+  victimAlias?: NullableString | NullableString[];
+  dateOfDeath?: DateLike;
+  placeOfDeathProvince?: NullableString;
+  placeOfDeathTown?: NullableString;
+}
+
+interface EventPerpetratorCandidate {
   perpetratorName?: NullableString;
   perpetratorAlias?: NullableString | NullableString[];
 }
@@ -306,6 +327,43 @@ const DUPLICATE_SIGNAL_WEIGHTS: Record<DuplicateScoreSignal, number> = {
   content: 0,
 };
 
+type EventSignalCode =
+  | 'victim_name_and_date_overlap'
+  | 'victim_name_and_location_match'
+  | 'victim_and_suspect_name_match';
+
+interface EventSignalHit {
+  code: EventSignalCode;
+  score: number;
+  explainability: string;
+  matchedFields: string[];
+}
+
+interface EventDuplicateMatch {
+  score: number;
+  confidence: DuplicateMatch['confidence'];
+  matchReason: string;
+  explainability: string;
+  matchedFields: string[];
+}
+
+const EVENT_SIGNAL_SCORE: Record<EventSignalCode, number> = {
+  // High-confidence signal: same victim plus matching/overlapping date range.
+  // This should dominate medium event signals when it is present.
+  victim_name_and_date_overlap: 0.8,
+  // Medium-confidence signal: same victim plus matching province/town.
+  victim_name_and_location_match: 0.55,
+  // Medium-confidence signal: same victim plus same suspect.
+  victim_and_suspect_name_match: 0.5,
+};
+
+// Threshold tuned so any medium signal can surface a candidate, while still
+// avoiding weak/noisy matches.
+const EVENT_DUPLICATE_SCORE_THRESHOLD = 0.5;
+// Scores at/above this threshold are treated as high confidence event matches.
+const EVENT_DUPLICATE_HIGH_CONFIDENCE_THRESHOLD = 0.8;
+const UNKNOWN_ARTICLE_EVENT_PREFIX = 'unknown-article';
+
 const roundScore = (value: number) => Number(value.toFixed(4));
 
 const buildScoringDetails = (
@@ -350,6 +408,301 @@ const buildScoringDetails = (
     summaryRationale,
     totalWeightedScore,
     weightedContributions,
+  };
+};
+
+type EventDateRange = {
+  start: number;
+  end: number;
+};
+
+type NormalisedVictimEventSignal = {
+  names: Set<string>;
+  dateRange?: EventDateRange;
+  province: string;
+  town: string;
+};
+
+const parseEventDateRange = (value: DateLike): EventDateRange | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  const parseTimestamp = (entry: string): number | undefined => {
+    const parsed = new Date(entry);
+    const timestamp = parsed.getTime();
+    return Number.isNaN(timestamp) ? undefined : timestamp;
+  };
+
+  if (value instanceof Date) {
+    const timestamp = value.getTime();
+    return Number.isNaN(timestamp)
+      ? undefined
+      : {
+          start: timestamp,
+          end: timestamp,
+        };
+  }
+
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  // Explicitly parse ISO calendar dates (YYYY-MM-DD), including ranges that
+  // contain two ISO dates in a single string.
+  const isoDateMatches = trimmed.match(/\d{4}-\d{2}-\d{2}/g) ?? [];
+  if (isoDateMatches.length > 0) {
+    const parsedDates = isoDateMatches
+      .map((entry) => parseTimestamp(entry))
+      .filter((entry): entry is number => typeof entry === 'number');
+
+    if (parsedDates.length > 0) {
+      const start = Math.min(...parsedDates);
+      const end = Math.max(...parsedDates);
+      return { start, end };
+    }
+  }
+
+  const parsed = parseTimestamp(trimmed);
+  if (typeof parsed === 'number') {
+    return { start: parsed, end: parsed };
+  }
+
+  return undefined;
+};
+
+const hasDateRangeOverlap = (
+  source?: EventDateRange,
+  target?: EventDateRange,
+): boolean => {
+  if (!source || !target) {
+    return false;
+  }
+
+  return source.start <= target.end && target.start <= source.end;
+};
+
+const collectNormalisedVictimSignals = (
+  candidate: DuplicateCandidate,
+): NormalisedVictimEventSignal[] => {
+  const sources: EventVictimCandidate[] = [];
+
+  sources.push({
+    victimName: candidate.victimName,
+    victimAlias: candidate.victimAlias,
+    dateOfDeath: candidate.dateOfDeath,
+    placeOfDeathProvince: candidate.placeOfDeathProvince,
+    placeOfDeathTown: candidate.placeOfDeathTown,
+  });
+
+  (candidate.victims ?? []).forEach((victim) => {
+    sources.push(victim);
+  });
+
+  return sources
+    .map((source) => {
+      const names = new Set<string>();
+      const primary = normaliseName(source.victimName);
+      if (primary) {
+        names.add(primary);
+      }
+      collectAliasValues(source.victimAlias).forEach((alias) => {
+        if (alias) {
+          names.add(alias);
+        }
+      });
+
+      if (names.size === 0) {
+        return undefined;
+      }
+
+      return {
+        names,
+        dateRange: parseEventDateRange(source.dateOfDeath),
+        province: normaliseName(source.placeOfDeathProvince),
+        town: normaliseName(source.placeOfDeathTown),
+      };
+    })
+    .filter(
+      (signal): signal is NormalisedVictimEventSignal => signal !== undefined,
+    );
+};
+
+const collectNormalisedVictimNames = (candidate: DuplicateCandidate): Set<string> => {
+  const names = new Set<string>();
+
+  const addVictimValues = (source: EventVictimCandidate) => {
+    const victimName = normaliseName(source.victimName);
+    if (victimName) {
+      names.add(victimName);
+    }
+    collectAliasValues(source.victimAlias).forEach((alias) => {
+      if (alias) {
+        names.add(alias);
+      }
+    });
+  };
+
+  addVictimValues({
+    victimName: candidate.victimName,
+    victimAlias: candidate.victimAlias,
+  });
+
+  (candidate.victims ?? []).forEach((victim) => {
+    addVictimValues(victim);
+  });
+
+  return names;
+};
+
+const collectNormalisedPerpetratorNames = (
+  candidate: DuplicateCandidate,
+): Set<string> => {
+  const names = new Set<string>();
+
+  const addPerpetratorValues = (source: EventPerpetratorCandidate) => {
+    const perpetratorName = normaliseName(source.perpetratorName);
+    if (perpetratorName) {
+      names.add(perpetratorName);
+    }
+    collectAliasValues(source.perpetratorAlias).forEach((alias) => {
+      if (alias) {
+        names.add(alias);
+      }
+    });
+  };
+
+  addPerpetratorValues({
+    perpetratorName: candidate.perpetratorName,
+    perpetratorAlias: candidate.perpetratorAlias,
+  });
+
+  (candidate.perpetrators ?? []).forEach((perpetrator) => {
+    addPerpetratorValues(perpetrator);
+  });
+
+  return names;
+};
+
+const setsIntersect = (source: Set<string>, target: Set<string>): boolean => {
+  for (const value of source) {
+    if (target.has(value)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const detectEventLevelDuplicate = (
+  current: DuplicateCandidate,
+  existing: DuplicateCandidate,
+): EventDuplicateMatch | undefined => {
+  const eventSignalHits: EventSignalHit[] = [];
+
+  const currentVictims = collectNormalisedVictimSignals(current);
+  const existingVictims = collectNormalisedVictimSignals(existing);
+
+  let hasVictimDateMatch = false;
+  let hasVictimLocationMatch = false;
+
+  for (const sourceVictim of currentVictims) {
+    for (const targetVictim of existingVictims) {
+      const hasVictimNameMatch = setsIntersect(sourceVictim.names, targetVictim.names);
+      if (!hasVictimNameMatch) {
+        continue;
+      }
+
+      if (
+        !hasVictimDateMatch &&
+        hasDateRangeOverlap(sourceVictim.dateRange, targetVictim.dateRange)
+      ) {
+        hasVictimDateMatch = true;
+      }
+
+      if (
+        !hasVictimLocationMatch &&
+        !!sourceVictim.province &&
+        !!sourceVictim.town &&
+        sourceVictim.province === targetVictim.province &&
+        sourceVictim.town === targetVictim.town
+      ) {
+        hasVictimLocationMatch = true;
+      }
+    }
+  }
+
+  if (hasVictimDateMatch) {
+    eventSignalHits.push({
+      code: 'victim_name_and_date_overlap',
+      score: EVENT_SIGNAL_SCORE.victim_name_and_date_overlap,
+      explainability:
+        'Victim names match and dateOfDeath values overlap (same date or overlapping date range).',
+      matchedFields: ['victimName', 'dateOfDeath'],
+    });
+  }
+
+  if (hasVictimLocationMatch) {
+    eventSignalHits.push({
+      code: 'victim_name_and_location_match',
+      score: EVENT_SIGNAL_SCORE.victim_name_and_location_match,
+      explainability:
+        'Victim names match and placeOfDeathProvince/placeOfDeathTown values match.',
+      matchedFields: ['victimName', 'placeOfDeathProvince', 'placeOfDeathTown'],
+    });
+  }
+
+  const currentVictimNames = collectNormalisedVictimNames(current);
+  const existingVictimNames = collectNormalisedVictimNames(existing);
+  const currentPerpetratorNames = collectNormalisedPerpetratorNames(current);
+  const existingPerpetratorNames = collectNormalisedPerpetratorNames(existing);
+
+  if (
+    setsIntersect(currentVictimNames, existingVictimNames) &&
+    setsIntersect(currentPerpetratorNames, existingPerpetratorNames)
+  ) {
+    eventSignalHits.push({
+      code: 'victim_and_suspect_name_match',
+      score: EVENT_SIGNAL_SCORE.victim_and_suspect_name_match,
+      explainability: 'Victim names and suspect names both match.',
+      matchedFields: ['victimName', 'perpetratorName'],
+    });
+  }
+
+  let cumulativeScore = 0;
+  for (const signal of eventSignalHits) {
+    cumulativeScore += signal.score;
+    // Cap to 1.0 to preserve compatibility with similarity-style scoring.
+    if (cumulativeScore >= 1) {
+      cumulativeScore = 1;
+      break;
+    }
+  }
+  const score = roundScore(cumulativeScore);
+
+  if (score < EVENT_DUPLICATE_SCORE_THRESHOLD) {
+    return undefined;
+  }
+
+  const matchReason = eventSignalHits.map((signal) => signal.code).join(',');
+  const explainability = eventSignalHits
+    .map((signal) => signal.explainability)
+    .join(' ');
+  const matchedFields = Array.from(
+    new Set(eventSignalHits.flatMap((signal) => signal.matchedFields)),
+  );
+
+  return {
+    score,
+    confidence:
+      score >= EVENT_DUPLICATE_HIGH_CONFIDENCE_THRESHOLD ? 'high' : 'medium',
+    matchReason,
+    explainability,
+    matchedFields,
   };
 };
 
@@ -425,6 +778,34 @@ export function detectDuplicates(
       continue;
     }
 
+    const eventDuplicate = detectEventLevelDuplicate(newArticle, existing);
+    if (eventDuplicate) {
+      // Event matching folds into the existing "name" signal weight so the scoring
+      // payload remains backward compatible for current DTO consumers.
+      const signalScoresWithEvent: DuplicateSignalScores = {
+        ...signalScores,
+        name: Math.max(signalScores.name, eventDuplicate.score),
+      };
+      // Keep matchType as "name" to preserve the current API contract; matchReason
+      // carries event-specific signal codes until a dedicated "event" type is added.
+      matches.push({
+        id: existing.id,
+        similarity: eventDuplicate.score,
+        matchType: 'name',
+        confidence: eventDuplicate.confidence,
+        matchReason: eventDuplicate.matchReason,
+        explainability: eventDuplicate.explainability,
+        matchedFields: eventDuplicate.matchedFields,
+        scoring: buildScoringDetails(
+          'name',
+          eventDuplicate.explainability,
+          eventDuplicate.matchedFields,
+          signalScoresWithEvent,
+        ),
+      });
+      continue;
+    }
+
     if (titleSimilarity > 0.85) {
       const explainability = `The newsReportHeadline values are similar (${(
         titleSimilarity * 100
@@ -450,6 +831,135 @@ export function detectDuplicates(
 
   return matches.sort((a, b) => b.similarity - a.similarity);
 }
+
+export interface EventArticleGroup {
+  eventKey: string;
+  articles: ExportArticleRecord[];
+  victims: ExportVictimRecord[];
+  perpetrators: ExportPerpetratorRecord[];
+}
+
+export function groupArticlesByEvent(
+  articles: ExportArticleRecord[],
+  victims: ExportVictimRecord[],
+  perpetrators: ExportPerpetratorRecord[],
+): EventArticleGroup[] {
+  const groupsByKey = new Map<string, EventArticleGroup>();
+
+  for (const article of articles) {
+    const candidateIds = [article.articleId, article.id].filter(
+      (identifier): identifier is string =>
+        typeof identifier === 'string' && identifier.length > 0,
+    );
+    const identifierSet = new Set(candidateIds);
+
+    const articleVictims = victims.filter((victim) => {
+      const victimArticleId = victim.articleId;
+      return (
+        typeof victimArticleId === 'string' && identifierSet.has(victimArticleId)
+      );
+    });
+    const articlePerpetrators = perpetrators.filter((perpetrator) => {
+      const perpetratorArticleId = perpetrator.articleId;
+      return (
+        typeof perpetratorArticleId === 'string' &&
+        identifierSet.has(perpetratorArticleId)
+      );
+    });
+
+    const eventKey = inferEventKey(article, articleVictims);
+    const existingGroup = groupsByKey.get(eventKey);
+
+    if (existingGroup) {
+      existingGroup.articles.push(article);
+      existingGroup.victims.push(...articleVictims);
+      existingGroup.perpetrators.push(...articlePerpetrators);
+      continue;
+    }
+
+    groupsByKey.set(eventKey, {
+      eventKey,
+      articles: [article],
+      victims: [...articleVictims],
+      perpetrators: [...articlePerpetrators],
+    });
+  }
+
+  return Array.from(groupsByKey.values());
+}
+
+const inferEventKey = (
+  article: ExportArticleRecord,
+  articleVictims: ExportVictimRecord[],
+): string => {
+  const primaryVictim = articleVictims.find((victim) => {
+    const victimName = victim['victimName'];
+    return typeof victimName === 'string' && victimName.trim().length > 0;
+  });
+
+  const victimName = normaliseName(
+    (primaryVictim?.['victimName'] as NullableString) ?? undefined,
+  );
+  const province = normaliseName(
+    (primaryVictim?.['placeOfDeathProvince'] as NullableString) ?? undefined,
+  );
+  const town = normaliseName(
+    (primaryVictim?.['placeOfDeathTown'] as NullableString) ?? undefined,
+  );
+  const dateBucket = buildApproximateDateBucket(
+    primaryVictim?.['dateOfDeath'] as DateLike,
+  );
+  const fallbackId = buildArticleFallbackEventToken(article);
+
+  if (!victimName) {
+    return `article:${fallbackId}`;
+  }
+  const locationKnown = !!province && !!town;
+  const locationToken = locationKnown
+    ? `${province}|${town}`
+    : `unknown-location|${fallbackId}`;
+
+  return [victimName, dateBucket, locationToken].join('|').toLowerCase();
+};
+
+const buildArticleFallbackEventToken = (article: ExportArticleRecord): string => {
+  const candidateValues = [
+    article.id,
+    article.articleId,
+    article['newsReportUrl'],
+    article['newsReportHeadline'],
+  ];
+  const explicitIdentifier = candidateValues.find(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0,
+  );
+
+  if (explicitIdentifier) {
+    return explicitIdentifier;
+  }
+
+  const fingerprint = JSON.stringify(article);
+  const digest = crypto
+    .createHash('sha256')
+    .update(fingerprint, 'utf8')
+    .digest('hex')
+    .slice(0, 12);
+
+  return `${UNKNOWN_ARTICLE_EVENT_PREFIX}:${digest}`;
+};
+
+const buildApproximateDateBucket = (value: DateLike): string => {
+  const range = parseEventDateRange(value);
+  if (!range) {
+    return 'unknown-date';
+  }
+
+  const startDate = new Date(range.start);
+  const year = startDate.getUTCFullYear();
+  const month = `${startDate.getUTCMonth() + 1}`.padStart(2, '0');
+  const day = `${startDate.getUTCDate()}`.padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 
 type CandidateName = {
   value: string;

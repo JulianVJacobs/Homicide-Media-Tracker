@@ -21,18 +21,35 @@ type DuplicateRequestPayload = {
 
 const toArray = <T>(value: unknown): T[] => (Array.isArray(value) ? value : []);
 
+const groupByArticleId = <T>(
+  records: T[],
+  getArticleId: (record: T) => string,
+): Map<string, T[]> => {
+  const groupedRecords = new Map<string, T[]>();
+  records.forEach((record) => {
+    const articleId = getArticleId(record);
+    const grouped = groupedRecords.get(articleId) ?? [];
+    grouped.push(record);
+    groupedRecords.set(articleId, grouped);
+  });
+  return groupedRecords;
+};
+
 const toAliasList = (
   aliasValue: string | string[] | undefined,
   relationAliases: string[],
   relationNames: string[],
 ): string[] => {
   const requestAliases = toArray<string>(aliasValue);
+  let aliasesFromRequest: string[] = [];
+  if (requestAliases.length > 0) {
+    aliasesFromRequest = requestAliases;
+  } else if (typeof aliasValue === 'string' && aliasValue.length > 0) {
+    aliasesFromRequest = [aliasValue];
+  }
+
   return [
-    ...(requestAliases.length > 0
-      ? requestAliases
-      : aliasValue
-        ? [aliasValue]
-        : []),
+    ...aliasesFromRequest,
     ...relationAliases,
     ...relationNames,
   ];
@@ -43,6 +60,8 @@ const buildDuplicateCandidate = (
   victims: schema.Victim[],
   perpetrators: schema.Perpetrator[],
 ) => {
+  // Legacy duplicate fields are singular, so we project the first related record
+  // into those fields while preserving full relation arrays for event-level checks.
   const [firstVictim] = victims;
   const [firstPerpetrator] = perpetrators;
   const victimAliases = victims
@@ -114,19 +133,14 @@ export async function POST(request: NextRequest) {
     const existingVictims = await db.select().from(schema.victims);
     const existingPerpetrators = await db.select().from(schema.perpetrators);
 
-    const victimsByArticleId = new Map<string, schema.Victim[]>();
-    existingVictims.forEach((victim) => {
-      const grouped = victimsByArticleId.get(victim.articleId) ?? [];
-      grouped.push(victim);
-      victimsByArticleId.set(victim.articleId, grouped);
-    });
-
-    const perpetratorsByArticleId = new Map<string, schema.Perpetrator[]>();
-    existingPerpetrators.forEach((perpetrator) => {
-      const grouped = perpetratorsByArticleId.get(perpetrator.articleId) ?? [];
-      grouped.push(perpetrator);
-      perpetratorsByArticleId.set(perpetrator.articleId, grouped);
-    });
+    const victimsByArticleId = groupByArticleId(
+      existingVictims,
+      (victim) => victim.articleId,
+    );
+    const perpetratorsByArticleId = groupByArticleId(
+      existingPerpetrators,
+      (perpetrator) => perpetrator.articleId,
+    );
 
     const existingCandidates = existingArticles.map((article) =>
       buildDuplicateCandidate(

@@ -39,6 +39,8 @@ export type PerpetratorInput = UnknownRecord & {
   sentence?: NullableString;
 };
 
+// Supports both legacy article-level fields and richer event-level fields so
+// duplicate detection can run for older payloads and relation-enriched payloads.
 interface DuplicateCandidate {
   id?: string;
   newsReportUrl?: NullableString;
@@ -347,6 +349,7 @@ interface EventDuplicateMatch {
 
 const EVENT_SIGNAL_SCORE: Record<EventSignalCode, number> = {
   // High-confidence signal: same victim plus matching/overlapping date range.
+  // This should dominate medium event signals when it is present.
   victim_name_and_date_overlap: 0.8,
   // Medium-confidence signal: same victim plus matching province/town.
   victim_name_and_location_match: 0.55,
@@ -354,8 +357,12 @@ const EVENT_SIGNAL_SCORE: Record<EventSignalCode, number> = {
   victim_and_suspect_name_match: 0.5,
 };
 
+// Threshold tuned so any medium signal can surface a candidate, while still
+// avoiding weak/noisy matches.
 const EVENT_DUPLICATE_SCORE_THRESHOLD = 0.5;
+// Scores at/above this threshold are treated as high confidence event matches.
 const EVENT_DUPLICATE_HIGH_CONFIDENCE_THRESHOLD = 0.8;
+const UNKNOWN_ARTICLE_EVENT_PREFIX = 'unknown-article';
 
 const roundScore = (value: number) => Number(value.toFixed(4));
 
@@ -421,7 +428,7 @@ const parseEventDateRange = (value: DateLike): EventDateRange | undefined => {
     return undefined;
   }
 
-  const toTimestamp = (entry: string): number | undefined => {
+  const parseTimestamp = (entry: string): number | undefined => {
     const parsed = new Date(entry);
     const timestamp = parsed.getTime();
     return Number.isNaN(timestamp) ? undefined : timestamp;
@@ -446,10 +453,12 @@ const parseEventDateRange = (value: DateLike): EventDateRange | undefined => {
     return undefined;
   }
 
+  // Explicitly parse ISO calendar dates (YYYY-MM-DD), including ranges that
+  // contain two ISO dates in a single string.
   const isoDateMatches = trimmed.match(/\d{4}-\d{2}-\d{2}/g) ?? [];
   if (isoDateMatches.length > 0) {
     const parsedDates = isoDateMatches
-      .map((entry) => toTimestamp(entry))
+      .map((entry) => parseTimestamp(entry))
       .filter((entry): entry is number => typeof entry === 'number');
 
     if (parsedDates.length > 0) {
@@ -459,7 +468,7 @@ const parseEventDateRange = (value: DateLike): EventDateRange | undefined => {
     }
   }
 
-  const parsed = toTimestamp(trimmed);
+  const parsed = parseTimestamp(trimmed);
   if (typeof parsed === 'number') {
     return { start: parsed, end: parsed };
   }
@@ -664,14 +673,16 @@ const detectEventLevelDuplicate = (
     });
   }
 
-  const score = roundScore(
-    // Additive scoring is intentional so independent signals stack confidence;
-    // values are capped at 1.0 for compatibility with similarity semantics.
-    Math.min(
-      1,
-      eventSignalHits.reduce((total, signal) => total + signal.score, 0),
-    ),
-  );
+  let cumulativeScore = 0;
+  for (const signal of eventSignalHits) {
+    cumulativeScore += signal.score;
+    // Cap to 1.0 to preserve compatibility with similarity-style scoring.
+    if (cumulativeScore >= 1) {
+      cumulativeScore = 1;
+      break;
+    }
+  }
+  const score = roundScore(cumulativeScore);
 
   if (score < EVENT_DUPLICATE_SCORE_THRESHOLD) {
     return undefined;
@@ -769,6 +780,8 @@ export function detectDuplicates(
 
     const eventDuplicate = detectEventLevelDuplicate(newArticle, existing);
     if (eventDuplicate) {
+      // Event matching folds into the existing "name" signal weight so the scoring
+      // payload remains backward compatible for current DTO consumers.
       const signalScoresWithEvent: DuplicateSignalScores = {
         ...signalScores,
         name: Math.max(signalScores.name, eventDuplicate.score),
@@ -894,20 +907,44 @@ const inferEventKey = (
     (primaryVictim?.['placeOfDeathTown'] as NullableString) ?? undefined,
   );
   const dateBucket = buildApproximateDateBucket(
-    (primaryVictim?.['dateOfDeath'] as DateLike) ?? article.dateOfPublication,
+    primaryVictim?.['dateOfDeath'] as DateLike,
   );
+  const fallbackId = buildArticleFallbackEventToken(article);
 
   if (!victimName) {
-    const fallbackId = typeof article.id === 'string' ? article.id : 'unknown-article';
     return `article:${fallbackId}`;
   }
   const locationKnown = !!province && !!town;
-  const fallbackId = typeof article.id === 'string' ? article.id : 'unknown-article';
   const locationToken = locationKnown
     ? `${province}|${town}`
     : `unknown-location|${fallbackId}`;
 
   return [victimName, dateBucket, locationToken].join('|').toLowerCase();
+};
+
+const buildArticleFallbackEventToken = (article: ExportArticleRecord): string => {
+  const candidateValues = [
+    article.id,
+    article.articleId,
+    article['newsReportUrl'],
+    article['newsReportHeadline'],
+  ];
+  const explicitIdentifier = candidateValues.find(
+    (value): value is string => typeof value === 'string' && value.trim().length > 0,
+  );
+
+  if (explicitIdentifier) {
+    return explicitIdentifier;
+  }
+
+  const fingerprint = JSON.stringify(article);
+  const digest = crypto
+    .createHash('sha256')
+    .update(fingerprint, 'utf8')
+    .digest('hex')
+    .slice(0, 12);
+
+  return `${UNKNOWN_ARTICLE_EVENT_PREFIX}:${digest}`;
 };
 
 const buildApproximateDateBucket = (value: DateLike): string => {

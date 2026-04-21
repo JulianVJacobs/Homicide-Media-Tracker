@@ -8,6 +8,12 @@ baseBranch: origin/main
 phaseBranch: phase/2.3.0
 launchDate: 2026-04-21
 note: 3.0.0 fleet is paused until this phase merges. Conductor to notify 3.0.0 conductor of schema/surface changes after final PR lands.
+coordination:
+  activeTargetBranch: copilot/phase-2-3-0
+  latestStatusUpdate: 2026-04-21
+  notes:
+    - lane readiness updated per conductor review comment
+    - all worker PR targets set to copilot/phase-2-3-0
 governance:
   laneBoundaryPolicy:
     - one branch per lane
@@ -76,7 +82,7 @@ lanes:
     branch: lane/2.3.0/01-schema-migrations
     prNumber: null
     status: planned
-    readiness: waiting
+    readiness: ready
     ownedSurface:
       - lib/db/schema.ts (new fields + migration SQL)
     blockers: []
@@ -87,11 +93,10 @@ lanes:
     branch: lane/2.3.0/02-article-form
     prNumber: null
     status: planned
-    readiness: blocked
+    readiness: ready
     ownedSurface:
       - lib/components/article-form.tsx
-    blockers:
-      - waits for lane 01 schema migrations
+    blockers: []
     verification: []
 
   - laneId: 03-victim-form
@@ -103,7 +108,7 @@ lanes:
     ownedSurface:
       - lib/components/victim-form.tsx
     blockers:
-      - waits for lane 01 schema migrations
+      - waits for lane 01
     verification: []
 
   - laneId: 04-suspect-form
@@ -111,11 +116,10 @@ lanes:
     branch: lane/2.3.0/04-suspect-form
     prNumber: null
     status: planned
-    readiness: blocked
+    readiness: ready
     ownedSurface:
       - lib/components/perpetrator-form.tsx
-    blockers:
-      - waits for lane 01 schema migrations
+    blockers: []
     verification: []
 
   - laneId: 05-participant-form
@@ -123,11 +127,10 @@ lanes:
     branch: lane/2.3.0/05-participant-form
     prNumber: null
     status: planned
-    readiness: blocked
+    readiness: ready
     ownedSurface:
       - lib/components/participant-form.tsx
-    blockers:
-      - waits for lane 04 suspect form (renamed type export)
+    blockers: []
     verification: []
 
   - laneId: 06-input-homicide
@@ -135,11 +138,10 @@ lanes:
     branch: lane/2.3.0/06-input-homicide
     prNumber: null
     status: planned
-    readiness: blocked
+    readiness: ready
     ownedSurface:
       - lib/components/input-homicide.tsx
-    blockers:
-      - waits for lanes 02, 03, 04, 05
+    blockers: []
     verification: []
 
   - laneId: 07-merge-queue
@@ -147,12 +149,11 @@ lanes:
     branch: lane/2.3.0/07-merge-queue
     prNumber: null
     status: planned
-    readiness: blocked
+    readiness: ready
     ownedSurface:
       - lib/components/utils.ts (detectDuplicates)
       - app/api/articles/duplicates/route.ts
-    blockers:
-      - waits for lane 01 schema migrations
+    blockers: []
     verification: []
 
   - laneId: 08-regression
@@ -165,5 +166,11 @@ lanes:
       - __tests__/ or *.test.ts regression suite additions
       - cutover readiness report
     blockers:
-      - waits for lanes 01 through 07 to merge
+      - waits for lane 01
+      - waits for lane 02
+      - waits for lane 03
+      - waits for lane 04
+      - waits for lane 05
+      - waits for lane 06
+      - waits for lane 07
     verification: []

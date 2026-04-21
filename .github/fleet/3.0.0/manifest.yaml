@@ -158,13 +158,16 @@ lanes:
     role: worker
     branch: lane/3.0.0/03-backend-domain-port
     prNumber: 31
-    status: ready-to-merge
-    readiness: ready-to-merge
+    status: merged
+    readiness: merged
     ownedSurface:
       - plugin-side actor/event/claim/profile persistence
       - plugin domain services and data mapping
     blockers: []
     verification:
+      - plugin domain service read/write mappings added under plugin/src/domain
+      - npm run test -- plugin/src/domain/services.test.ts --runInBand
+      - npm run lint
       - scope review passed: plugin/src/domain/ only — no cross-lane violations
       - conductor approved: 2026-04-21 (merge sequence position 1)
 

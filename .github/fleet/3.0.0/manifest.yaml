@@ -223,13 +223,17 @@ lanes:
     role: worker
     branch: lane/3.0.0/07-offline-sync-bridge
     prNumber: 35
-    status: ready-to-merge
-    readiness: ready-to-merge
+    status: merged
+    readiness: merged
     ownedSurface:
       - workbench offline queue and replay semantics
       - plugin sync bridge endpoint integration
     blockers: []
     verification:
+      - npm run lint passes
+      - npm run test passes
+      - offline queue replays through PATCH /api/sync batch bridge
+      - replay requestId de-duplication verified by app/api/sync/replay.test.ts
       - scope review passed: app/api/sync/, lib/utils/cache-manager.ts, public/service-worker.js — no cross-lane violations
       - conductor approved: 2026-04-21 (merge sequence position 4; can merge in parallel with 03/04/05)
 

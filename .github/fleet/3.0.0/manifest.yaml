@@ -193,13 +193,16 @@ lanes:
     role: worker
     branch: lane/3.0.0/05-workbench-bridge
     prNumber: 33
-    status: ready-to-merge
-    readiness: ready-to-merge
+    status: merged
+    readiness: merged
     ownedSurface:
       - workbench integration adapters and API clients
       - plugin/API data-boundary transition in Next workbench
     blockers: []
     verification:
+      - plugin API adapters added under lib/contracts and lib/workbench
+      - actor/victim/perpetrator/participant online routes use plugin API when configured
+      - npm run lint passed
       - scope review passed: app/api/actors, app/api/participant, app/api/perpetrators, app/api/victims, lib/workbench/, lib/contracts/ — no cross-lane violations
       - conductor approved: 2026-04-21 (merge sequence position 3)
 

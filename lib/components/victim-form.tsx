@@ -51,7 +51,234 @@ type VictimFieldKeys = Extract<
 
 type VictimFormValues = Pick<NewVictim, VictimFieldKeys> & {
   articleId?: string | null;
+  victimAliases?: string | null;
+  nationalityOfVictim?: string | null;
+  ageDescriptor?: string | null;
+  dateOfDeathMode?: 'exact' | 'approximate' | 'unknown' | null;
+  dateOfDeathEnd?: string | null;
 };
+
+const deriveAgeRange = (age: number | null, isUnknown: boolean): string => {
+  if (isUnknown) {
+    return 'Unknown';
+  }
+
+  if (age === null || Number.isNaN(age)) {
+    return '';
+  }
+
+  if (age <= 10) return '0-10';
+  if (age <= 17) return '11-17';
+  if (age <= 25) return '18-25';
+  if (age <= 35) return '26-35';
+  if (age <= 45) return '36-45';
+  if (age <= 55) return '46-55';
+  if (age <= 65) return '56-65';
+  return '66+';
+};
+
+const LOCATION_TYPE_PRESETS = [
+  'Residential',
+  'Street',
+  'Business',
+  'School',
+  'Park',
+  'Rural',
+  'Other',
+];
+
+const NATIONALITIES = [
+  'Afghan',
+  'Albanian',
+  'Algerian',
+  'American',
+  'Andorran',
+  'Angolan',
+  'Antiguan and Barbudan',
+  'Argentine',
+  'Armenian',
+  'Australian',
+  'Austrian',
+  'Azerbaijani',
+  'Bahamian',
+  'Bahraini',
+  'Bangladeshi',
+  'Barbadian',
+  'Belarusian',
+  'Belgian',
+  'Belizean',
+  'Beninese',
+  'Bhutanese',
+  'Bolivian',
+  'Bosnian and Herzegovinian',
+  'Botswanan',
+  'Brazilian',
+  'British',
+  'Bruneian',
+  'Bulgarian',
+  'Burkinabé',
+  'Burundian',
+  'Cambodian',
+  'Cameroonian',
+  'Canadian',
+  'Cape Verdean',
+  'Central African',
+  'Chadian',
+  'Chilean',
+  'Chinese',
+  'Colombian',
+  'Comorian',
+  'Congolese',
+  'Costa Rican',
+  'Croatian',
+  'Cuban',
+  'Cypriot',
+  'Czech',
+  'Danish',
+  'Djiboutian',
+  'Dominican',
+  'Dutch',
+  'East Timorese',
+  'Ecuadorean',
+  'Egyptian',
+  'Emirati',
+  'Equatorial Guinean',
+  'Eritrean',
+  'Estonian',
+  'Eswatini',
+  'Ethiopian',
+  'Fijian',
+  'Filipino',
+  'Finnish',
+  'French',
+  'Gabonese',
+  'Gambian',
+  'Georgian',
+  'German',
+  'Ghanaian',
+  'Greek',
+  'Grenadian',
+  'Guatemalan',
+  'Guinean',
+  'Guinea-Bissauan',
+  'Guyanese',
+  'Haitian',
+  'Honduran',
+  'Hungarian',
+  'Icelandic',
+  'Indian',
+  'Indonesian',
+  'Iranian',
+  'Iraqi',
+  'Irish',
+  'Israeli',
+  'Italian',
+  'Ivorian',
+  'Jamaican',
+  'Japanese',
+  'Jordanian',
+  'Kazakh',
+  'Kenyan',
+  'Kiribati',
+  'Kuwaiti',
+  'Kyrgyz',
+  'Laotian',
+  'Latvian',
+  'Lebanese',
+  'Liberian',
+  'Libyan',
+  'Liechtensteiner',
+  'Lithuanian',
+  'Luxembourgish',
+  'Malagasy',
+  'Malawian',
+  'Malaysian',
+  'Maldivian',
+  'Malian',
+  'Maltese',
+  'Marshallese',
+  'Mauritanian',
+  'Mauritian',
+  'Mexican',
+  'Micronesian',
+  'Moldovan',
+  'Monégasque',
+  'Mongolian',
+  'Montenegrin',
+  'Moroccan',
+  'Mozambican',
+  'Myanmar',
+  'Namibian',
+  'Nauruan',
+  'Nepalese',
+  'New Zealander',
+  'Nicaraguan',
+  'Nigerian',
+  'Nigerien',
+  'North Korean',
+  'North Macedonian',
+  'Norwegian',
+  'Omani',
+  'Pakistani',
+  'Palauan',
+  'Panamanian',
+  'Papua New Guinean',
+  'Paraguayan',
+  'Peruvian',
+  'Polish',
+  'Portuguese',
+  'Qatari',
+  'Romanian',
+  'Russian',
+  'Rwandan',
+  'Saint Kitts and Nevis',
+  'Saint Lucian',
+  'Saint Vincent and the Grenadines',
+  'Samoan',
+  'San Marinese',
+  'São Toméan',
+  'Saudi',
+  'Senegalese',
+  'Serbian',
+  'Seychellois',
+  'Sierra Leonean',
+  'Singaporean',
+  'Slovak',
+  'Slovenian',
+  'Solomon Islander',
+  'Somali',
+  'South African',
+  'South Korean',
+  'South Sudanese',
+  'Spanish',
+  'Sri Lankan',
+  'Sudanese',
+  'Surinamese',
+  'Swedish',
+  'Swiss',
+  'Syrian',
+  'Taiwanese',
+  'Tajik',
+  'Tanzanian',
+  'Thai',
+  'Togolese',
+  'Tongan',
+  'Trinidadian and Tobagonian',
+  'Tunisian',
+  'Turkish',
+  'Turkmen',
+  'Tuvaluan',
+  'Ugandan',
+  'Ukrainian',
+  'Uruguayan',
+  'Uzbek',
+  'Vanuatuan',
+  'Venezuelan',
+  'Vietnamese',
+  'Yemeni',
+  'Zambian',
+  'Zimbabwean',
+];
 
 const VictimForm: React.FC<VictimFormProps> = ({
   onSubmit,
@@ -61,32 +288,45 @@ const VictimForm: React.FC<VictimFormProps> = ({
   roleProfileContext,
   visibleFieldGroups,
 }) => {
-  // Default data for dev/testing
   const RESET_DATA: VictimFormValues = {
     victimName: '',
     victimAlias: '',
+    victimAliases: '[]',
     dateOfDeath: '',
+    dateOfDeathMode: 'exact',
+    dateOfDeathEnd: '',
     placeOfDeathProvince: '',
     placeOfDeathTown: '',
     typeOfLocation: '',
     sexualAssault: '',
     genderOfVictim: '',
     raceOfVictim: '',
+    nationalityOfVictim: 'Unknown',
     ageOfVictim: null,
     ageRangeOfVictim: '',
+    ageDescriptor: 'Unknown',
     modeOfDeathSpecific: '',
     modeOfDeathGeneral: '',
     policeStation: '',
     typeOfMurder: '',
   };
+
   const [currentVictim, setCurrentVictim] =
     useState<VictimFormValues>(RESET_DATA);
-
   const [availableTowns, setAvailableTowns] = useState<string[]>([]);
   const [customTown, setCustomTown] = useState('');
+  const [isNameUnknown, setIsNameUnknown] = useState(false);
+  const [isAgeUnknown, setIsAgeUnknown] = useState(false);
+  const [isDateUnknown, setIsDateUnknown] = useState(false);
+  const [dateMode, setDateMode] = useState<'exact' | 'approximate'>('exact');
+  const [aliasInputs, setAliasInputs] = useState<string[]>(['']);
+  const [raceOther, setRaceOther] = useState('');
+  const [nationalityOther, setNationalityOther] = useState('');
+  const [locationTypeOptions, setLocationTypeOptions] = useState<string[]>(
+    LOCATION_TYPE_PRESETS,
+  );
 
   useEffect(() => {
-    // Update available towns based on selected province
     if (
       currentVictim.placeOfDeathProvince &&
       townsByProvince[currentVictim.placeOfDeathProvince]
@@ -113,9 +353,11 @@ const VictimForm: React.FC<VictimFormProps> = ({
   const visibleFields = useMemo(
     () =>
       buildVisibleFieldSet(groupVisibility, {
-        coreIdentity: ['victimName', 'victimAlias'],
+        coreIdentity: ['victimName', 'victimAlias', 'victimAliases'],
         deathDetails: [
           'dateOfDeath',
+          'dateOfDeathMode',
+          'dateOfDeathEnd',
           'sexualAssault',
           'modeOfDeathGeneral',
           'modeOfDeathSpecific',
@@ -126,7 +368,14 @@ const VictimForm: React.FC<VictimFormProps> = ({
           'typeOfLocation',
           'policeStation',
         ],
-        demographics: ['genderOfVictim', 'raceOfVictim', 'ageOfVictim', 'ageRangeOfVictim'],
+        demographics: [
+          'genderOfVictim',
+          'raceOfVictim',
+          'nationalityOfVictim',
+          'ageOfVictim',
+          'ageDescriptor',
+          'ageRangeOfVictim',
+        ],
       }),
     [groupVisibility],
   );
@@ -136,13 +385,31 @@ const VictimForm: React.FC<VictimFormProps> = ({
     [requiredFields, visibleFields],
   );
 
+  const constraintInput = useMemo(
+    () => ({
+      ...currentVictim,
+      victimName: isNameUnknown ? 'Unknown' : currentVictim.victimName,
+      ageOfVictim: isAgeUnknown ? 0 : currentVictim.ageOfVictim,
+      dateOfDeath: isDateUnknown ? 'Unknown' : currentVictim.dateOfDeath,
+    }),
+    [currentVictim, isNameUnknown, isAgeUnknown, isDateUnknown],
+  );
+
   const constraintState = useConstraintEvaluation(
-    currentVictim as Record<string, unknown>,
+    constraintInput as Record<string, unknown>,
     'victim',
     roleProfileContext,
     { requiredFields: effectiveRequiredFields },
   );
-  const isValid = constraintState.isValid;
+
+  const hasValidName = isNameUnknown || Boolean(currentVictim.victimName?.trim());
+  const hasValidAge = isAgeUnknown || currentVictim.ageOfVictim !== null;
+  const hasValidDate =
+    isDateUnknown ||
+    (Boolean(currentVictim.dateOfDeath) &&
+      (dateMode === 'exact' || Boolean(currentVictim.dateOfDeathEnd)));
+
+  const isValid = constraintState.isValid && hasValidName && hasValidAge && hasValidDate;
 
   const handleChange = <K extends keyof VictimFormValues>(
     field: K,
@@ -151,22 +418,72 @@ const VictimForm: React.FC<VictimFormProps> = ({
     setCurrentVictim((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleAddLocationType = () => {
+    const nextValue = (currentVictim.typeOfLocation ?? '').trim();
+    if (!nextValue) {
+      return;
+    }
+
+    const exists = locationTypeOptions.some(
+      (option) => option.toLowerCase() === nextValue.toLowerCase(),
+    );
+
+    if (!exists) {
+      setLocationTypeOptions((prev) => [...prev, nextValue]);
+    }
+
+    handleChange('typeOfLocation', nextValue);
+  };
+
   const handleAddVictim = () => {
     if (isValid) {
+      const cleanAliases = aliasInputs
+        .map((alias) => alias.trim())
+        .filter((alias) => alias.length > 0);
+
+      const resolvedRace =
+        currentVictim.raceOfVictim === 'Other'
+          ? raceOther.trim() || 'Other'
+          : currentVictim.raceOfVictim;
+
+      const resolvedNationality =
+        currentVictim.nationalityOfVictim === 'Other'
+          ? nationalityOther.trim() || 'Other'
+          : currentVictim.nationalityOfVictim;
+
       const victimToAdd: VictimFormValues = {
         ...currentVictim,
+        victimName: isNameUnknown
+          ? 'Unknown'
+          : (currentVictim.victimName ?? '').trim(),
+        victimAlias: cleanAliases[0] ?? '',
+        victimAliases: JSON.stringify(cleanAliases),
+        raceOfVictim: resolvedRace,
+        nationalityOfVictim: resolvedNationality,
+        ageOfVictim: isAgeUnknown ? null : currentVictim.ageOfVictim,
+        ageRangeOfVictim: deriveAgeRange(currentVictim.ageOfVictim, isAgeUnknown),
+        dateOfDeathMode: isDateUnknown ? 'unknown' : dateMode,
+        dateOfDeath: isDateUnknown ? '' : currentVictim.dateOfDeath,
+        dateOfDeathEnd:
+          !isDateUnknown && dateMode === 'approximate'
+            ? currentVictim.dateOfDeathEnd
+            : '',
         placeOfDeathTown:
           currentVictim.placeOfDeathTown === 'Other' && customTown.trim()
             ? customTown.trim()
             : currentVictim.placeOfDeathTown,
       };
 
-      // Use custom town if "Other" was selected
       onSubmit(victimToAdd);
-
-      // Reset form
       setCurrentVictim(RESET_DATA);
       setCustomTown('');
+      setIsNameUnknown(false);
+      setIsAgeUnknown(false);
+      setIsDateUnknown(false);
+      setDateMode('exact');
+      setAliasInputs(['']);
+      setRaceOther('');
+      setNationalityOther('');
     }
   };
 
@@ -193,36 +510,24 @@ const VictimForm: React.FC<VictimFormProps> = ({
 
   const raceOptions = [
     { value: '', label: 'Select Race' },
-    { value: 'African', label: 'African' },
+    { value: 'Black South African', label: 'Black South African' },
     { value: 'Coloured', label: 'Coloured' },
+    { value: 'White South African', label: 'White South African' },
     { value: 'Indian', label: 'Indian' },
-    { value: 'White', label: 'White' },
+    { value: 'Asian', label: 'Asian' },
+    { value: 'Black Other African', label: 'Black Other African' },
+    { value: 'White Non-South African', label: 'White Non-South African' },
     { value: 'Unknown', label: 'Unknown' },
     { value: 'Other', label: 'Other' },
   ];
 
-  const ageRangeOptions = [
-    { value: '', label: 'Select Age Range' },
-    { value: '0-10', label: '0-10 years' },
-    { value: '11-17', label: '11-17 years' },
-    { value: '18-25', label: '18-25 years' },
-    { value: '26-35', label: '26-35 years' },
-    { value: '36-45', label: '36-45 years' },
-    { value: '46-55', label: '46-55 years' },
-    { value: '56-65', label: '56-65 years' },
-    { value: '66+', label: '66+ years' },
+  const ageDescriptorOptions = [
+    { value: 'Neonate or abandonment', label: 'Neonate or abandonment' },
+    { value: 'Baby or infant', label: 'Baby or infant' },
+    { value: 'Child', label: 'Child' },
+    { value: 'Teenager', label: 'Teenager' },
+    { value: 'Elderly', label: 'Elderly' },
     { value: 'Unknown', label: 'Unknown' },
-  ];
-
-  const locationTypeOptions = [
-    { value: '', label: 'Select Location Type' },
-    { value: 'Residential', label: 'Residential' },
-    { value: 'Street', label: 'Street' },
-    { value: 'Business', label: 'Business' },
-    { value: 'School', label: 'School' },
-    { value: 'Park', label: 'Park' },
-    { value: 'Rural', label: 'Rural' },
-    { value: 'Other', label: 'Other' },
   ];
 
   const yesNoOptions = [
@@ -231,6 +536,16 @@ const VictimForm: React.FC<VictimFormProps> = ({
     { value: 'No', label: 'No' },
     { value: 'Unknown', label: 'Unknown' },
   ];
+
+  const sortedNationalities = useMemo(
+    () => [...NATIONALITIES].sort((left, right) => left.localeCompare(right)),
+    [],
+  );
+
+  const normalizedLocationType = (currentVictim.typeOfLocation ?? '').trim();
+  const hasLocationTypeMatch = locationTypeOptions.some(
+    (option) => option.toLowerCase() === normalizedLocationType.toLowerCase(),
+  );
 
   return (
     <Card className="mb-4">
@@ -251,8 +566,8 @@ const VictimForm: React.FC<VictimFormProps> = ({
             <ListGroup variant="flush" className="mt-2">
               {victims.map((victim, index) => (
                 <ListGroup.Item key={index} className="px-0">
-                  <strong>{victim.victimName}</strong> - {victim.genderOfVictim}
-                  , Age: {victim.ageOfVictim ?? victim.ageRangeOfVictim},{' '}
+                  <strong>{victim.victimName}</strong> - {victim.genderOfVictim},
+                  Age: {victim.ageOfVictim ?? victim.ageRangeOfVictim},{' '}
                   {victim.placeOfDeathProvince}
                 </ListGroup.Item>
               ))}
@@ -265,25 +580,68 @@ const VictimForm: React.FC<VictimFormProps> = ({
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Victim Name *</Form.Label>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <Form.Label className="mb-0">Victim Name *</Form.Label>
+                    <Form.Check
+                      type="checkbox"
+                      id="victim-name-unknown"
+                      label="Unknown"
+                      checked={isNameUnknown}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        setIsNameUnknown(next);
+                        handleChange('victimName', next ? 'Unknown' : '');
+                      }}
+                    />
+                  </div>
                   <Form.Control
                     type="text"
-                    value={currentVictim.victimName ?? ''}
+                    aria-label="Victim Name"
+                    value={isNameUnknown ? 'Unknown' : (currentVictim.victimName ?? '')}
                     onChange={(e) => handleChange('victimName', e.target.value)}
-                    placeholder="Full name of victim"
+                    disabled={isNameUnknown}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Alias</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentVictim.victimAlias ?? ''}
-                    onChange={(e) => handleChange('victimAlias', e.target.value)}
-                    placeholder="Known alias/nickname"
-                  />
+                  <Form.Label>Aliases</Form.Label>
+                  {aliasInputs.map((alias, index) => (
+                    <div key={`alias-${index}`} className="d-flex mb-2 gap-2">
+                      <Form.Control
+                        type="text"
+                        value={alias}
+                        aria-label={`Alias ${index + 1}`}
+                        onChange={(e) => {
+                          const nextAliases = [...aliasInputs];
+                          nextAliases[index] = e.target.value;
+                          setAliasInputs(nextAliases);
+                        }}
+                      />
+                      {aliasInputs.length > 1 && (
+                        <Button
+                          variant="outline-danger"
+                          type="button"
+                          onClick={() =>
+                            setAliasInputs((prev) =>
+                              prev.filter((_, aliasIndex) => aliasIndex !== index),
+                            )
+                          }
+                        >
+                          ×
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    type="button"
+                    onClick={() => setAliasInputs((prev) => [...prev, ''])}
+                  >
+                    + Add Alias
+                  </Button>
                 </Form.Group>
               </Col>
             </Row>
@@ -291,15 +649,85 @@ const VictimForm: React.FC<VictimFormProps> = ({
 
           {groupVisibility.deathDetails && (
             <Row>
-              <Col md={6}>
+              <Col md={12}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Date of Death *</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={currentVictim.dateOfDeath ?? ''}
-                    onChange={(e) => handleChange('dateOfDeath', e.target.value)}
-                    required
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <Form.Label className="mb-0">Date of Death *</Form.Label>
+                    <Form.Check
+                      type="checkbox"
+                      id="date-of-death-unknown"
+                      label="Unknown"
+                      checked={isDateUnknown}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        setIsDateUnknown(next);
+                        if (next) {
+                          handleChange('dateOfDeath', '');
+                          handleChange('dateOfDeathEnd', '');
+                          handleChange('dateOfDeathMode', 'unknown');
+                        } else {
+                          handleChange('dateOfDeathMode', dateMode);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <Form.Check
+                    type="switch"
+                    id="date-of-death-mode"
+                    label={dateMode === 'approximate' ? 'Approximate' : 'Exact'}
+                    checked={dateMode === 'approximate'}
+                    disabled={isDateUnknown}
+                    onChange={(e) => {
+                      const nextMode = e.target.checked ? 'approximate' : 'exact';
+                      setDateMode(nextMode);
+                      handleChange('dateOfDeathMode', nextMode);
+                      if (nextMode === 'exact') {
+                        handleChange('dateOfDeathEnd', '');
+                      }
+                    }}
+                    className="mb-3"
                   />
+
+                  {dateMode === 'exact' ? (
+                    <Form.Control
+                      type="date"
+                      aria-label="Date of death"
+                      value={currentVictim.dateOfDeath ?? ''}
+                      onChange={(e) => handleChange('dateOfDeath', e.target.value)}
+                      disabled={isDateUnknown}
+                      required
+                    />
+                  ) : (
+                    <Row>
+                      <Col md={6}>
+                        <Form.Label>Start Date</Form.Label>
+                        <Form.Control
+                          type="date"
+                          aria-label="Date of death start"
+                          value={currentVictim.dateOfDeath ?? ''}
+                          onChange={(e) =>
+                            handleChange('dateOfDeath', e.target.value)
+                          }
+                          disabled={isDateUnknown}
+                          required
+                        />
+                      </Col>
+                      <Col md={6}>
+                        <Form.Label>End Date</Form.Label>
+                        <Form.Control
+                          type="date"
+                          aria-label="Date of death end"
+                          value={currentVictim.dateOfDeathEnd ?? ''}
+                          onChange={(e) =>
+                            handleChange('dateOfDeathEnd', e.target.value)
+                          }
+                          disabled={isDateUnknown}
+                          required
+                        />
+                      </Col>
+                    </Row>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
@@ -358,14 +786,12 @@ const VictimForm: React.FC<VictimFormProps> = ({
 
           {groupVisibility.demographics && (
             <Row>
-              <Col md={6}>
+              <Col md={4}>
                 <Form.Group className="mb-3">
                   <Form.Label>Gender *</Form.Label>
                   <Form.Select
                     value={currentVictim.genderOfVictim ?? ''}
-                    onChange={(e) =>
-                      handleChange('genderOfVictim', e.target.value)
-                    }
+                    onChange={(e) => handleChange('genderOfVictim', e.target.value)}
                     required
                   >
                     {genderOptions.map((option) => (
@@ -376,14 +802,13 @@ const VictimForm: React.FC<VictimFormProps> = ({
                   </Form.Select>
                 </Form.Group>
               </Col>
-              <Col md={6}>
+              <Col md={4}>
                 <Form.Group className="mb-3">
                   <Form.Label>Race</Form.Label>
                   <Form.Select
+                    aria-label="Race"
                     value={currentVictim.raceOfVictim ?? ''}
-                    onChange={(e) =>
-                      handleChange('raceOfVictim', e.target.value)
-                    }
+                    onChange={(e) => handleChange('raceOfVictim', e.target.value)}
                   >
                     {raceOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -391,6 +816,44 @@ const VictimForm: React.FC<VictimFormProps> = ({
                       </option>
                     ))}
                   </Form.Select>
+                  {currentVictim.raceOfVictim === 'Other' && (
+                    <Form.Control
+                      type="text"
+                      className="mt-2"
+                      value={raceOther}
+                      onChange={(e) => setRaceOther(e.target.value)}
+                      placeholder="Specify race"
+                    />
+                  )}
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Nationality</Form.Label>
+                  <Form.Select
+                    aria-label="Nationality"
+                    value={currentVictim.nationalityOfVictim ?? 'Unknown'}
+                    onChange={(e) =>
+                      handleChange('nationalityOfVictim', e.target.value)
+                    }
+                  >
+                    <option value="Unknown">Unknown</option>
+                    {sortedNationalities.map((nationality) => (
+                      <option key={nationality} value={nationality}>
+                        {nationality}
+                      </option>
+                    ))}
+                    <option value="Other">Other</option>
+                  </Form.Select>
+                  {currentVictim.nationalityOfVictim === 'Other' && (
+                    <Form.Control
+                      type="text"
+                      className="mt-2"
+                      value={nationalityOther}
+                      onChange={(e) => setNationalityOther(e.target.value)}
+                      placeholder="Specify nationality"
+                    />
+                  )}
                 </Form.Group>
               </Col>
             </Row>
@@ -400,11 +863,27 @@ const VictimForm: React.FC<VictimFormProps> = ({
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Age</Form.Label>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <Form.Label className="mb-0">Age</Form.Label>
+                    <Form.Check
+                      type="checkbox"
+                      id="age-unknown"
+                      label="Unknown"
+                      checked={isAgeUnknown}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        setIsAgeUnknown(next);
+                        if (next) {
+                          handleChange('ageOfVictim', null);
+                        }
+                      }}
+                    />
+                  </div>
                   <Form.Control
                     type="number"
+                    aria-label="Age"
                     value={
-                      currentVictim.ageOfVictim !== null
+                      !isAgeUnknown && currentVictim.ageOfVictim !== null
                         ? currentVictim.ageOfVictim
                         : ''
                     }
@@ -417,7 +896,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                         nextValue as VictimFormValues['ageOfVictim'],
                       );
                     }}
-                    placeholder="Exact age if known"
+                    disabled={isAgeUnknown}
                     min="0"
                     max="120"
                   />
@@ -425,14 +904,13 @@ const VictimForm: React.FC<VictimFormProps> = ({
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Age Range</Form.Label>
+                  <Form.Label>Age Descriptor</Form.Label>
                   <Form.Select
-                    value={currentVictim.ageRangeOfVictim ?? ''}
-                    onChange={(e) =>
-                      handleChange('ageRangeOfVictim', e.target.value)
-                    }
+                    aria-label="Age Descriptor"
+                    value={currentVictim.ageDescriptor ?? 'Unknown'}
+                    onChange={(e) => handleChange('ageDescriptor', e.target.value)}
                   >
-                    {ageRangeOptions.map((option) => (
+                    {ageDescriptorOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -448,18 +926,31 @@ const VictimForm: React.FC<VictimFormProps> = ({
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Location Type</Form.Label>
-                  <Form.Select
+                  <Form.Control
+                    type="text"
+                    aria-label="Location Type"
+                    list="location-type-options"
                     value={currentVictim.typeOfLocation ?? ''}
-                    onChange={(e) =>
-                      handleChange('typeOfLocation', e.target.value)
-                    }
-                  >
+                    onChange={(e) => handleChange('typeOfLocation', e.target.value)}
+                    placeholder="Select or enter location type"
+                  />
+                  <datalist id="location-type-options">
                     {locationTypeOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
+                      <option key={option} value={option} />
                     ))}
-                  </Form.Select>
+                  </datalist>
+                  <div className="d-flex justify-content-end mt-2">
+                    {normalizedLocationType && !hasLocationTypeMatch && (
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        type="button"
+                        onClick={handleAddLocationType}
+                      >
+                        Add &quot;{normalizedLocationType}&quot;
+                      </Button>
+                    )}
+                  </div>
                 </Form.Group>
               </Col>
               <Col md={6}>
@@ -468,9 +959,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                   <Form.Control
                     type="text"
                     value={currentVictim.policeStation ?? ''}
-                    onChange={(e) =>
-                      handleChange('policeStation', e.target.value)
-                    }
+                    onChange={(e) => handleChange('policeStation', e.target.value)}
                     placeholder="Name of police station"
                   />
                 </Form.Group>
@@ -485,9 +974,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
                   <Form.Label>Sexual Assault</Form.Label>
                   <Form.Select
                     value={currentVictim.sexualAssault ?? ''}
-                    onChange={(e) =>
-                      handleChange('sexualAssault', e.target.value)
-                    }
+                    onChange={(e) => handleChange('sexualAssault', e.target.value)}
                   >
                     {yesNoOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -527,11 +1014,7 @@ const VictimForm: React.FC<VictimFormProps> = ({
           )}
 
           <div className="d-flex justify-content-end">
-            <Button
-              variant="primary"
-              onClick={handleAddVictim}
-              disabled={!isValid}
-            >
+            <Button variant="primary" onClick={handleAddVictim} disabled={!isValid}>
               Add Victim
             </Button>
           </div>

@@ -247,19 +247,17 @@ lanes:
   - laneId: 08-regression-migration
     role: worker
     branch: lane/3.0.0/08-regression-migration
-    prNumber: null
-    status: planned
-    readiness: blocked
+    prNumber: 36
+    status: in-progress
+    readiness: ready
     ownedSurface:
       - compatibility regression suite
       - migration rehearsal artifacts
       - cutover readiness report
-    blockers:
-      - awaiting lane 01 (in-progress)
-      - awaiting lane 02 (blocked on lane 01)
-      - awaiting lane 03 (ready-to-merge)
-      - awaiting lane 04 (ready-to-merge)
-      - awaiting lane 05 (ready-to-merge)
-      - awaiting lane 06 (blocked on lane 04)
-      - awaiting lane 07 (ready-to-merge)
-    verification: []
+    blockers: []
+    verification:
+      - npm run lint passes on integrated phase baseline
+      - npm run test passes on integrated phase baseline (29 suites / 105 tests)
+      - npm run test -- __tests__/phase-3-regression-migration.test.ts passes (4 tests)
+      - node scripts/migration-rehearsal.cjs completed; no data loss detected
+      - cutover readiness report committed at .github/fleet/3.0.0/cutover-readiness-report.md with GO recommendation

@@ -376,7 +376,10 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
     setAuthorValues((prev) => [...prev, '']);
   };
   const handleRemoveAuthor = (index: number) => {
-    setAuthorValues((prev) => prev.filter((_, entryIndex) => entryIndex !== index));
+    setAuthorValues((prev) => {
+      const next = prev.filter((_, entryIndex) => entryIndex !== index);
+      return next.length > 0 ? next : [''];
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -611,7 +614,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({ onSubmit, initialData }) => {
                   onChange={(e) => {
                     const checked = e.target.checked;
                     setIsAuthorOther(checked);
-                    if (checked && !AUTHOR_OTHER_OPTIONS.includes(authorOtherValue)) {
+                    if (checked) {
                       setAuthorOtherValue(AUTHOR_OTHER_OPTIONS[0]);
                     }
                   }}

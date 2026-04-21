@@ -142,17 +142,21 @@ lanes:
 
   - laneId: 02-plugin-scaffold
     role: worker
-    branch: lane/3.0.0/02-plugin-scaffold
+    branch: copilot/300-02-plugin-scaffold
     prNumber: null
-    status: planned
-    readiness: blocked
+    status: in-progress
+    readiness: ready
     ownedSurface:
       - AtoM plugin skeleton and bootstrap
       - plugin route registration and health endpoint
       - plugin config wiring
-    blockers:
-      - awaiting lane 01 (in-progress)
-    verification: []
+    blockers: []
+    verification:
+      - plugin/plugin.yml present with name/version/description from package.json
+      - plugin/bootstrap.ts bootstraps PluginScaffold, registers GET / health route returning 200+metadata
+      - plugin/index.ts exports bootstrap alongside all other plugin surfaces
+      - npm run lint passes (0 warnings/errors)
+      - npm run test passes (99 tests, 28 suites)
 
   - laneId: 03-backend-domain-port
     role: worker

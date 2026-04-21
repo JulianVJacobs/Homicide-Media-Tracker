@@ -19,6 +19,14 @@ import {
   buildVisibleFieldSet,
   filterRequiredFieldsByVisibility,
 } from './participant-field-visibility';
+import {
+  type ChargeEntry,
+  buildSentenceFromCharge,
+  createDefaultChargeEntry,
+  mapConvictionFromCharge,
+  pluralizeTermUnit,
+  serializeAliases,
+} from './perpetrator-form-utils';
 
 interface PerpetratorFormProps {
   onSubmit: (data: PerpetratorFormValues) => void;
@@ -43,6 +51,7 @@ type PerpetratorFieldKeys = Extract<
 
 type PerpetratorFormValues = Pick<NewPerpetrator, PerpetratorFieldKeys> & {
   articleId?: string | null;
+  charges?: string | null;
 };
 
 const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
@@ -63,9 +72,13 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
     suspectCharged: '',
     conviction: '',
     sentence: '',
+    charges: '[]',
   };
   const [currentPerpetrator, setCurrentPerpetrator] =
     useState<PerpetratorFormValues>(RESET_DATA);
+  const [isUnknownName, setIsUnknownName] = useState(false);
+  const [aliases, setAliases] = useState<string[]>(['']);
+  const [charges, setCharges] = useState<ChargeEntry[]>([createDefaultChargeEntry()]);
 
   const groupVisibility = useMemo(
     () => ({
@@ -87,7 +100,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
         coreIdentity: ['perpetratorName', 'perpetratorAlias'],
         relationship: ['perpetratorRelationshipToVictim'],
         suspectStatus: ['suspectIdentified', 'suspectArrested', 'suspectCharged'],
-        conviction: ['conviction', 'sentence'],
+        conviction: ['conviction', 'sentence', 'charges'],
       }),
     [groupVisibility],
   );
@@ -103,21 +116,92 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
     roleProfileContext,
     { requiredFields: effectiveRequiredFields },
   );
-  const isValid = constraintState.isValid;
+  const hasValidName =
+    isUnknownName || Boolean((currentPerpetrator.perpetratorName ?? '').trim());
+  const isValid = constraintState.isValid && hasValidName;
 
   const handleChange = <K extends keyof PerpetratorFormValues>(
     field: K,
     value: PerpetratorFormValues[K],
   ) => {
+    if (field === 'suspectIdentified') {
+      const nextValue = value as string;
+      setCurrentPerpetrator((prev) => ({
+        ...prev,
+        suspectIdentified: nextValue,
+        suspectArrested: nextValue === 'Yes' ? prev.suspectArrested : '',
+        suspectCharged:
+          nextValue === 'Yes' && prev.suspectArrested === 'Yes'
+            ? prev.suspectCharged
+            : '',
+      }));
+      if (nextValue !== 'Yes') {
+        setCharges([createDefaultChargeEntry()]);
+      }
+      return;
+    }
+
+    if (field === 'suspectArrested') {
+      const nextValue = value as string;
+      setCurrentPerpetrator((prev) => ({
+        ...prev,
+        suspectArrested: nextValue,
+        suspectCharged: nextValue === 'Yes' ? prev.suspectCharged : '',
+      }));
+      if (nextValue !== 'Yes') {
+        setCharges([createDefaultChargeEntry()]);
+      }
+      return;
+    }
+
+    if (field === 'suspectCharged') {
+      const nextValue = value as string;
+      setCurrentPerpetrator((prev) => ({ ...prev, suspectCharged: nextValue }));
+      if (nextValue !== 'Yes') {
+        setCharges([createDefaultChargeEntry()]);
+      }
+      return;
+    }
+
     setCurrentPerpetrator((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleUnknownNameToggle = (checked: boolean) => {
+    setIsUnknownName(checked);
+    if (checked) {
+      handleChange('perpetratorName', 'Unknown');
+      return;
+    }
+    if ((currentPerpetrator.perpetratorName ?? '').trim() === 'Unknown') {
+      handleChange('perpetratorName', '');
+    }
+  };
+
+  const updateCharge = (index: number, update: (charge: ChargeEntry) => ChargeEntry) => {
+    setCharges((prev) => prev.map((charge, i) => (i === index ? update(charge) : charge)));
   };
 
   const handleAddPerpetrator = () => {
     if (isValid) {
-      onSubmit(currentPerpetrator);
+      const preparedCharges = currentPerpetrator.suspectCharged === 'Yes' ? charges : [];
+      const firstCharge = preparedCharges[0];
+      const perpetratorToSubmit: PerpetratorFormValues = {
+        ...currentPerpetrator,
+        perpetratorName: isUnknownName
+          ? 'Unknown'
+          : (currentPerpetrator.perpetratorName ?? '').trim(),
+        perpetratorAlias: serializeAliases(aliases),
+        charges: JSON.stringify(preparedCharges),
+        conviction: mapConvictionFromCharge(firstCharge),
+        sentence: buildSentenceFromCharge(firstCharge),
+      };
+      onSubmit(perpetratorToSubmit);
 
       // Reset form
       setCurrentPerpetrator(RESET_DATA);
+      setIsUnknownName(false);
+      setAliases(['']);
+      setCharges([createDefaultChargeEntry()]);
     }
   };
 
@@ -140,27 +224,59 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
     { value: 'Unknown', label: 'Unknown' },
   ];
 
-  const convictionOptions = [
-    { value: '', label: 'Select' },
-    { value: 'Guilty', label: 'Guilty' },
-    { value: 'Not Guilty', label: 'Not Guilty' },
-    { value: 'Pending', label: 'Pending' },
+  const chargeOptions = [
     { value: 'Unknown', label: 'Unknown' },
-    { value: 'Not Applicable', label: 'Not Applicable' },
+    { value: 'Murder', label: 'Murder' },
+    { value: 'Attempted Murder', label: 'Attempted Murder' },
+    { value: 'Culpable Homicide', label: 'Culpable Homicide' },
+    { value: 'Assault', label: 'Assault' },
+    { value: 'Robbery', label: 'Robbery' },
+    { value: 'Other', label: 'Other' },
+  ];
+
+  const convictedOptions = [
+    { value: 'Unknown', label: 'Unknown' },
+    { value: 'Yes', label: 'Yes' },
+    { value: 'No', label: 'No' },
+  ];
+
+  const sentenceTypeOptions = [
+    { value: 'Unknown', label: 'Unknown' },
+    { value: 'Imprisonment', label: 'Imprisonment' },
+    { value: 'Correctional supervision', label: 'Correctional supervision' },
+    { value: 'Suspended sentence', label: 'Suspended sentence' },
+    { value: 'Fine', label: 'Fine' },
+    { value: 'Capital punishment', label: 'Capital punishment' },
+    { value: 'Other', label: 'Other' },
+  ];
+
+  const imprisonmentUnitOptions: Array<'Life term' | 'Year' | 'Month'> = [
+    'Life term',
+    'Year',
+    'Month',
+  ];
+
+  const correctionalUnitOptions: Array<'Year' | 'Month'> = ['Year', 'Month'];
+
+  const currencyOptions = [
+    { value: 'ZAR', label: 'ZAR' },
+    { value: 'USD', label: 'USD' },
+    { value: 'EUR', label: 'EUR' },
+    { value: 'GBP', label: 'GBP' },
   ];
 
   return (
     <Card className="mb-4">
       <Card.Header>
         <div className="d-flex justify-content-between align-items-center">
-          <h4 className="mb-0">Perpetrator Information</h4>
+          <h4 className="mb-0">Suspect Information</h4>
           {Array.isArray(perpetrators) && perpetrators.length > 0 && (
             <Button
               variant="outline-danger"
               size="sm"
               onClick={onClearPerpetrators}
             >
-              Clear All Perpetrators
+              Clear All Suspects
             </Button>
           )}
         </div>
@@ -168,7 +284,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
       <Card.Body>
         {Array.isArray(perpetrators) && perpetrators.length > 0 && (
           <Alert variant="info" className="mb-3">
-            <strong>{perpetrators.length} perpetrator(s) added:</strong>
+            <strong>{perpetrators.length} suspect(s) added:</strong>
             <ListGroup variant="flush" className="mt-2">
               {perpetrators.map((perpetrator, index) => (
                 <ListGroup.Item key={index} className="px-0">
@@ -190,29 +306,67 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Perpetrator Name *</Form.Label>
+                  <Form.Label className="d-flex justify-content-between align-items-center">
+                    <span>Suspect Name *</span>
+                    <Form.Check
+                      type="checkbox"
+                      label="Unknown"
+                      checked={isUnknownName}
+                      onChange={(event) =>
+                        handleUnknownNameToggle(event.target.checked)
+                      }
+                    />
+                  </Form.Label>
                   <Form.Control
                     type="text"
                     value={currentPerpetrator.perpetratorName ?? ''}
                     onChange={(e) =>
                       handleChange('perpetratorName', e.target.value)
                     }
-                    placeholder="Full name or 'Unknown' if not identified"
+                    placeholder="Full name of suspect"
+                    disabled={isUnknownName}
                     required
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Alias</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentPerpetrator.perpetratorAlias ?? ''}
-                    onChange={(e) =>
-                      handleChange('perpetratorAlias', e.target.value)
-                    }
-                    placeholder="Known alias/nickname"
-                  />
+                  <Form.Label>Aliases</Form.Label>
+                  {aliases.map((alias, index) => (
+                    <div key={`alias-${index}`} className="d-flex align-items-center gap-2 mb-2">
+                      <Form.Control
+                        type="text"
+                        value={alias}
+                        onChange={(event) => {
+                          const nextAliases = [...aliases];
+                          nextAliases[index] = event.target.value;
+                          setAliases(nextAliases);
+                        }}
+                        placeholder={`Alias ${index + 1}`}
+                      />
+                      <Button
+                        variant="outline-danger"
+                        type="button"
+                        onClick={() => {
+                          setAliases((prev) => {
+                            const next = prev.filter((_, aliasIndex) => aliasIndex !== index);
+                            return next.length > 0 ? next : [''];
+                          });
+                        }}
+                        aria-label={`Remove alias ${index + 1}`}
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    type="button"
+                    onClick={() => setAliases((prev) => [...prev, ''])}
+                  >
+                    + Add Alias
+                  </Button>
                 </Form.Group>
               </Col>
             </Row>
@@ -264,72 +418,345 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
                   </Form.Select>
                 </Form.Group>
               </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Suspect Arrested</Form.Label>
-                  <Form.Select
-                    value={currentPerpetrator.suspectArrested ?? ''}
-                    onChange={(e) =>
-                      handleChange('suspectArrested', e.target.value)
-                    }
-                  >
-                    {yesNoOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Suspect Charged</Form.Label>
-                  <Form.Select
-                    value={currentPerpetrator.suspectCharged ?? ''}
-                    onChange={(e) =>
-                      handleChange('suspectCharged', e.target.value)
-                    }
-                  >
-                    {yesNoOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
+              {currentPerpetrator.suspectIdentified === 'Yes' && (
+                <Col md={4}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Suspect Arrested</Form.Label>
+                    <Form.Select
+                      value={currentPerpetrator.suspectArrested ?? ''}
+                      onChange={(e) =>
+                        handleChange('suspectArrested', e.target.value)
+                      }
+                    >
+                      {yesNoOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              )}
+              {currentPerpetrator.suspectIdentified === 'Yes' &&
+                currentPerpetrator.suspectArrested === 'Yes' && (
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Suspect Charged</Form.Label>
+                      <Form.Select
+                        value={currentPerpetrator.suspectCharged ?? ''}
+                        onChange={(e) =>
+                          handleChange('suspectCharged', e.target.value)
+                        }
+                      >
+                        {yesNoOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                )}
             </Row>
           )}
 
-          {groupVisibility.conviction && (
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Conviction</Form.Label>
-                  <Form.Select
-                    value={currentPerpetrator.conviction ?? ''}
-                    onChange={(e) => handleChange('conviction', e.target.value)}
+          {groupVisibility.conviction &&
+            currentPerpetrator.suspectCharged === 'Yes' && (
+              <div className="mb-3">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <Form.Label className="mb-0">Charges</Form.Label>
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    type="button"
+                    onClick={() =>
+                      setCharges((prev) => [...prev, createDefaultChargeEntry()])
+                    }
                   >
-                    {convictionOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Sentence</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={currentPerpetrator.sentence ?? ''}
-                    onChange={(e) => handleChange('sentence', e.target.value)}
-                    placeholder="e.g., Life imprisonment, 15 years, etc."
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
+                    + Add Charge
+                  </Button>
+                </div>
+
+                {charges.map((charge, index) => (
+                  <Card key={`charge-${index}`} className="mb-3">
+                    <Card.Body>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <strong>Charge {index + 1}</strong>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          type="button"
+                          onClick={() => {
+                            setCharges((prev) => prev.filter((_, i) => i !== index));
+                          }}
+                          aria-label={`Remove charge ${index + 1}`}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Charge</Form.Label>
+                            <Form.Select
+                              value={charge.charge}
+                              onChange={(event) => {
+                                const nextCharge = event.target.value;
+                                updateCharge(index, (current) => ({
+                                  ...current,
+                                  charge: nextCharge,
+                                  chargeOther: nextCharge === 'Other' ? current.chargeOther : '',
+                                }));
+                              }}
+                            >
+                              {chargeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Convicted?</Form.Label>
+                            <Form.Select
+                              value={charge.convicted}
+                              onChange={(event) => {
+                                const convicted = event.target.value as ChargeEntry['convicted'];
+                                updateCharge(index, (current) => ({
+                                  ...current,
+                                  convicted,
+                                  sentenceType:
+                                    convicted === 'Yes' ? current.sentenceType : 'Unknown',
+                                }));
+                              }}
+                            >
+                              {convictedOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+
+                      {charge.charge === 'Other' && (
+                        <Form.Group className="mb-3">
+                          <Form.Label>Other Charge</Form.Label>
+                          <Form.Control
+                            type="text"
+                            value={charge.chargeOther}
+                            onChange={(event) =>
+                              updateCharge(index, (current) => ({
+                                ...current,
+                                chargeOther: event.target.value,
+                              }))
+                            }
+                            placeholder="Enter charge"
+                          />
+                        </Form.Group>
+                      )}
+
+                      {charge.convicted === 'Yes' && (
+                        <>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Sentence Type</Form.Label>
+                            <Form.Select
+                              value={charge.sentenceType}
+                              onChange={(event) => {
+                                const sentenceType =
+                                  event.target.value as ChargeEntry['sentenceType'];
+                                updateCharge(index, (current) => ({
+                                  ...current,
+                                  sentenceType,
+                                }));
+                              }}
+                            >
+                              {sentenceTypeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+
+                          {charge.sentenceType === 'Imprisonment' && (
+                            <Row>
+                              <Col md={4}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Term Quantity</Form.Label>
+                                  <Form.Control
+                                    type="number"
+                                    min={1}
+                                    value={charge.imprisonmentQuantity}
+                                    onChange={(event) => {
+                                      const parsed = Number(event.target.value);
+                                      updateCharge(index, (current) => ({
+                                        ...current,
+                                        imprisonmentQuantity:
+                                          Number.isNaN(parsed) || parsed < 1 ? 1 : parsed,
+                                      }));
+                                    }}
+                                  />
+                                </Form.Group>
+                              </Col>
+                              <Col md={8}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Term Unit</Form.Label>
+                                  <Form.Select
+                                    value={charge.imprisonmentUnit}
+                                    onChange={(event) =>
+                                      updateCharge(index, (current) => ({
+                                        ...current,
+                                        imprisonmentUnit:
+                                          event.target.value as ChargeEntry['imprisonmentUnit'],
+                                      }))
+                                    }
+                                  >
+                                    {imprisonmentUnitOptions.map((option) => (
+                                      <option key={option} value={option}>
+                                        {pluralizeTermUnit(option, charge.imprisonmentQuantity)}
+                                      </option>
+                                    ))}
+                                  </Form.Select>
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                          )}
+
+                          {charge.sentenceType === 'Correctional supervision' && (
+                            <>
+                              <Row>
+                                <Col md={4}>
+                                  <Form.Group className="mb-3">
+                                    <Form.Label>Term Quantity</Form.Label>
+                                    <Form.Control
+                                      type="number"
+                                      min={1}
+                                      value={charge.correctionalQuantity}
+                                      onChange={(event) => {
+                                        const parsed = Number(event.target.value);
+                                        updateCharge(index, (current) => ({
+                                          ...current,
+                                          correctionalQuantity:
+                                            Number.isNaN(parsed) || parsed < 1 ? 1 : parsed,
+                                        }));
+                                      }}
+                                    />
+                                  </Form.Group>
+                                </Col>
+                                <Col md={8}>
+                                  <Form.Group className="mb-3">
+                                    <Form.Label>Term Unit</Form.Label>
+                                    <Form.Select
+                                      value={charge.correctionalUnit}
+                                      onChange={(event) =>
+                                        updateCharge(index, (current) => ({
+                                          ...current,
+                                          correctionalUnit:
+                                            event.target.value as ChargeEntry['correctionalUnit'],
+                                        }))
+                                      }
+                                    >
+                                      {correctionalUnitOptions.map((option) => (
+                                        <option key={option} value={option}>
+                                          {pluralizeTermUnit(
+                                            option,
+                                            charge.correctionalQuantity,
+                                          )}
+                                        </option>
+                                      ))}
+                                    </Form.Select>
+                                  </Form.Group>
+                                </Col>
+                              </Row>
+                              <Form.Group className="mb-3">
+                                <Form.Label>Details (Optional)</Form.Label>
+                                <Form.Control
+                                  type="text"
+                                  value={charge.correctionalDetails}
+                                  onChange={(event) =>
+                                    updateCharge(index, (current) => ({
+                                      ...current,
+                                      correctionalDetails: event.target.value,
+                                    }))
+                                  }
+                                  placeholder="Additional details"
+                                />
+                              </Form.Group>
+                            </>
+                          )}
+
+                          {charge.sentenceType === 'Fine' && (
+                            <Row>
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Amount</Form.Label>
+                                  <Form.Control
+                                    type="number"
+                                    min={0}
+                                    value={charge.fineAmount ?? ''}
+                                    onChange={(event) => {
+                                      const raw = event.target.value;
+                                      const parsed = raw === '' ? null : Number(raw);
+                                      updateCharge(index, (current) => ({
+                                        ...current,
+                                        fineAmount:
+                                          parsed === null || Number.isNaN(parsed)
+                                            ? null
+                                            : parsed,
+                                      }));
+                                    }}
+                                  />
+                                </Form.Group>
+                              </Col>
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Currency</Form.Label>
+                                  <Form.Select
+                                    value={charge.fineCurrency}
+                                    onChange={(event) =>
+                                      updateCharge(index, (current) => ({
+                                        ...current,
+                                        fineCurrency: event.target.value,
+                                      }))
+                                    }
+                                  >
+                                    {currencyOptions.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </Form.Select>
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                          )}
+
+                          {charge.sentenceType === 'Other' && (
+                            <Form.Group className="mb-3">
+                              <Form.Label>Other Sentencing</Form.Label>
+                              <Form.Control
+                                type="text"
+                                value={charge.sentenceOther}
+                                onChange={(event) =>
+                                  updateCharge(index, (current) => ({
+                                    ...current,
+                                    sentenceOther: event.target.value,
+                                  }))
+                                }
+                                placeholder="Describe sentencing"
+                              />
+                            </Form.Group>
+                          )}
+                        </>
+                      )}
+                    </Card.Body>
+                  </Card>
+                ))}
+              </div>
           )}
 
           <div className="d-flex justify-content-end">
@@ -338,7 +765,7 @@ const PerpetratorForm: React.FC<PerpetratorFormProps> = ({
               onClick={handleAddPerpetrator}
               disabled={!isValid}
             >
-              Add Perpetrator
+              Add Suspect
             </Button>
           </div>
         </Form>

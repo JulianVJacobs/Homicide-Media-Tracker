@@ -1,0 +1,149 @@
+plannedVersion: 3.0.0
+phaseName: Promoted Phase 3 Plugin Integration
+phaseGoal: Establish AtoM plugin/bridge foundation with Electron de-bloat while preserving workbench domain contracts.
+approvalState: approved
+allowedChangeClass: major
+mergePolicy: eager-after-green
+baseBranch: origin/main
+phaseBranch: phase/3.0.0
+launchDate: 2026-04-21
+finalPr:
+  number: null
+  status: not-created
+  blockers: []
+cleanup:
+  ownerLane: 00-conductor
+  policy: delete-after-final-merge
+  phaseBranch:
+    name: phase/3.0.0
+    deleteWhen:
+      - final PR merged to origin/main
+      - worker branch deletion attempted
+  workerBranches: []
+  safeguards:
+    - never delete before final PR merge to origin/main
+    - never delete before regression sign-off
+    - if a branch no longer exists, record cleanup as already-satisfied
+  status: pending
+lanes:
+  - laneId: 00-conductor
+    role: conductor
+    branch: phase/3.0.0
+    prNumber: null
+    status: active
+    readiness: waiting
+    ownedSurface:
+      - phase branch governance
+      - manifest lifecycle
+      - merge policy enforcement
+      - final integration PR to origin/main
+    blockers: []
+    verification:
+      - manifest published
+      - lane boundaries declared
+
+  - laneId: 01-electron-debloat
+    role: worker
+    branch: lane/3.0.0/01-electron-debloat
+    prNumber: null
+    status: planned
+    readiness: waiting
+    ownedSurface:
+      - Electron main/preload runtime surfaces
+      - IPC dependency retirement from strategic path
+      - desktop-only integration path de-bloat
+    blockers: []
+    verification: []
+
+  - laneId: 02-plugin-scaffold
+    role: worker
+    branch: lane/3.0.0/02-plugin-scaffold
+    prNumber: null
+    status: planned
+    readiness: blocked
+    ownedSurface:
+      - AtoM plugin skeleton and bootstrap
+      - plugin route registration and health endpoint
+      - plugin config wiring
+    blockers:
+      - waits for lane 01 de-bloat baseline
+    verification: []
+
+  - laneId: 03-backend-domain-port
+    role: worker
+    branch: lane/3.0.0/03-backend-domain-port
+    prNumber: null
+    status: planned
+    readiness: blocked
+    ownedSurface:
+      - plugin-side actor/event/claim/profile persistence
+      - plugin domain services and data mapping
+    blockers:
+      - waits for lane 02 plugin scaffold
+    verification: []
+
+  - laneId: 04-plugin-api-contract
+    role: worker
+    branch: lane/3.0.0/04-plugin-api-contract
+    prNumber: null
+    status: planned
+    readiness: blocked
+    ownedSurface:
+      - plugin API controllers and routes
+      - contract-compatible payload mapping
+    blockers:
+      - waits for lane 03 backend domain services
+    verification: []
+
+  - laneId: 05-workbench-bridge
+    role: worker
+    branch: lane/3.0.0/05-workbench-bridge
+    prNumber: null
+    status: planned
+    readiness: blocked
+    ownedSurface:
+      - workbench integration adapters and API clients
+      - plugin/API data-boundary transition in Next workbench
+    blockers:
+      - waits for lane 04 plugin API contract stability
+    verification: []
+
+  - laneId: 06-acl-record-linkage
+    role: worker
+    branch: lane/3.0.0/06-acl-record-linkage
+    prNumber: null
+    status: planned
+    readiness: blocked
+    ownedSurface:
+      - AtoM ACL integration and user-context enforcement
+      - archival record linkage entry points
+    blockers:
+      - waits for lane 04 API auth hooks
+    verification: []
+
+  - laneId: 07-offline-sync-bridge
+    role: worker
+    branch: lane/3.0.0/07-offline-sync-bridge
+    prNumber: null
+    status: planned
+    readiness: blocked
+    ownedSurface:
+      - workbench offline queue and replay semantics
+      - plugin sync bridge endpoint integration
+    blockers:
+      - waits for lanes 05 and 06
+    verification: []
+
+  - laneId: 08-regression-migration
+    role: worker
+    branch: lane/3.0.0/08-regression-migration
+    prNumber: null
+    status: planned
+    readiness: blocked
+    ownedSurface:
+      - compatibility regression suite
+      - migration rehearsal artifacts
+      - cutover readiness report
+    blockers:
+      - waits for lanes 01 through 07 to merge
+    verification: []

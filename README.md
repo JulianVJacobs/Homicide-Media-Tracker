@@ -15,13 +15,14 @@ Checkbox legend:
 - `[x]` completed in this release line
 - `[ ]` planned and not yet completed
 - `[>]` deferred/re-scoped to a different semver target (no standalone release at original line)
+- `[<]` promoted/re-sequenced from a later roadmap line into an earlier active line
 
 **Status update (2026-04-21):**
 
 - ✅ Phase 3 integration merge completed on `origin/main` (Lima final integration PR #13, India PR #14, with Juliet/Kilo integrated in Lima merge flow).
 - ✅ Fleet `2.1.0` completed and closed on `origin/main` (final PR `#17`, post-merge worker branch cleanup complete).
 - ✅ Fleet `2.2.0` completed and closed on `origin/main` (final PR `#22`, integrated verification passed, post-merge worker branch cleanup complete).
-- 🟡 Next execution focus: `3.0.x` graph explorer and `3.1.x` statistical reproducibility, now that the Phase 2 dependency gate is closed.
+- 🟠 Active fleet contract: promoted Phase 3 AtoM plugin integration launch (`3.0.0`) is approved and ready for lane kickoff.
 
 ### **Foundation: Participant Management (1.x.x releases)**
 
@@ -82,6 +83,26 @@ Sequencing note: `2.2.x` should be completed before `3.0.x`/`3.1.x` under the cu
 
 - Historical note: legacy phonetic lane labels were used in earlier phases and are now archived-only references.
 
+### Active Fleet Contract (promoted Phase 3 plugin integration)
+
+- Planned version: `3.0.0`
+- Approval state: approved and active (initiated 2026-04-21)
+- Allowed change class: major (host integration + runtime de-bloat and plugin-first bridge)
+- Phase goal: establish AtoM plugin/bridge foundation with Electron de-bloat while preserving workbench domain contracts
+- Phase branch: `phase/3.0.0`
+- Merge policy: eager-after-green into `phase/3.0.0`, then one final PR to `origin/main`
+- Conductor lane:
+  - `[3.0.0][00-conductor] Integrate phase 3.0.0 plugin-foundation fleet`
+- Worker lanes:
+  - `[3.0.0][01-electron-debloat] Retire Electron runtime wiring from strategic app path`
+  - `[3.0.0][02-plugin-scaffold] Create AtoM plugin scaffold and bridge bootstrap`
+  - `[3.0.0][03-backend-domain-port] Port domain persistence/services to plugin backend`
+  - `[3.0.0][04-plugin-api-contract] Publish plugin API routes aligned to existing contracts`
+  - `[3.0.0][05-workbench-bridge] Repoint workbench integration to plugin/API boundary`
+  - `[3.0.0][06-acl-record-linkage] Integrate AtoM ACL and record linkage entry points`
+  - `[3.0.0][07-offline-sync-bridge] Add targeted workbench offline/sync bridge`
+  - `[3.0.0][08-regression-migration] Run regression, migration rehearsal, and cutover checks`
+
 Generalize the participant model into a core Event–Actor–Role ontology. Introduce annotation events with configurable profiles, role-based claims, and prepare for AtoM plugin integration.
 
 - [x] **2.0.x — Event-Actor-Role Core Schema**
@@ -110,15 +131,42 @@ Generalize the participant model into a core Event–Actor–Role ontology. Intr
 
 ---
 
-### **Phase 3: Graph Visualization & Statistical Reproducibility**
+### **Phase 3: AtoM Plugin & Workbench Deployment (Promoted)**
 
-Enable research workflows with graph exploration, multi-source analysis, and exportable lineage.
+Promoted from former Phase 4 so the host integration is built first. Objective: the plugin should merge into AtoM UI patterns so users experience a single cohesive application.
 
-Dependency note: Phase 3 assumes `2.2.x` is complete unless a graph slice is explicitly limited to unresolved/raw actor views.
+- [<] **3.0.x — AtoM Plugin Backend (Symfony)** (promoted from former `4.0.x`)
+  - [ ] Create AtoM plugin scaffold (access-homicide-tracker)
+  - [ ] Implement plugin routes for CRUD on events, actors, roles, claims, evidence, merges, graph
+  - [ ] Integrate with AtoM ACL and user management
+  - [ ] Publish annotation layer API contract
+- [<] **3.1.x — Workbench UI in AtoM** (promoted from former `4.1.x`)
+  - [ ] Build workbench pages: Event extraction, Actors/Roles, Connection graph, Merge queue, Review log
+  - [ ] Integrate with AtoM article/information-object records as source anchors
+  - [ ] Support annotation tabs within article record view
+  - [ ] Align navigation, visual language, and interaction patterns with core AtoM pages to appear as one application
+- [<] **3.2.x — Targeted PWA & Offline Sync** (promoted from former `4.2.x`)
+  - [ ] Implement service worker for workbench routes only (not full-site offline)
+  - [ ] Cache manifest, vocabularies, recent records, and mutation queue
+  - [ ] Use IndexedDB for offline queue with idempotency keys, ordered replay, and conflict handling
+  - [ ] Implement sync endpoint: `/api/workbench/sync/batch`
+- [<] **3.3.x — Plugin Hardening & Pilot** (promoted from former `4.3.x`)
+  - [ ] Run pilot with historical homicide data
+  - [ ] Test offline reliability, merge quality, analysis consistency
+  - [ ] Gather user feedback on workbench workflows
+  - [ ] Prepare for production deployment
 
-Merged from former `1.3.x` scope (now tracked under `3.0.x`):
+---
 
-- [ ] **3.0.x — Graph Explorer**
+### **Phase 4: Graph Visualization & Statistical Reproducibility (Re-scoped)**
+
+Demoted from former Phase 3 so advanced features are built against the plugin-native host boundary.
+
+Dependency note: Phase 4 now assumes promoted Phase 3 AtoM integration is complete.
+
+Merged from former `1.3.x` scope (tracked under graph explorer line):
+
+- [>] **4.0.x — Graph Explorer** (re-scoped from former `3.0.x`)
   - [ ] Implement graph backend: article–event–actor–role–claim edges
   - [ ] Build graph visualization UI
   - [ ] Support filtering and traversal by role, profile, confidence
@@ -126,36 +174,10 @@ Merged from former `1.3.x` scope (now tracked under `3.0.x`):
   - [ ] Victim-perpetrator relationship "other" option with custom text
   - [ ] Perpetrator sentencing: support multiple sentences
   - [ ] Add final review step before submission
-- [ ] **3.1.x — Statistical Reproducibility**
+- [>] **4.1.x — Statistical Reproducibility** (re-scoped from former `3.1.x`)
   - [ ] Provide export modes: mention-level raw, actor-resolved, diff metadata
   - [ ] Document merge lineage and reversibility
   - [ ] Support audit trail for coder decisions and merge rationale
-
----
-
-### **Phase 4: AtoM Plugin & Workbench Deployment**
-
-Transition to AtoM plugin architecture. Implement plugin backend, specialized workbench UI, and targeted PWA for offline annotation workflows.
-
-- [ ] **4.0.x — AtoM Plugin Backend (Symfony)**
-  - [ ] Create AtoM plugin scaffold (access-homicide-tracker)
-  - [ ] Implement plugin routes for CRUD on events, actors, roles, claims, evidence, merges, graph
-  - [ ] Integrate with AtoM ACL and user management
-  - [ ] Publish annotation layer API contract
-- [ ] **4.1.x — Workbench UI in AtoM**
-  - [ ] Build workbench pages: Event extraction, Actors/Roles, Connection graph, Merge queue, Review log
-  - [ ] Integrate with AtoM article/information-object records as source anchors
-  - [ ] Support annotation tabs within article record view
-- [ ] **4.2.x — Targeted PWA & Offline Sync**
-  - [ ] Implement service worker for workbench routes only (not full-site offline)
-  - [ ] Cache manifest, vocabularies, recent records, and mutation queue
-  - [ ] Use IndexedDB for offline queue with idempotency keys, ordered replay, and conflict handling
-  - [ ] Implement sync endpoint: `/api/workbench/sync/batch`
-- [ ] **4.3.x — Plugin Hardening & Pilot**
-  - [ ] Run pilot with historical homicide data
-  - [ ] Test offline reliability, merge quality, analysis consistency
-  - [ ] Gather user feedback on workbench workflows
-  - [ ] Prepare for production deployment
 
 ---
 

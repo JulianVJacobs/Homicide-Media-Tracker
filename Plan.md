@@ -66,6 +66,7 @@
 - `[x]` completed in the scoped release line
 - `[ ]` planned and not yet completed
 - `[>]` deferred/re-scoped to another semver target (no standalone release at original line)
+- `[<]` promoted/re-sequenced from a later roadmap line into an earlier active line
 
 ### Canonical identity and naming
 
@@ -141,7 +142,71 @@
 
 ### Next candidates
 
-- `3.0.x` graph explorer and `3.1.x` statistical reproducibility roadmap items, now unblocked by completed `2.2.0` identity-resolution work.
+- Promoted Phase 3 plugin-first track:
+  - `[<] 3.0.x` AtoM plugin backend scaffold and bridge contract
+  - `[<] 3.1.x` workbench UI integration into AtoM with single-application UX objective
+  - `[<] 3.2.x` targeted PWA/offline sync for workbench routes
+  - `[<] 3.3.x` plugin hardening and pilot
+- Re-scoped Phase 4 feature track (after promoted Phase 3):
+  - `[>] 4.0.x` graph explorer
+  - `[>] 4.1.x` statistical reproducibility
+
+## Active fleet proposal (Promoted Phase 3 plugin integration)
+
+### Fleet contract block
+
+- Phase name: Promoted Phase 3 plugin integration
+- Planned version: `3.0.0`
+- Version rationale: move host integration first so subsequent graph/repro features are built directly against AtoM plugin boundaries.
+- Allowed change class: major
+- Approval status: approved by contract request (`create the fleet contract`)
+- Escalation rule: if scope expands into Phase 4 feature delivery (graph/repro UI), split into `3.1.0+` follow-on phase rather than broadening `3.0.0` foundation scope.
+
+### Parallel-safe lane decomposition
+
+- `[3.0.0][00-conductor] Integrate phase 3.0.0 plugin-foundation fleet`
+  - Owned surface: `phase/3.0.0` governance, `.github/fleet/3.0.0/manifest.yaml`, merge policy, final PR.
+- `[3.0.0][01-electron-debloat] Retire Electron runtime wiring from strategic app path`
+  - Owned surface: Electron main/preload runtime surfaces, IPC dependency removal shims, desktop-only integration path retirement.
+- `[3.0.0][02-plugin-scaffold] Create AtoM plugin scaffold and bridge bootstrap`
+  - Owned surface: plugin skeleton, route registration, plugin config/bootstrap, health endpoint.
+- `[3.0.0][03-backend-domain-port] Port domain persistence/services to plugin backend`
+  - Owned surface: plugin-side actor/event/claim/profile persistence and domain services.
+- `[3.0.0][04-plugin-api-contract] Publish plugin API routes aligned to existing contracts`
+  - Owned surface: plugin controllers/routes and API contract mapping.
+- `[3.0.0][05-workbench-bridge] Repoint workbench integration to plugin/API boundary`
+  - Owned surface: workbench data adapters and API clients; remove remaining Electron assumptions in workbench path.
+- `[3.0.0][06-acl-record-linkage] Integrate AtoM ACL and record linkage entry points`
+  - Owned surface: AtoM permission integration, user-context enforcement, record-linked launch points.
+- `[3.0.0][07-offline-sync-bridge] Add targeted workbench offline/sync bridge`
+  - Owned surface: workbench offline queue/replay and plugin sync bridge endpoints.
+- `[3.0.0][08-regression-migration] Run regression, migration rehearsal, and cutover checks`
+  - Owned surface: compatibility testing, migration rehearsal artifacts, cutover readiness report.
+
+### Dependency edges
+
+- `[3.0.0][02-plugin-scaffold]` depends on `[3.0.0][01-electron-debloat]` baseline de-bloat decisions.
+- `[3.0.0][03-backend-domain-port]` depends on `[3.0.0][02-plugin-scaffold]` plugin bootstrap.
+- `[3.0.0][04-plugin-api-contract]` depends on `[3.0.0][03-backend-domain-port]` services and schemas.
+- `[3.0.0][05-workbench-bridge]` depends on `[3.0.0][04-plugin-api-contract]` stable route contracts.
+- `[3.0.0][06-acl-record-linkage]` depends on `[3.0.0][04-plugin-api-contract]` and can run in parallel with `[3.0.0][05-workbench-bridge]` once API auth hooks are stable.
+- `[3.0.0][07-offline-sync-bridge]` depends on `[3.0.0][05-workbench-bridge]` and `[3.0.0][06-acl-record-linkage]`.
+- `[3.0.0][08-regression-migration]` runs after lanes `01` through `07` are merged on `phase/3.0.0`.
+
+### Merge order block
+
+- Baseline branch: `origin/main`
+- Phase branch: `phase/3.0.0`
+- Ordered merge sequence:
+  1. `[3.0.0][01-electron-debloat]`
+  2. `[3.0.0][02-plugin-scaffold]`
+  3. `[3.0.0][03-backend-domain-port]`
+  4. `[3.0.0][04-plugin-api-contract]`
+  5. `[3.0.0][05-workbench-bridge]`
+  6. `[3.0.0][06-acl-record-linkage]`
+  7. `[3.0.0][07-offline-sync-bridge]`
+  8. `[3.0.0][08-regression-migration]`
+  9. `[3.0.0][00-conductor]` opens one final PR from `phase/3.0.0` to `origin/main`
 
 ## Fleet execution record (Phase 2 closeout completed)
 

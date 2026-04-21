@@ -55,7 +55,7 @@ lanes:
     role: worker
     branch: lane/3.0.0/01-electron-debloat
     prNumber: null
-    status: planned
+    status: in-progress
     readiness: waiting
     ownedSurface:
       - Electron main/preload runtime surfaces
@@ -75,46 +75,43 @@ lanes:
       - plugin route registration and health endpoint
       - plugin config wiring
     blockers:
-      - waits for lane 01 de-bloat baseline
+      - awaiting lane 01 (in-progress)
     verification: []
 
   - laneId: 03-backend-domain-port
     role: worker
     branch: lane/3.0.0/03-backend-domain-port
     prNumber: null
-    status: planned
-    readiness: blocked
+    status: ready-to-merge
+    readiness: ready-to-merge
     ownedSurface:
       - plugin-side actor/event/claim/profile persistence
       - plugin domain services and data mapping
-    blockers:
-      - waits for lane 02 plugin scaffold
+    blockers: []
     verification: []
 
   - laneId: 04-plugin-api-contract
     role: worker
     branch: lane/3.0.0/04-plugin-api-contract
     prNumber: null
-    status: planned
-    readiness: blocked
+    status: ready-to-merge
+    readiness: ready-to-merge
     ownedSurface:
       - plugin API controllers and routes
       - contract-compatible payload mapping
-    blockers:
-      - waits for lane 03 backend domain services
+    blockers: []
     verification: []
 
   - laneId: 05-workbench-bridge
     role: worker
     branch: lane/3.0.0/05-workbench-bridge
     prNumber: null
-    status: planned
-    readiness: blocked
+    status: ready-to-merge
+    readiness: ready-to-merge
     ownedSurface:
       - workbench integration adapters and API clients
       - plugin/API data-boundary transition in Next workbench
-    blockers:
-      - waits for lane 04 plugin API contract stability
+    blockers: []
     verification: []
 
   - laneId: 06-acl-record-linkage
@@ -127,20 +124,19 @@ lanes:
       - AtoM ACL integration and user-context enforcement
       - archival record linkage entry points
     blockers:
-      - waits for lane 04 API auth hooks
+      - awaiting lane 04 (ready-to-merge; merge lane 04 first)
     verification: []
 
   - laneId: 07-offline-sync-bridge
     role: worker
     branch: lane/3.0.0/07-offline-sync-bridge
     prNumber: null
-    status: planned
-    readiness: blocked
+    status: ready-to-merge
+    readiness: ready-to-merge
     ownedSurface:
       - workbench offline queue and replay semantics
       - plugin sync bridge endpoint integration
-    blockers:
-      - waits for lanes 05 and 06
+    blockers: []
     verification: []
 
   - laneId: 08-regression-migration
@@ -154,5 +150,11 @@ lanes:
       - migration rehearsal artifacts
       - cutover readiness report
     blockers:
-      - waits for lanes 01 through 07 to merge
+      - awaiting lane 01 (in-progress)
+      - awaiting lane 02 (blocked on lane 01)
+      - awaiting lane 03 (ready-to-merge)
+      - awaiting lane 04 (ready-to-merge)
+      - awaiting lane 05 (ready-to-merge)
+      - awaiting lane 06 (blocked on lane 04)
+      - awaiting lane 07 (ready-to-merge)
     verification: []

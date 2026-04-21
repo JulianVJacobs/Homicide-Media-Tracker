@@ -137,11 +137,11 @@
 - `2.2.0` Phase 2 closeout fleet completed and merged.
 - Integrated closeout verification passed: regression readiness sign-off plus full lint/test baseline on merged phase content.
 - Manifest cleanup completed per fleet policy before the final PR.
+- Post-merge branch cleanup completed for remaining `origin/copilot/220-*` worker branches.
 
 ### Next candidates
 
 - `3.0.x` graph explorer and `3.1.x` statistical reproducibility roadmap items, now unblocked by completed `2.2.0` identity-resolution work.
-- Operational cleanup: delete remaining `origin/copilot/220-*` worker branches after final merge confirmation.
 
 ## Fleet execution record (Phase 2 closeout completed)
 
@@ -169,8 +169,8 @@
   - `npm run lint` passed on the integrated phase branch
   - `npm run test` passed on the integrated phase branch (`23` suites, `72` tests)
   - Regression readiness report recorded no blocker in the owned verification surface
-- Remaining operational follow-up:
-  - delete surviving `origin/copilot/220-*` worker branches
+- Post-merge cleanup evidence:
+  - no remaining `origin/copilot/220-*` refs detected in local remote-tracking view
 
 ### Parallel-safe lane decomposition
 

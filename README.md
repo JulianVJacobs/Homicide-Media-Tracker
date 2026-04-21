@@ -20,7 +20,7 @@ Checkbox legend:
 
 - ✅ Phase 3 integration merge completed on `origin/main` (Lima final integration PR #13, India PR #14, with Juliet/Kilo integrated in Lima merge flow).
 - ✅ Fleet `2.1.0` completed and closed on `origin/main` (final PR `#17`, post-merge worker branch cleanup complete).
-- ✅ Fleet `2.2.0` completed and closed on `origin/main` (final PR `#22`, integrated verification passed; remaining `origin/copilot/220-*` worker branches still need cleanup).
+- ✅ Fleet `2.2.0` completed and closed on `origin/main` (final PR `#22`, integrated verification passed, post-merge worker branch cleanup complete).
 - 🟡 Next execution focus: `3.0.x` graph explorer and `3.1.x` statistical reproducibility, now that the Phase 2 dependency gate is closed.
 
 ### **Foundation: Participant Management (1.x.x releases)**
@@ -78,7 +78,7 @@ Sequencing note: `2.2.x` should be completed before `3.0.x`/`3.1.x` under the cu
 - Final PR: `#22` merged to `origin/main`
 - Manifest lifecycle: `.github/fleet/2.2.0/manifest.yaml` deleted before final PR per fleet policy
 - Verification: integrated lint + test baseline passed during closeout sign-off
-- Cleanup: remaining `origin/copilot/220-*` worker branches are still pending deletion
+- Cleanup: remaining `origin/copilot/220-*` worker branches deleted after merge
 
 - Historical note: legacy phonetic lane labels were used in earlier phases and are now archived-only references.
 

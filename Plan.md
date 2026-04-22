@@ -153,6 +153,42 @@
 
 ## Fleet execution record (Promoted Phase 3 plugin integration)
 
+### Fleet execution record (Phase 3.1 host provisioning integration)
+
+#### Fleet contract block
+
+- Phase name: Phase 3.1 host provisioning integration
+- Planned version: `3.1.0`
+- Allowed change class: major
+- Approval status: approved and integrated on `phase/3.1.0` (2026-04-22)
+- Merge policy: eager-after-green
+- Scope guardrail: refuse drift into `3.2.x` offline-sync or broader product expansion
+- Manifest lifecycle: `.github/fleet/3.1.0/manifest.yaml` published for coordination and deleted before final PR to `main`
+
+#### Lane merge record
+
+- Conductor lane: `[3.1.0][00-conductor]` (PR `#50`)
+- Worker lanes merged into `phase/3.1.0` in dependency order:
+  1. `[3.1.0][01-atom-stack]` (PR `#51`, merge commit `f035fe7`)
+  2. `[3.1.0][02-bootstrap]` (PR `#52`, merge commit `a8b84cf`)
+  3. `[3.1.0][03-plugin-runtime-bind]` (PR `#53`, merge commit `58f4a54`)
+  4. `[3.1.0][04-workbench-host-shell]` (PR `#54`, merge commit `4ccc5f7`)
+  5. `[3.1.0][05-verification-runbook]` (PR `#55`, merge commit `0be6d5f`)
+
+#### Final PR body summary (phase/3.1.0 -> main)
+
+- Semver: `3.1.0` (major)
+- Owned surfaces: host provisioning, bootstrap, plugin runtime binding, first host-shell slice, verification
+- Blockers resolved: none
+- Verification summary:
+  - integrated lane merge order completed on `phase/3.1.0`
+  - scope audit found no `3.2.x` offline-sync expansion in merged worker lane diffs
+  - plugin route smoke checks passed:
+    - `npm run test -- plugin/tests/plugin-api-contract.integration.test.ts lib/workbench/plugin-api-client.test.ts __tests__/phase-3-regression-migration.test.ts`
+  - lint/test gates passed on integrated branch:
+    - `npm run lint`
+    - `npm run test`
+
 ### Fleet contract block
 
 - Phase name: Promoted Phase 3 plugin integration

@@ -1,0 +1,118 @@
+plannedVersion: 3.1.0
+phaseName: Phase 3.1 host provisioning integration
+phaseGoal: Integrate host provisioning, bootstrap, plugin runtime binding, first host-shell surfaces, and verification-only closeout.
+approvalState: approved
+allowedChangeClass: major
+mergePolicy: eager-after-green
+baseBranch: origin/main
+phaseBranch: phase/3.1.0
+governance:
+  approvedScope:
+    - in-repo AtoM host provisioning
+    - first-run bootstrap and plugin enablement
+    - plugin runtime binding and hosted route/auth path
+    - first integrated host-shell surfaces
+    - integrated verification
+  refusedScope:
+    - 3.2.x offline-sync expansion
+    - broader product expansion outside approved 3.1.0 surfaces
+  stopConditions:
+    - worker lane exceeds owned surface
+    - worker lane expands into 3.2.x offline-sync or later
+    - required verification evidence missing
+    - merge collisions invalidate approved decomposition
+finalPr:
+  titlePrefix: "[3.1.0][00-conductor]"
+  base: main
+  head: phase/3.1.0
+  status: ready-to-open
+  semver: 3.1.0
+  blockersResolved: []
+  verificationSummary:
+    - integrated phase branch includes lane merge commits for 01 through 05 in dependency order
+    - no worker lane introduced 3.2.x offline-sync surface changes
+    - plugin route smoke checks passed via targeted Jest suites
+    - lint and full test gates passed on integrated branch
+lanes:
+  - laneId: 00-conductor
+    role: conductor
+    branch: phase/3.1.0
+    prNumber: 50
+    status: active
+    readiness: ready
+    ownedSurface:
+      - phase/3.1.0 branch governance
+      - .github/fleet/3.1.0/manifest.yaml lifecycle
+      - merge policy enforcement and lane readiness decisions
+      - final integration and final PR body
+    blockers: []
+  - laneId: 01-atom-stack
+    role: worker
+    branch: copilot/310-01-atom-stack-add-host-runtime-definition
+    prNumber: 51
+    status: merged-into-phase
+    readiness: merged
+    ownedSurface:
+      - container stack definitions and topology
+      - shared environment contract files and defaults
+      - host readiness and health checks
+      - host stack startup wrappers
+    blockers: []
+    mergeCommit: f035fe7
+    prUrl: https://github.com/JulianVJacobs/Homicide-Media-Tracker/pull/51
+  - laneId: 02-bootstrap
+    role: worker
+    branch: copilot/310-02-bootstrap
+    prNumber: 52
+    status: merged-into-phase
+    readiness: merged
+    ownedSurface:
+      - bootstrap orchestration scripts
+      - plugin enablement hooks and first-run initialization
+      - reset/reseed utilities
+      - setup command helpers
+    blockers: []
+    mergeCommit: a8b84cf
+    prUrl: https://github.com/JulianVJacobs/Homicide-Media-Tracker/pull/52
+  - laneId: 03-plugin-runtime-bind
+    role: worker
+    branch: copilot/lane-310-03-plugin-runtime-bind
+    prNumber: 53
+    status: merged-into-phase
+    readiness: merged
+    ownedSurface:
+      - plugin runtime adapter surfaces
+      - hosted route/auth execution path binding
+      - auth/context integration for hosted plugin requests
+      - host-mode runtime glue
+    blockers: []
+    mergeCommit: 58f4a54
+    prUrl: https://github.com/JulianVJacobs/Homicide-Media-Tracker/pull/53
+  - laneId: 04-workbench-host-shell
+    role: worker
+    branch: copilot/310-04-workbench-host-shell
+    prNumber: 54
+    status: merged-into-phase
+    readiness: merged
+    ownedSurface:
+      - host-shell integration entry points
+      - initial embedded workbench views in hosted shell
+      - navigation integration surfaces for first vertical slice
+      - minimal host-facing UI glue
+    blockers: []
+    mergeCommit: 4ccc5f7
+    prUrl: https://github.com/JulianVJacobs/Homicide-Media-Tracker/pull/54
+  - laneId: 05-verification-runbook
+    role: worker
+    branch: copilot/310-05-verification-runbook
+    prNumber: 55
+    status: merged-into-phase
+    readiness: merged
+    ownedSurface:
+      - integrated verification scripts/protocol
+      - local/CI verification runbook
+      - readiness report artifacts
+      - CI verification wiring
+    blockers: []
+    mergeCommit: 0be6d5f
+    prUrl: https://github.com/JulianVJacobs/Homicide-Media-Tracker/pull/55

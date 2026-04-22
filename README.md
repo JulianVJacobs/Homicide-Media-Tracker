@@ -17,12 +17,13 @@ Checkbox legend:
 - `[>]` deferred/re-scoped to a different semver target (no standalone release at original line)
 - `[<]` promoted/re-sequenced from a later roadmap line into an earlier active line
 
-**Status update (2026-04-21):**
+**Status update (2026-04-22):**
 
 - ✅ Phase 3 integration merge completed on `origin/main` (Lima final integration PR #13, India PR #14, with Juliet/Kilo integrated in Lima merge flow).
 - ✅ Fleet `2.1.0` completed and closed on `origin/main` (final PR `#17`, post-merge worker branch cleanup complete).
 - ✅ Fleet `2.2.0` completed and closed on `origin/main` (final PR `#22`, integrated verification passed, post-merge worker branch cleanup complete).
 - ✅ Fleet `3.0.0` completed and merged on `origin/main` (conductor recovery final merge PR `#46`; lane merges and manifest cleanup complete).
+- ✅ Fleet `3.1.0` integrated on `phase/3.1.0` with lanes `01` through `05` merged in dependency order and manifest lifecycle completed before final PR drafting.
 
 ### **Foundation: Participant Management (1.x.x releases)**
 
@@ -61,25 +62,25 @@ Sequencing note: `2.2.x` should be completed before `3.0.x`/`3.1.x` under the cu
 
 ### Most Recent Fleet Execution (canonical schema)
 
-- Proposed planned version: `2.2.0`
-- Approval state: approved and completed (closed 2026-04-21)
-- Phase branch: `phase/2.2.0`
-- Merge policy: eager-after-green into `phase/2.2.0`, then one final PR to `origin/main`
+- Proposed planned version: `3.1.0`
+- Approval state: approved and integrated on phase branch (2026-04-22)
+- Phase branch: `phase/3.1.0`
+- Merge policy: eager-after-green into `phase/3.1.0`, then one final PR to `origin/main`
 - Lane identity format: `[<planned-version>][<agent-id>-<short-name>] <task-description>`
 - Conductor lane id reserved: `00`
 - Launch state: closed
 - Completed lanes:
-  - `[2.2.0][00-conductor] Integrate phase 2.2.0 closeout fleet`
-  - `[2.2.0][01-identity-core] Reuse alias/promotion logic for actors and add multi-field duplicate scoring`
-  - `[2.2.0][02-scoring-explainability] Add candidate scoring explainability surfaces and API outputs`
-  - `[2.2.0][03-merge-queue-ui] Build actor merge queue and promotion workflow UI`
-  - `[2.2.0][04-role-attrs-outlet] Complete role-specific attributes and ship outlet searchable combobox`
-  - `[2.2.0][05-regression-verification] Verify end-to-end closeout behavior on integrated phase branch`
+  - `[3.1.0][00-conductor] Integrate phase 3.1.0 host-provisioning fleet`
+  - `[3.1.0][01-atom-stack] Add AtoM host runtime definition for local and CI execution`
+  - `[3.1.0][02-bootstrap] Automate first-run bootstrap and plugin enablement`
+  - `[3.1.0][03-plugin-runtime-bind] Bind tracker plugin runtime to AtoM routes`
+  - `[3.1.0][04-workbench-host-shell] Deliver integrated workbench surfaces`
+  - `[3.1.0][05-verification-runbook] Add integrated verification gates and runbook`
 
-- Final PR: `#22` merged to `origin/main`
-- Manifest lifecycle: `.github/fleet/2.2.0/manifest.yaml` deleted before final PR per fleet policy
-- Verification: integrated lint + test baseline passed during closeout sign-off
-- Cleanup: remaining `origin/copilot/220-*` worker branches deleted after merge
+- Final PR: conductor output prepared from `phase/3.1.0` to `origin/main` (title prefix `[3.1.0][00-conductor]`)
+- Manifest lifecycle: `.github/fleet/3.1.0/manifest.yaml` published for lane status, then deleted before final PR
+- Verification: targeted plugin-route smoke checks and integrated `npm run lint` + `npm run test` gates passed on the integrated branch
+- Cleanup: no 3.2.x offline-sync scope drift accepted during 3.1.0 integration
 
 - Historical note: legacy phonetic lane labels were used in earlier phases and are now archived-only references.
 

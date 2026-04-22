@@ -28,8 +28,6 @@ interface ArticleFormProps {
 
 // Intentionally includes every paragraph text value from docs/news-outlets-and-platforms-list.xml.
 const NEWS_OUTLET_SEED_OPTIONS = [
-  'Homicide Tracker List of titles for drop-down',
-  'News Titles and Platforms Included in Media Survey',
   '100punt6',
   'AFRIKANER',
   'ALBERTON RECORD',

@@ -1,9 +1,9 @@
 name: homicide-media-tracker
 version: 2.2.0
 description: An application to track (homicide) media.
-main: plugin/index.js
+main: za.homicidemediatracker.PluginMain
 api: v1
-pluginId: access-homicide-tracker
+pluginId: za.homicidemediatracker
 enabled: true
 routes:
   prefix: /plugins/homicide-tracker

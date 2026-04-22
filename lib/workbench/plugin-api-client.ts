@@ -2,6 +2,7 @@ import type {
   PluginApiListResponse,
   PluginApiResponse,
 } from '../contracts/plugin-api-contract';
+import { resolveWorkbenchPluginRuntimeConfig } from './plugin-runtime-config';
 
 export type WorkbenchPluginResource =
   | 'actors'
@@ -11,6 +12,9 @@ export type WorkbenchPluginResource =
   | 'perpetrators'
   | 'participants';
 
+const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, '');
+const isAbsoluteUrl = (value: string): boolean => /^https?:\/\//i.test(value);
+
 const toConfiguredBaseUrl = (): string | null => {
   const raw =
     process.env.WORKBENCH_PLUGIN_API_BASE_URL ||
@@ -18,7 +22,16 @@ const toConfiguredBaseUrl = (): string | null => {
     process.env.NEXT_PUBLIC_PLUGIN_API_BASE_URL ||
     '';
   const base = raw.trim();
-  return base ? base.replace(/\/+$/, '') : null;
+  if (base) {
+    return normalizeBaseUrl(base);
+  }
+
+  // Preserve 3.0.x precedence for explicit base URL env vars; only fall back to
+  // hosted route-prefix mode when no base URL is configured.
+  const runtimeConfig = resolveWorkbenchPluginRuntimeConfig();
+  return runtimeConfig.mode === 'hosted-atom'
+    ? runtimeConfig.routePrefix
+    : null;
 };
 
 export const isWorkbenchPluginApiEnabled = (): boolean =>
@@ -33,11 +46,25 @@ const buildResourceUrl = (
     throw new Error('Workbench plugin API base URL is not configured');
   }
 
-  const url = new URL(`${baseUrl}/${resource}`);
+  const queryParams = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (value === undefined) continue;
-    url.searchParams.set(key, String(value));
+    queryParams.set(key, String(value));
   }
+
+  const resourcePath = `${normalizeBaseUrl(baseUrl)}/${resource}`;
+  // Relative hosted route prefixes (e.g. /api/workbench) cannot be parsed by
+  // URL without a base origin, so they use path concatenation while absolute
+  // base URLs use URL for robust query serialization.
+  if (!isAbsoluteUrl(baseUrl)) {
+    const queryString = queryParams.toString();
+    return queryString ? `${resourcePath}?${queryString}` : resourcePath;
+  }
+
+  const url = new URL(resourcePath);
+  queryParams.forEach((value, key) => {
+    url.searchParams.set(key, value);
+  });
   return url.toString();
 };
 

@@ -3,6 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
+const STATE_KEY_HASH_LENGTH = 16;
+const DEFAULT_MAX_FAILURE_LINES = 40;
+
 const IDEMPOTENT_ERROR_PATTERN =
   /already exists|already enabled|duplicate|has already been taken|not changed/i;
 
@@ -12,14 +15,14 @@ const DEFAULT_STEPS = [
     description: 'Provision initial AtoM administrator account',
     envKey: 'ATOM_BOOTSTRAP_ADMIN_HOOK',
     defaultHook:
-      'php symfony tools:install --email="${ATOM_ADMIN_EMAIL:-admin@example.invalid}" --username="${ATOM_ADMIN_USERNAME:-admin}" --password="${ATOM_ADMIN_PASSWORD:-admin}" --siteBaseUrl="${ATOM_SITE_BASE_URL:-http://localhost}" --siteName="${ATOM_SITE_NAME:-AtoM}"',
+      'php symfony tools:install --email="${ATOM_ADMIN_EMAIL:-admin@example.invalid}" --username="${ATOM_ADMIN_USERNAME:-admin}" --password="${ATOM_ADMIN_PASSWORD:?ATOM_ADMIN_PASSWORD is required for bootstrap}" --siteBaseUrl="${ATOM_SITE_BASE_URL:-http://localhost}" --siteName="${ATOM_SITE_NAME:-AtoM}"',
   },
   {
     id: 'bootstrap-user-state',
     description: 'Apply required bootstrap user/state initialization',
     envKey: 'ATOM_BOOTSTRAP_STATE_HOOK',
     defaultHook:
-      'php symfony tools:add-user --username="${ATOM_BOOTSTRAP_USERNAME:-bootstrap}" --password="${ATOM_BOOTSTRAP_PASSWORD:-bootstrap}" --email="${ATOM_BOOTSTRAP_EMAIL:-bootstrap@example.invalid}" --group="${ATOM_BOOTSTRAP_GROUP:-editor}"',
+      'php symfony tools:add-user --username="${ATOM_BOOTSTRAP_USERNAME:-bootstrap}" --password="${ATOM_BOOTSTRAP_PASSWORD:?ATOM_BOOTSTRAP_PASSWORD is required for bootstrap}" --email="${ATOM_BOOTSTRAP_EMAIL:-bootstrap@example.invalid}" --group="${ATOM_BOOTSTRAP_GROUP:-editor}"',
   },
   {
     id: 'plugin-enablement',
@@ -36,7 +39,7 @@ const DEFAULT_STEPS = [
   },
 ];
 
-function parseBoolean(value, fallback) {
+function parseBooleanFlag(value, fallback) {
   if (value === undefined) return fallback;
   return !['0', 'false', 'no', 'off'].includes(String(value).toLowerCase());
 }
@@ -47,31 +50,33 @@ function resolveStateFile(env = process.env) {
   );
 }
 
-function shellQuote(value) {
-  return `'${String(value).replace(/'/g, `'\\''`)}'`;
-}
-
 function buildExecutionCommand(hook, env = process.env) {
   const trimmedHook = String(hook || '').trim();
   if (!trimmedHook) return '';
 
-  const useCompose = parseBoolean(env.ATOM_BOOTSTRAP_USE_COMPOSE, true);
+  const useCompose = parseBooleanFlag(env.ATOM_BOOTSTRAP_USE_COMPOSE, true);
   if (!useCompose) {
-    return trimmedHook;
+    return {
+      command: 'sh',
+      args: ['-lc', trimmedHook],
+    };
   }
 
-  const command = ['docker', 'compose'];
+  const args = ['compose'];
   if (env.ATOM_STACK_COMPOSE_FILE) {
-    command.push('-f', shellQuote(env.ATOM_STACK_COMPOSE_FILE));
+    args.push('-f', env.ATOM_STACK_COMPOSE_FILE);
   }
   if (env.ATOM_STACK_PROJECT_NAME) {
-    command.push('-p', shellQuote(env.ATOM_STACK_PROJECT_NAME));
+    args.push('-p', env.ATOM_STACK_PROJECT_NAME);
   }
 
-  command.push('exec', '-T', shellQuote(env.ATOM_STACK_SERVICE || 'atom'));
-  command.push('sh', '-lc', shellQuote(trimmedHook));
+  args.push('exec', '-T', env.ATOM_STACK_SERVICE || 'atom');
+  args.push('sh', '-lc', trimmedHook);
 
-  return command.join(' ');
+  return {
+    command: 'docker',
+    args,
+  };
 }
 
 function createDefaultSteps(env = process.env) {
@@ -86,11 +91,15 @@ function createDefaultSteps(env = process.env) {
 }
 
 function createStateKey(step) {
+  const commandPayload =
+    typeof step.command === 'string'
+      ? step.command
+      : JSON.stringify(step.command);
   const digest = crypto
     .createHash('sha256')
-    .update(step.command || '')
+    .update(commandPayload || '')
     .digest('hex')
-    .slice(0, 16);
+    .slice(0, STATE_KEY_HASH_LENGTH);
   return `${step.id}:${digest}`;
 }
 
@@ -125,8 +134,12 @@ function writeState(stateFile, state) {
 }
 
 function executeCommand(command) {
-  const result = spawnSync(command, {
-    shell: true,
+  const execution =
+    typeof command === 'string'
+      ? { command: 'sh', args: ['-lc', command] }
+      : command;
+
+  const result = spawnSync(execution.command, execution.args || [], {
     encoding: 'utf8',
   });
 
@@ -139,6 +152,18 @@ function executeCommand(command) {
     stdout: result.stdout || '',
     stderr: result.stderr || '',
   };
+}
+
+function formatCommandFailure(
+  stdout,
+  stderr,
+  tailLines = DEFAULT_MAX_FAILURE_LINES,
+) {
+  const output = `${stdout || ''}\n${stderr || ''}`
+    .split('\n')
+    .filter(Boolean);
+  const tail = output.slice(-tailLines).join('\n');
+  return tail || 'No command output captured.';
 }
 
 function executeBootstrap({
@@ -171,8 +196,9 @@ function executeBootstrap({
     if (output.status !== 0) {
       const combinedOutput = `${output.stdout}\n${output.stderr}`;
       if (!IDEMPOTENT_ERROR_PATTERN.test(combinedOutput)) {
+        const failureOutput = formatCommandFailure(output.stdout, output.stderr);
         throw new Error(
-          `Bootstrap step "${step.id}" failed with status ${output.status}.\n${combinedOutput}`.trim(),
+          `Bootstrap step "${step.id}" failed with status ${output.status}.\n${failureOutput}`.trim(),
         );
       }
 
@@ -189,8 +215,12 @@ function executeBootstrap({
 }
 
 function resetBootstrapState(stateFile = resolveStateFile()) {
-  if (fs.existsSync(stateFile)) {
-    fs.rmSync(stateFile);
+  try {
+    fs.rmSync(stateFile, { force: true });
+  } catch (error) {
+    throw new Error(
+      `Unable to remove bootstrap state at ${stateFile}: ${error.message}`,
+    );
   }
 }
 
@@ -200,6 +230,7 @@ module.exports = {
   createDefaultSteps,
   executeBootstrap,
   executeCommand,
+  formatCommandFailure,
   resetBootstrapState,
   resolveStateFile,
 };

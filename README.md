@@ -20,6 +20,7 @@ Bootstrap hooks can be overridden with:
 - `ATOM_BOOTSTRAP_BASELINE_HOOK`
 
 By default hooks run through `docker compose exec` on service `atom`; set `ATOM_BOOTSTRAP_USE_COMPOSE=false` to run hooks directly in host shell.
+When using default hooks, set `ATOM_ADMIN_PASSWORD` and `ATOM_BOOTSTRAP_PASSWORD` explicitly.
 
 ## Roadmap
 

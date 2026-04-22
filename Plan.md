@@ -144,7 +144,7 @@
 
 - Promoted Phase 3 plugin-first track:
   - `[<] 3.0.x` AtoM plugin backend scaffold and bridge contract
-  - `[<] 3.1.x` workbench UI integration into AtoM with single-application UX objective
+  - `[<] 3.1.x` workbench UI integration into AtoM with single-application UX objective, including in-repo AtoM host provisioning (no external instance assumed)
   - `[<] 3.2.x` targeted PWA/offline sync for workbench routes
   - `[<] 3.3.x` plugin hardening and pilot
 - Re-scoped Phase 4 feature track (after promoted Phase 3):
@@ -152,6 +152,56 @@
   - `[>] 4.1.x` statistical reproducibility
 
 ## Fleet execution record (Promoted Phase 3 plugin integration)
+
+### Contract delta (2026-04-22)
+
+- New hard requirement captured: deliver a runnable AtoM host stack from this repository as part of post-3.0 Phase 3 work; do not treat AtoM as pre-existing external infrastructure.
+- Recommended next slice target: `3.1.0` major continuation lane set for host provisioning + plugin runtime binding + first integrated workbench surfaces.
+
+## Active fleet proposal (Phase 3.1.0 host provisioning + runtime binding)
+
+### Fleet contract block
+
+- Phase name: Phase 3.1.0 host provisioning and runtime binding
+- Planned version: `3.1.0`
+- Version rationale: convert 3.0.0 plugin-first foundation into a runnable in-repo AtoM host runtime with bound plugin execution path.
+- Allowed change class: major
+- Approval status: proposed; awaiting explicit launch confirmation
+- Escalation rule: if scope expands into Phase 3.2 offline-sync behavior, split into `3.2.0` follow-on lanes.
+
+### Parallel-safe lane decomposition
+
+- `[3.1.0][00-conductor] Integrate phase 3.1.0 host-provisioning fleet`
+  - Owned surface: `phase/3.1.0` governance, `.github/fleet/3.1.0/manifest.yaml`, merge policy, final PR.
+- `[3.1.0][01-atom-stack] Provision containerized AtoM host stack and shared env contract`
+  - Owned surface: container stack definitions, service topology wiring, environment contract files.
+- `[3.1.0][02-bootstrap] Automate first-run bootstrap and plugin enablement`
+  - Owned surface: bootstrap scripts, admin/user setup, plugin enablement hooks, idempotent setup steps.
+- `[3.1.0][03-plugin-runtime-bind] Bind tracker plugin runtime to hosted AtoM routes/auth context`
+  - Owned surface: plugin runtime adapter surfaces, route/auth bindings, host-aware plugin configuration.
+- `[3.1.0][04-workbench-host-shell] Deliver first integrated workbench surfaces in AtoM host shell`
+  - Owned surface: embedded workbench host shell pages, navigation integration points, initial view mounting.
+- `[3.1.0][05-verification-runbook] Add integrated verification gates and runbook`
+  - Owned surface: end-to-end verification scripts, CI checks, operator runbook and smoke-test protocol.
+
+### Dependency edges
+
+- `[3.1.0][02-bootstrap]` depends on `[3.1.0][01-atom-stack]`.
+- `[3.1.0][03-plugin-runtime-bind]` depends on `[3.1.0][01-atom-stack]` and can run in parallel with `[3.1.0][02-bootstrap]` once service health checks pass.
+- `[3.1.0][04-workbench-host-shell]` depends on `[3.1.0][03-plugin-runtime-bind]`.
+- `[3.1.0][05-verification-runbook]` runs after lanes `01` through `04` are merged on `phase/3.1.0`.
+
+### Merge order block
+
+- Baseline branch: `origin/main`
+- Phase branch: `phase/3.1.0`
+- Ordered merge sequence:
+  1. `[3.1.0][01-atom-stack]`
+  2. `[3.1.0][02-bootstrap]`
+  3. `[3.1.0][03-plugin-runtime-bind]`
+  4. `[3.1.0][04-workbench-host-shell]`
+  5. `[3.1.0][05-verification-runbook]`
+  6. `[3.1.0][00-conductor]` opens one final PR from `phase/3.1.0` to `origin/main`
 
 ### Fleet contract block
 

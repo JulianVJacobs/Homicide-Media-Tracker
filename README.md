@@ -24,7 +24,7 @@ When using default hooks, set `ATOM_ADMIN_PASSWORD` and `ATOM_BOOTSTRAP_PASSWORD
 
 ## Roadmap
 
-**Current version: 2.2.0 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**
+**Current version: 3.0.1 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**
 
 Checkbox legend:
 
@@ -123,6 +123,28 @@ Sequencing note: `2.2.x` should be completed before `3.0.x`/`3.1.x` under the cu
   - `[3.0.0][07-offline-sync-bridge] Add targeted workbench offline/sync bridge`
   - `[3.0.0][08-regression-migration] Run regression, migration rehearsal, and cutover checks`
 
+### Active Fleet Contract (Phase 3.1.0 host provisioning)
+
+- Planned version: `3.1.0`
+- Approval state: proposed, awaiting explicit launch approval
+- Allowed change class: major (host runtime provisioning + plugin runtime binding)
+- Phase goal: deliver a runnable AtoM host stack from this repository and bind the tracker plugin to it for local/CI execution.
+- Phase branch: `phase/3.1.0`
+- Merge policy: eager-after-green into `phase/3.1.0`, then one final PR to `origin/main`
+- Conductor lane:
+  - `[3.1.0][00-conductor] Integrate phase 3.1.0 host-provisioning fleet`
+- Worker lanes:
+  - `[3.1.0][01-atom-stack] Provision containerized AtoM host stack and shared env contract`
+  - `[3.1.0][02-bootstrap] Automate first-run bootstrap (admin/user/plugin enablement + baseline data)`
+  - `[3.1.0][03-plugin-runtime-bind] Bind tracker plugin runtime to hosted AtoM routes and auth context`
+  - `[3.1.0][04-workbench-host-shell] Deliver first integrated workbench surfaces inside AtoM host shell`
+  - `[3.1.0][05-verification-runbook] Add end-to-end verification and local/CI runbook gates`
+- Dependency edges:
+  - `[3.1.0][02-bootstrap]` depends on `[3.1.0][01-atom-stack]`
+  - `[3.1.0][03-plugin-runtime-bind]` depends on `[3.1.0][01-atom-stack]` and can progress in parallel with `[3.1.0][02-bootstrap]` once base services are reachable
+  - `[3.1.0][04-workbench-host-shell]` depends on `[3.1.0][03-plugin-runtime-bind]`
+  - `[3.1.0][05-verification-runbook]` runs after lanes `01` through `04` merge on `phase/3.1.0`
+
 Generalize the participant model into a core Event–Actor–Role ontology. Introduce annotation events with configurable profiles, role-based claims, and prepare for AtoM plugin integration.
 
 - [x] **2.0.x — Event-Actor-Role Core Schema**
@@ -155,12 +177,16 @@ Generalize the participant model into a core Event–Actor–Role ontology. Intr
 
 Promoted from former Phase 4 so the host integration is built first. Objective: the plugin should merge into AtoM UI patterns so users experience a single cohesive application.
 
-- [<] **3.0.x — AtoM Plugin Backend (Symfony)** (promoted from former `4.0.x`)
-  - [ ] Create AtoM plugin scaffold (access-homicide-tracker)
-  - [ ] Implement plugin routes for CRUD on events, actors, roles, claims, evidence, merges, graph
-  - [ ] Integrate with AtoM ACL and user management
-  - [ ] Publish annotation layer API contract
+Runtime contract note: this phase now explicitly includes delivering a runnable AtoM host environment from this repository (developer-local and CI-ready), not only plugin artifacts.
+
+- [x] **3.0.x — AtoM Plugin Backend (Symfony)** (promoted from former `4.0.x`)
+  - [x] Create AtoM plugin scaffold (access-homicide-tracker)
+  - [x] Implement plugin routes for CRUD on events, actors, roles, claims, evidence, merges, graph
+  - [x] Integrate with AtoM ACL and user management
+  - [x] Publish annotation layer API contract
 - [<] **3.1.x — Workbench UI in AtoM** (promoted from former `4.1.x`)
+  - [ ] Provision runnable AtoM host stack from this repository (containerized local runtime + bootstrap scripts + runbook)
+  - [ ] Provide environment bootstrap for first-run admin, plugin enablement, and health verification
   - [ ] Build workbench pages: Event extraction, Actors/Roles, Connection graph, Merge queue, Review log
   - [ ] Integrate with AtoM article/information-object records as source anchors
   - [ ] Support annotation tabs within article record view

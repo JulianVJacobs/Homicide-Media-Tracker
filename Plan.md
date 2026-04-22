@@ -156,7 +156,7 @@
 
 - Promoted Phase 3 plugin-first track:
   - `[<] 3.0.x` AtoM plugin backend scaffold and bridge contract
-  - `[<] 3.1.x` workbench UI integration into AtoM with single-application UX objective
+  - `[<] 3.1.x` workbench UI integration into AtoM with single-application UX objective, including in-repo AtoM host provisioning (no external instance assumed)
   - `[<] 3.2.x` targeted PWA/offline sync for workbench routes
   - `[<] 3.3.x` plugin hardening and pilot
 - Re-scoped Phase 4 feature track (after promoted Phase 3):

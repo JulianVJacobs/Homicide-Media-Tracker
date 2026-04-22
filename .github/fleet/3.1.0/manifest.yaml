@@ -1,0 +1,24 @@
+phase: 3.1.0
+plannedVersion: 3.1.0
+allowedChangeClass: major
+mergePolicy: eager-after-green
+lanes:
+  - id: 01-atom-stack
+    title: '[3.1.0][01-atom-stack] Provision containerized AtoM host stack and shared env contract'
+    branch: lane/3.1.0/01-atom-stack
+    pr:
+      status: open
+      branch: copilot/310-01-atom-stack-add-host-runtime-definition
+      title: '[3.1.0][01-atom-stack] Provision containerized AtoM host stack and shared env contract'
+    readiness:
+      stackBoot: passed
+      servicesHealthy: passed
+      readinessChecks: passed
+    verification:
+      cleanStart:
+        - npm run atom.stack.down
+        - npm run atom.stack.up
+        - npm run atom.stack.readiness
+        - npm run atom.stack.ps
+        - npm run atom.stack.down
+    blockers: []

@@ -36,6 +36,36 @@ describe('plugin-api-client', () => {
     expect(isWorkbenchPluginApiEnabled()).toBe(false);
   });
 
+  it('enables hosted AtoM route mode without explicit base URL', async () => {
+    delete process.env.WORKBENCH_PLUGIN_API_BASE_URL;
+    delete process.env.PLUGIN_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_PLUGIN_API_BASE_URL;
+    process.env.WORKBENCH_PLUGIN_RUNTIME_MODE = 'hosted-atom';
+    process.env.WORKBENCH_PLUGIN_API_ROUTE_PREFIX = '/api/workbench/';
+
+    const fetchMock = jest.fn(async () =>
+      ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            items: [],
+            total: 0,
+          },
+        }),
+      }) as Response,
+    );
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    expect(isWorkbenchPluginApiEnabled()).toBe(true);
+    await listPluginResource('actors', { limit: 1 });
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/workbench/actors?limit=1',
+      expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
   it('lists resources from plugin API', async () => {
     const fetchMock = jest.fn(async () =>
       ({

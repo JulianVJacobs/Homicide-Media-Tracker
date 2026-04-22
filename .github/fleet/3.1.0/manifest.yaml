@@ -1,0 +1,22 @@
+version: 3.1.0
+phaseBranch: phase/3.1.0
+lanes:
+  - id: 03-plugin-runtime-bind
+    titlePrefix: "[3.1.0][03-plugin-runtime-bind]"
+    branch: lane/3.1.0/03-plugin-runtime-bind
+    targetBranch: phase/3.1.0
+    readiness: ready
+    blockers: []
+    pr:
+      titlePrefix: "[3.1.0][03-plugin-runtime-bind]"
+      status: in_progress
+      metadata:
+        ownedSurface:
+          - plugin runtime adapter surfaces
+          - route binding and host-aware plugin execution path
+          - auth/context integration for hosted plugin requests
+          - host-mode plugin configuration and runtime glue
+        verification:
+          - plugin health route responds through /api/workbench
+          - core contract endpoints execute through hosted runtime path
+          - hosted auth headers bind into plugin ACL checks and user context

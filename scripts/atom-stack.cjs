@@ -8,6 +8,8 @@ const repoRoot = path.resolve(__dirname, '..');
 const stackDir = path.join(repoRoot, 'infrastructure', 'atom-stack');
 const composeFile = path.join(stackDir, 'docker-compose.yml');
 const defaultEnvFile = path.join(stackDir, '.env.example');
+const defaultHostPort = '62080';
+const defaultHealthPath = '/healthz';
 
 function getEnvFilePath() {
   const configured = process.env.ATOM_STACK_ENV_FILE;
@@ -132,8 +134,8 @@ async function verifyReadiness(composeArgs, envEntries) {
     }
   }
 
-  const hostPort = envEntries.ATOM_HOST_PORT || '62080';
-  const healthPath = envEntries.ATOM_HOST_HEALTH_PATH || '/healthz';
+  const hostPort = envEntries.ATOM_HOST_PORT || defaultHostPort;
+  const healthPath = envEntries.ATOM_HOST_HEALTH_PATH || defaultHealthPath;
   const readinessUrl = `http://127.0.0.1:${hostPort}${healthPath}`;
 
   await checkHttpReadiness(readinessUrl);
@@ -151,7 +153,8 @@ async function main() {
   }
 
   if (command === 'up') {
-    const waitTimeout = process.env.ATOM_STACK_WAIT_TIMEOUT || '240';
+    const waitTimeout =
+      process.env.ATOM_STACK_WAIT_TIMEOUT || envEntries.ATOM_STACK_WAIT_TIMEOUT || '240';
     run('docker', [
       'compose',
       ...composeArgs,
@@ -161,6 +164,7 @@ async function main() {
       '--wait-timeout',
       waitTimeout,
     ]);
+    await verifyReadiness(composeArgs, envEntries);
     return;
   }
 

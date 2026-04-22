@@ -21,7 +21,9 @@ describe('atom host stack contract', () => {
 
     expect(envContract).toContain('ATOM_HOST_PORT=62080');
     expect(envContract).toContain('ATOM_HOST_HEALTH_PATH=/healthz');
-    expect(envContract).toContain('WORKBENCH_PLUGIN_API_BASE_URL=http://localhost:62080/plugins/homicide-tracker/api');
+    expect(envContract).toContain('ATOM_STACK_WAIT_TIMEOUT=240');
+    expect(envContract).toContain('WORKBENCH_PLUGIN_API_BASE_URL=');
+    expect(envContract).toContain('/plugins/homicide-tracker/api');
   });
 
   it('defines deterministic topology and health checks', () => {
@@ -32,6 +34,7 @@ describe('atom host stack contract', () => {
     expect(compose).toContain('atom-host:');
     expect(compose).toContain('depends_on:');
     expect(compose).toContain('healthcheck:');
-    expect(compose).toContain("http://127.0.0.1:8080/healthz");
+    expect(compose).toContain('ATOM_HOST_INTERNAL_PORT');
+    expect(compose).toContain('ATOM_HOST_HEALTH_PATH');
   });
 });

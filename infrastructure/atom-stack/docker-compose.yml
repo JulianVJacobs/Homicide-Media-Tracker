@@ -7,8 +7,8 @@ services:
     environment:
       MARIADB_DATABASE: ${ATOM_DB_NAME:-atom}
       MARIADB_USER: ${ATOM_DB_USER:-atom}
-      MARIADB_PASSWORD: ${ATOM_DB_PASSWORD:-atom}
-      MARIADB_ROOT_PASSWORD: ${ATOM_DB_ROOT_PASSWORD:-atom-root}
+      MARIADB_PASSWORD: ${ATOM_DB_PASSWORD:-REPLACE_WITH_SECURE_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${ATOM_DB_ROOT_PASSWORD:-REPLACE_WITH_SECURE_ROOT_PASSWORD}
     ports:
       - '${ATOM_DB_PORT:-63306}:3306'
     volumes:
@@ -43,6 +43,9 @@ services:
   atom-host:
     image: ${ATOM_HOST_IMAGE:-nginx:1.27.0-alpine}
     restart: unless-stopped
+    environment:
+      ATOM_HOST_INTERNAL_PORT: ${ATOM_HOST_INTERNAL_PORT:-8080}
+      ATOM_HOST_HEALTH_PATH: ${ATOM_HOST_HEALTH_PATH:-/healthz}
     depends_on:
       atom-db:
         condition: service_healthy
@@ -53,7 +56,11 @@ services:
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
-      test: ['CMD', 'wget', '-q', '-O', '-', 'http://127.0.0.1:8080/healthz']
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -O - "http://127.0.0.1:$${ATOM_HOST_INTERNAL_PORT}$${ATOM_HOST_HEALTH_PATH}"',
+        ]
       interval: 5s
       timeout: 5s
       retries: 20

@@ -6,6 +6,22 @@ A data collection and analysis tool for tracking homicide cases from media sourc
 
 This single README combines development guidance from the project and an older backup README. It focuses on practical steps, architecture, and troubleshooting for contributors and maintainers.
 
+## Hosted AtoM bootstrap automation (3.1 lane)
+
+- `npm run atom.bootstrap`: idempotent first-run bootstrap (admin setup, bootstrap state/user setup, plugin enablement, baseline initialization).
+- `npm run atom.bootstrap.reset`: clear bootstrap state (and run optional `ATOM_BOOTSTRAP_RESET_HOOK`).
+- `npm run atom.bootstrap.reseed`: reset state and rerun bootstrap steps from clean state.
+- `npm run atom.bootstrap.force`: rerun all bootstrap steps regardless of saved state.
+
+Bootstrap hooks can be overridden with:
+- `ATOM_BOOTSTRAP_ADMIN_HOOK`
+- `ATOM_BOOTSTRAP_STATE_HOOK`
+- `ATOM_BOOTSTRAP_PLUGIN_HOOK`
+- `ATOM_BOOTSTRAP_BASELINE_HOOK`
+
+By default hooks run through `docker compose exec` on service `atom`; set `ATOM_BOOTSTRAP_USE_COMPOSE=false` to run hooks directly in host shell.
+When using default hooks, set `ATOM_ADMIN_PASSWORD` and `ATOM_BOOTSTRAP_PASSWORD` explicitly.
+
 ## Roadmap
 
 **Current version: 2.2.0 | Strategic direction: AtoM plugin + Event-Actor-Role annotation layer**

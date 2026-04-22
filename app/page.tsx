@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Container,
   Card,
@@ -67,6 +68,9 @@ export default function Home() {
                       onClick={() => setCurrentView('profiles')}
                     >
                       Manage Schema Profiles
+                    </Button>
+                    <Button as={Link} variant="outline-success" size="lg" href="/workbench">
+                      Open Hosted Workbench
                     </Button>
                   </div>
                 </Card.Body>
@@ -150,6 +154,7 @@ export default function Home() {
               >
                 System Information
               </Nav.Link>
+              <Nav.Link href="/workbench">Hosted Workbench</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>

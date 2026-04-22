@@ -1,3 +1,15 @@
+- Active lane update (3.1.0 / 05-verification-runbook):
+  - Completed:
+    - Added executable integrated verification gate suite at `__tests__/integrated-verification-gates.test.ts` for stack startup health, bootstrap registration, plugin route health, and host-shell IPC bridge access.
+    - Added CI wiring at `.github/workflows/integrated-verification.yml` to run the integrated gate in pull requests and manual dispatches.
+    - Published runbook at `docs/verification-runbook-3.1.0.md` with exact reset, bring-up, verification, teardown, and CI steps.
+    - Updated `.github/fleet/3.1.0/manifest.yaml` with lane readiness, blockers, PR metadata, and verification gate outcomes.
+  - Remaining:
+    - Conductor lane merge of verification lane PR into `phase/3.1.0`.
+    - Final integrated phase-branch execution record capture after conductor merge.
+  - Risks / follow-ups:
+    - Integrated gate validates contract-level startup/bridge behavior; full desktop runtime smoke still depends on conductor-level integrated phase validation.
+
 - Phase 3 lane closeout status (archived snapshot):
   - Completed: event_actor_role, claim, and claim_evidence tables added with FK wiring; default event-role vocabulary seeding added; basic event-role and role-claim CRUD endpoints implemented.
   - Remaining (historical note): `2.0.0/00-conductor` integration wiring and any stricter domain-level predicate/role policy decisions if product required them.

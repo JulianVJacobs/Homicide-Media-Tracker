@@ -22,7 +22,7 @@ Checkbox legend:
 - ✅ Phase 3 integration merge completed on `origin/main` (Lima final integration PR #13, India PR #14, with Juliet/Kilo integrated in Lima merge flow).
 - ✅ Fleet `2.1.0` completed and closed on `origin/main` (final PR `#17`, post-merge worker branch cleanup complete).
 - ✅ Fleet `2.2.0` completed and closed on `origin/main` (final PR `#22`, integrated verification passed, post-merge worker branch cleanup complete).
-- 🟠 Active fleet contract: promoted Phase 3 AtoM plugin integration launch (`3.0.0`) is approved and ready for lane kickoff.
+- ✅ Fleet `3.0.0` completed and merged on `origin/main` (conductor recovery final merge PR `#46`; lane merges and manifest cleanup complete).
 
 ### **Foundation: Participant Management (1.x.x releases)**
 
@@ -83,14 +83,17 @@ Sequencing note: `2.2.x` should be completed before `3.0.x`/`3.1.x` under the cu
 
 - Historical note: legacy phonetic lane labels were used in earlier phases and are now archived-only references.
 
-### Active Fleet Contract (promoted Phase 3 plugin integration)
+### Fleet Execution Record (promoted Phase 3 plugin integration)
 
 - Planned version: `3.0.0`
-- Approval state: approved and active (initiated 2026-04-21)
+- Approval state: approved and completed (merged 2026-04-22)
 - Allowed change class: major (host integration + runtime de-bloat and plugin-first bridge)
 - Phase goal: establish AtoM plugin/bridge foundation with Electron de-bloat while preserving workbench domain contracts
 - Phase branch: `phase/3.0.0`
 - Merge policy: eager-after-green into `phase/3.0.0`, then one final PR to `origin/main`
+- Final merge PR: `#46`
+- Final merge commit on `main`: `9579fe0`
+- Manifest lifecycle: `.github/fleet/3.0.0/manifest.yaml` deleted before final merge per fleet policy
 - Conductor lane:
   - `[3.0.0][00-conductor] Integrate phase 3.0.0 plugin-foundation fleet`
 - Worker lanes:

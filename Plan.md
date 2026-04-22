@@ -151,7 +151,7 @@
   - `[>] 4.0.x` graph explorer
   - `[>] 4.1.x` statistical reproducibility
 
-## Active fleet proposal (Promoted Phase 3 plugin integration)
+## Fleet execution record (Promoted Phase 3 plugin integration)
 
 ### Fleet contract block
 
@@ -159,7 +159,10 @@
 - Planned version: `3.0.0`
 - Version rationale: move host integration first so subsequent graph/repro features are built directly against AtoM plugin boundaries.
 - Allowed change class: major
-- Approval status: approved by contract request (`create the fleet contract`)
+- Approval status: approved and completed (merged 2026-04-22)
+- Final merge PR: `#46`
+- Final merge commit on `main`: `9579fe0`
+- Manifest lifecycle: `.github/fleet/3.0.0/manifest.yaml` deleted before final merge per fleet policy
 - Escalation rule: if scope expands into Phase 4 feature delivery (graph/repro UI), split into `3.1.0+` follow-on phase rather than broadening `3.0.0` foundation scope.
 
 ### Parallel-safe lane decomposition

@@ -211,6 +211,26 @@
   8. `[3.0.0][08-regression-migration]`
   9. `[3.0.0][00-conductor]` opens one final PR from `phase/3.0.0` to `origin/main`
 
+## Fleet manifest status (Phase 3.1.0 workbench host shell)
+
+- Lane id: `[3.1.0][04-workbench-host-shell]`
+- Branch: `lane/3.1.0/04-workbench-host-shell`
+- Target branch: `phase/3.1.0`
+- PR status: in progress on `copilot/310-04-workbench-host-shell`
+- PR metadata:
+  - Required title prefix: `[3.1.0][04-workbench-host-shell]`
+  - Merge policy: eager-after-green
+- Owned surface:
+  - Host-shell integration entry points
+  - Initial embedded workbench pages/views mounted within AtoM host shell
+  - Navigation integration surfaces for the first integrated vertical slice
+  - Minimal host-facing UI glue for access to the bound plugin runtime
+- Readiness: ready for targeted validation and hosted-shell walkthrough evidence
+- Blockers:
+  - `phase/3.1.0` branch ref is not present in this clone's remote refs (implementation proceeds on lane branch)
+- Verification summary:
+  - Users can navigate to `/workbench`, `/workbench/events/new`, and `/workbench/events` from the app shell and exercise the integrated hosted slice.
+
 ## Fleet execution record (Phase 2 closeout completed)
 
 ### Fleet contract block

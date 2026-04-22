@@ -30,6 +30,10 @@
   ],
   "main": "./dist/main/main.js",
   "scripts": {
+    "atom.stack.down": "node scripts/atom-stack.cjs down",
+    "atom.stack.ps": "node scripts/atom-stack.cjs ps",
+    "atom.stack.readiness": "node scripts/atom-stack.cjs readiness",
+    "atom.stack.up": "node scripts/atom-stack.cjs up",
     "all.package": "npm run build.electron && npm run package",
     "app.prepare": "node scripts/prepare-app.js",
     "build": "next build && node scripts/generate-public-cache.js",

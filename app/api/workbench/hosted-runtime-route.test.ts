@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/globals';
 import { GET, POST } from './[[...pluginPath]]/route';
-import { resetHostedPluginRuntimeForTests } from '../../../plugin/runtime/hosted-atom-runtime';
+import { __resetHostedPluginRuntimeForTesting } from '../../../plugin/runtime/hosted-atom-runtime';
 
 const createRequest = (
   url: string,
@@ -28,6 +28,9 @@ describe('hosted plugin runtime route binding', () => {
   const originalResponse = global.Response;
 
   beforeAll(() => {
+    // Minimal Response.json test double for this route only. It intentionally
+    // omits most Response fields/methods, so it should not be reused where a
+    // complete fetch Response shape is required.
     global.Response = class {
       static json(body: unknown, init?: ResponseInit) {
         return {
@@ -39,7 +42,7 @@ describe('hosted plugin runtime route binding', () => {
   });
 
   afterEach(() => {
-    resetHostedPluginRuntimeForTests();
+    __resetHostedPluginRuntimeForTesting();
   });
 
   afterAll(() => {

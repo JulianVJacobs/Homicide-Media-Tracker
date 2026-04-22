@@ -132,7 +132,7 @@ const createHostedDomainServices = (): PluginDomainServices => {
   };
 };
 
-const splitHeaderList = (value: string | null): string[] =>
+const splitCommaSeparatedHeader = (value: string | null): string[] =>
   (value ?? '')
     .split(',')
     .map((entry) => entry.trim())
@@ -170,6 +170,9 @@ const toCredentialPayload = (
 };
 
 export const bindHostedAuthContext = (request: Request): PluginAuthContext => {
+  // Preferred hosted AtoM headers are x-atom-* variants. Generic fallbacks are
+  // accepted temporarily so existing host wrappers can migrate without breaking
+  // runtime binding during rollout.
   const userIdHeader =
     request.headers.get('x-atom-user-id') || request.headers.get('x-user-id');
   const rolesHeader =
@@ -181,8 +184,8 @@ export const bindHostedAuthContext = (request: Request): PluginAuthContext => {
 
   return {
     userId: userIdHeader?.trim() || undefined,
-    roles: splitHeaderList(rolesHeader),
-    permissions: splitHeaderList(permissionsHeader),
+    roles: splitCommaSeparatedHeader(rolesHeader),
+    permissions: splitCommaSeparatedHeader(permissionsHeader),
     credential: toCredentialPayload(
       request.headers.get('x-atom-credential'),
       request.headers.get('authorization'),
@@ -199,6 +202,6 @@ export const getHostedPluginRuntime = (): PluginScaffold => {
   return hostedRuntime;
 };
 
-export const resetHostedPluginRuntimeForTests = (): void => {
+export const __resetHostedPluginRuntimeForTesting = (): void => {
   hostedRuntime = null;
 };

@@ -12,6 +12,9 @@ export type WorkbenchPluginResource =
   | 'perpetrators'
   | 'participants';
 
+const normalizeBaseUrl = (value: string): string => value.replace(/\/+$/, '');
+const isAbsoluteUrl = (value: string): boolean => /^https?:\/\//i.test(value);
+
 const toConfiguredBaseUrl = (): string | null => {
   const raw =
     process.env.WORKBENCH_PLUGIN_API_BASE_URL ||
@@ -20,9 +23,11 @@ const toConfiguredBaseUrl = (): string | null => {
     '';
   const base = raw.trim();
   if (base) {
-    return base.replace(/\/+$/, '');
+    return normalizeBaseUrl(base);
   }
 
+  // Preserve 3.0.x precedence for explicit base URL env vars; only fall back to
+  // hosted route-prefix mode when no base URL is configured.
   const runtimeConfig = resolveWorkbenchPluginRuntimeConfig();
   return runtimeConfig.mode === 'hosted-atom'
     ? runtimeConfig.routePrefix
@@ -47,8 +52,11 @@ const buildResourceUrl = (
     queryParams.set(key, String(value));
   }
 
-  const resourcePath = `${baseUrl.replace(/\/+$/, '')}/${resource}`;
-  if (!/^https?:\/\//i.test(baseUrl)) {
+  const resourcePath = `${normalizeBaseUrl(baseUrl)}/${resource}`;
+  // Relative hosted route prefixes (e.g. /api/workbench) cannot be parsed by
+  // URL without a base origin, so they use path concatenation while absolute
+  // base URLs use URL for robust query serialization.
+  if (!isAbsoluteUrl(baseUrl)) {
     const queryString = queryParams.toString();
     return queryString ? `${resourcePath}?${queryString}` : resourcePath;
   }

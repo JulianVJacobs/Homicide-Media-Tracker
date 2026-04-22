@@ -71,6 +71,12 @@ const dispatchHostedRuntime = async (
     }
 
     console.error('Hosted plugin runtime request failed:', error);
+    const auth = bindHostedAuthContext(request);
+    console.error('Hosted plugin runtime request context:', {
+      method,
+      pluginPath: toPluginPath(context.params.pluginPath),
+      userId: auth.userId ?? null,
+    });
     return Response.json(
       {
         success: false,

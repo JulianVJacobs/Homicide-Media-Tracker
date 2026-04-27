@@ -14,6 +14,7 @@ This single README combines development guidance from the project and an older b
 - `npm run atom.bootstrap.force`: rerun all bootstrap steps regardless of saved state.
 
 Bootstrap hooks can be overridden with:
+
 - `ATOM_BOOTSTRAP_ADMIN_HOOK`
 - `ATOM_BOOTSTRAP_STATE_HOOK`
 - `ATOM_BOOTSTRAP_PLUGIN_HOOK`
@@ -21,6 +22,75 @@ Bootstrap hooks can be overridden with:
 
 By default hooks run through `docker compose exec` on service `atom`; set `ATOM_BOOTSTRAP_USE_COMPOSE=false` to run hooks directly in host shell.
 When using default hooks, set `ATOM_ADMIN_PASSWORD` and `ATOM_BOOTSTRAP_PASSWORD` explicitly.
+
+## Devcontainer with Compose (AtoM + workspace)
+
+The devcontainer now runs through Docker Compose so the workspace and hosted AtoM stack can start together.
+
+1. Open this repository in VS Code and run Reopen in Container.
+1. Devcontainer services started: `workspace`, `atom-host`, `atom-db`, `atom-cache`.
+1. Forwarded ports include:
+
+- `62080` (AtoM host)
+- `63306` (MariaDB)
+- `63790` (Redis)
+
+1. Run stack checks from inside the container:
+
+- `npm run atom.stack.ps`
+- `npm run atom.stack.readiness`
+
+1. Bootstrap commands run against service `atom-host` by default in this devcontainer profile (`ATOM_STACK_SERVICE=atom-host`).
+
+Compose files used by the devcontainer:
+
+- `.devcontainer/docker-compose.yml`
+- `infrastructure/atom-stack/docker-compose.yml`
+
+## Repository topology (recommended)
+
+Treat this repository as a superproject with two nested projects tracked as Git submodules:
+
+- `app.news-media-tracker` -> tracker application project
+- `srvc.atom` -> AtoM service project (host stack + plugin runtime)
+
+This keeps service and app release cadence independent while preserving a single integration workspace.
+
+Canonical ownership in the current split:
+
+- Superproject: devcontainer, integration workflows, cross-repo planning, and shared orchestration
+- `app.news-media-tracker`: tracker UI, Electron host, application build/test tooling
+- `srvc.atom`: plugin integration, AtoM stack, bootstrap/runtime service scripts
+
+### Clone and sync with submodules
+
+- Fresh clone:
+  - `git clone --recurse-submodules <tracker-repo-url>`
+- Existing clone:
+  - `git submodule update --init --recursive`
+- Pull latest for tracker + submodules:
+  - `git pull --recurse-submodules`
+  - `git submodule update --recursive --remote`
+
+### Submodule paths in this superproject
+
+The superproject currently tracks:
+
+- `app.news-media-tracker` -> `https://github.com/JulianVJacobs/app.news-media-tracker.git`
+- `srvc.atom` -> `https://github.com/JulianVJacobs/srvc.atom.git`
+
+To pull the latest submodule commits explicitly:
+
+1. `git submodule update --remote --recursive`
+1. `git add .gitmodules app.news-media-tracker srvc.atom`
+1. `git commit -m "chore(submodules): bump app/service pointers"`
+
+Useful orchestration commands from the superproject root:
+
+1. `npm run workspace.app.install`
+1. `npm run workspace.app.dev`
+1. `npm run workspace.service.stack.up`
+1. `npm run workspace.service.bootstrap`
 
 ## Roadmap
 

@@ -1,14 +1,18 @@
 {
   "name": "Homicide Media Tracker",
-  "appPort": [
-    3000
+  "dockerComposeFile": [
+    "../infrastructure/atom-stack/docker-compose.yml",
+    "docker-compose.yml"
   ],
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": "."
-  },
+  "service": "workspace",
+  "runServices": [
+    "atom-db",
+    "atom-cache",
+    "atom-host",
+    "workspace"
+  ],
   "workspaceFolder": "/workspace",
-  "shutdownAction": "none",
+  "shutdownAction": "stopCompose",
   "containerEnv": {
     "POSTGRES_URL_NO_SSL": "${localEnv:POSTGRES_URL_NO_SSL}",
     "POSTGRES_USER": "${localEnv:POSTGRES_USER}",
@@ -19,21 +23,15 @@
     "ENV": "dev",
     "WINEARCH": "win64",
     "WINEPREFIX": "/home/vscode/.wine",
-    "DISPLAY": "${localEnv:DISPLAY}"
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "WORKBENCH_PLUGIN_API_BASE_URL": "http://atom-host:8080/plugins/homicide-tracker/api"
   },
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached" // ,
-    // "${localEnv:APPDATA}/Code/User/workspaceStorage/de86b799e0ce0bc1bdc766ecb43c6b83/chatSessions:/workspace/.copilot-chats:cached"
-  ],
-  "runArgs": [
-    "--volume",
-    "/etc/localtime:/etc/localtime:ro",
-    "--volume",
-    "/etc/timezone:/etc/timezone:ro"
-  ],
   "forwardPorts": [
     3000,
-    3001
+    3001,
+    62080,
+    63306,
+    63790
   ],
   "portsAttributes": {
     "3000": {
@@ -41,6 +39,15 @@
     },
     "3001": {
       "label": "Electron Dev"
+    },
+    "62080": {
+      "label": "AtoM Host"
+    },
+    "63306": {
+      "label": "AtoM Database (MariaDB)"
+    },
+    "63790": {
+      "label": "AtoM Cache (Redis)"
     }
   },
   "postCreateCommand": "npm install --legacy-peer-deps",

@@ -1,5 +1,21 @@
+- Active update (2026-04-27): Submodule topology preparation + devcontainer path fix
+  - Completed:
+    - Fixed devcontainer compose host-path resolution in `.devcontainer/docker-compose.yml` by anchoring workspace build context and bind mount to `${LOCAL_WORKSPACE_FOLDER}`. This prevents Docker from resolving `.devcontainer/Dockerfile` from `infrastructure/` when compose files are merged.
+    - Added app/service split as superproject submodules and created `.gitmodules` entries for `app.news-media-tracker` and `srvc.atom`.
+    - Added repository topology guidance in `README.md` for the app/service submodule model and pointer update workflow.
+    - Transferred service-owned assets into `srvc.atom` (plugin, AtoM stack, bootstrap/runtime scripts, verification runbook).
+    - Transferred app-owned assets into `app.news-media-tracker` (tracker source, build configuration, packaging/test scripts).
+    - Added root orchestration scripts so the superproject can drive both submodules during integration work.
+  - Remaining:
+    - Remove or archive duplicate root-owned copies after the submodule repos become the canonical working locations.
+    - Update CI checkout steps to use recursive submodule checkout in all workflows that build/test against plugin or stack content.
+  - Risks / follow-ups:
+    - Until recursive submodule checkout is enforced in CI and local clone docs, builds may fail with missing directories.
+    - Submodule pointer updates require explicit commits in the superproject; release process should define who owns version bump cadence for app vs service.
+
 - Active lane update (3.1.0 / 05-verification-runbook):
   - Completed:
+    - Added compose-based devcontainer profile joining workspace service with the hosted AtoM stack to support integrated local bring-up in a single container workflow.
     - Added executable integrated verification gate suite at `__tests__/integrated-verification-gates.test.ts` for stack startup health, bootstrap registration, plugin route health, and host-shell IPC bridge access.
     - Added CI wiring at `.github/workflows/integrated-verification.yml` to run the integrated gate in pull requests and manual dispatches.
     - Published runbook at `docs/verification-runbook-3.1.0.md` with exact reset, bring-up, verification, teardown, and CI steps.

@@ -2,9 +2,9 @@
 
 ## Purpose
 
-A data collection and analysis tool for tracking homicide cases from media sources. This project supports both a web-style Next.js development experience and a native desktop distribution via Electron.
+This repository is now the superproject that orchestrates the News Media Tracker app and the AtoM service integration together. Runtime application code lives in the `app.news-media-tracker` submodule and AtoM/plugin runtime code lives in the `srvc.atom` submodule.
 
-This single README combines development guidance from the project and an older backup README. It focuses on practical steps, architecture, and troubleshooting for contributors and maintainers.
+This README focuses on superproject operations, integration workflow, and repository topology. Historical references later in the file to former root-owned paths are archival context; the canonical code now lives in the two submodules.
 
 ## Hosted AtoM bootstrap automation (3.1 lane)
 
@@ -23,29 +23,31 @@ Bootstrap hooks can be overridden with:
 By default hooks run through `docker compose exec` on service `atom`; set `ATOM_BOOTSTRAP_USE_COMPOSE=false` to run hooks directly in host shell.
 When using default hooks, set `ATOM_ADMIN_PASSWORD` and `ATOM_BOOTSTRAP_PASSWORD` explicitly.
 
-## Devcontainer with Compose (AtoM + workspace)
+## Devcontainer with Compose (superproject + app + service)
 
-The devcontainer now runs through Docker Compose so the workspace and hosted AtoM stack can start together.
+All devcontainers now share a single root compose file so the superproject, app workspace, service workspace, and hosted AtoM stack can start together.
 
-1. Open this repository in VS Code and run Reopen in Container.
-1. Devcontainer services started: `workspace`, `atom-host`, `atom-db`, `atom-cache`.
+1. Open this repository in VS Code and run Reopen in Container for the superproject environment.
+1. Open `app.news-media-tracker` or `srvc.atom` directly and run Reopen in Container there to attach to the app-specific or service-specific workspace.
+1. Compose services started: `workspace-superproject`, `workspace-app`, `workspace-service`, `atom-host`, `atom-db`, `atom-cache`.
 1. Forwarded ports include:
 
+- `3000` (Next.js Dev Server)
+- `3001` (Electron Dev)
 - `62080` (AtoM host)
 - `63306` (MariaDB)
 - `63790` (Redis)
 
-1. Run stack checks from inside the container:
+1. Run stack checks from inside any attached container:
 
 - `npm run atom.stack.ps`
 - `npm run atom.stack.readiness`
 
-1. Bootstrap commands run against service `atom-host` by default in this devcontainer profile (`ATOM_STACK_SERVICE=atom-host`).
+1. Bootstrap commands run against service `atom-host` by default in this compose profile (`ATOM_STACK_SERVICE=atom-host`).
 
-Compose files used by the devcontainer:
+Compose file used by all three devcontainers:
 
-- `.devcontainer/docker-compose.yml`
-- `infrastructure/atom-stack/docker-compose.yml`
+- `docker-compose.yml`
 
 ## Repository topology (recommended)
 

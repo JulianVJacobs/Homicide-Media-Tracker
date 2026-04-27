@@ -1,14 +1,15 @@
 - Active update (2026-04-27): Submodule topology preparation + devcontainer path fix
   - Completed:
-    - Fixed devcontainer compose host-path resolution in `.devcontainer/docker-compose.yml` by anchoring workspace build context and bind mount to `${LOCAL_WORKSPACE_FOLDER}`. This prevents Docker from resolving `.devcontainer/Dockerfile` from `infrastructure/` when compose files are merged.
+    - Replaced the earlier multi-file devcontainer compose wiring with a single root `docker-compose.yml` that defines the superproject workspace, app workspace, service workspace, and hosted AtoM stack dependencies.
     - Added app/service split as superproject submodules and created `.gitmodules` entries for `app.news-media-tracker` and `srvc.atom`.
-    - Added repository topology guidance in `README.md` for the app/service submodule model and pointer update workflow.
+    - Added submodule-scoped devcontainers for `app.news-media-tracker` and `srvc.atom`, plus a root superproject devcontainer that all point to the same compose file.
     - Transferred service-owned assets into `srvc.atom` (plugin, AtoM stack, bootstrap/runtime scripts, verification runbook).
     - Transferred app-owned assets into `app.news-media-tracker` (tracker source, build configuration, packaging/test scripts).
-    - Added root orchestration scripts so the superproject can drive both submodules during integration work.
+    - Removed duplicate root-owned app/service implementation trees so the root repository is orchestration-only.
+    - Updated root orchestration scripts, CI install flow, and repository guidance to execute against the submodules.
   - Remaining:
-    - Remove or archive duplicate root-owned copies after the submodule repos become the canonical working locations.
-    - Update CI checkout steps to use recursive submodule checkout in all workflows that build/test against plugin or stack content.
+    - Update any remaining archival docs or agent prompts that still discuss former root-owned implementation paths in present tense.
+    - Decide whether generated or domain-reference assets in `data/` and `docs/` should stay at the superproject or move into one of the submodules.
   - Risks / follow-ups:
     - Until recursive submodule checkout is enforced in CI and local clone docs, builds may fail with missing directories.
     - Submodule pointer updates require explicit commits in the superproject; release process should define who owns version bump cadence for app vs service.

@@ -1,15 +1,16 @@
 {
-  "name": "Homicide Media Tracker",
+  "name": "Homicide Media Tracker Superproject",
   "dockerComposeFile": [
-    "../infrastructure/atom-stack/docker-compose.yml",
-    "docker-compose.yml"
+    "../docker-compose.yml"
   ],
-  "service": "workspace",
+  "service": "workspace-superproject",
   "runServices": [
     "atom-db",
     "atom-cache",
     "atom-host",
-    "workspace"
+    "workspace-app",
+    "workspace-service",
+    "workspace-superproject"
   ],
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
@@ -50,7 +51,7 @@
       "label": "AtoM Cache (Redis)"
     }
   },
-  "postCreateCommand": "npm install --legacy-peer-deps",
+  "postCreateCommand": "npm run workspace.app.install",
   "remoteUser": "vscode",
   "customizations": {
     "vscode": {

@@ -21,9 +21,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: app.news-media-tracker/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install app dependencies
+        run: npm --prefix app.news-media-tracker ci --legacy-peer-deps
 
       - name: Run integrated verification gate
         run: npm run verify.integrated

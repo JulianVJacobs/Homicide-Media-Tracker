@@ -4,20 +4,19 @@ This file gives focused, actionable guidance for AI coding agents working in thi
 
 1. Big-picture architecture
 
-- **Frontend:** Next.js app lives in `app/` (Next 14 app-router). Pages and API routes use the `app` directory (see `app/api/*/route.ts`).
-- **Electron host:** Desktop shell in `src/main/*` (Electron main process). `src/main/main.ts` starts the Next.js server in production or connects to the dev server in development.
-- **Preload & Main build:** Preload and main processes are bundled via `webpack.preload.config.js` and `webpack.main.config.js` and built with `npm run build:main` and `npm run build:preload`.
-- **Database:** Local LibSQL (SQLite-like) + Drizzle ORM in `lib/database/*`. The singleton `databaseManager` is used by the main process and exposed to renderer via IPC handlers in `src/main/main.ts`.
-- **Packaging:** `electron-builder` configuration is in `package.json` (`build` section) and assets live in `assets/`. Packaged app includes a standalone Next.js server (`.next/standalone/server.js`) and uses `release/app` as the packaged app content.
+- **Superproject:** This repository now orchestrates two submodules and shared integration tooling. Root-owned surfaces should stay limited to `.devcontainer/`, `docker-compose.yml`, `.github/`, top-level docs, and orchestration scripts in `package.json`.
+- **App submodule:** Tracker application code lives in `app.news-media-tracker/` (Next.js app-router + Electron host + local database/runtime code).
+- **Service submodule:** AtoM/plugin/runtime code lives in `srvc.atom/` (plugin routes, bootstrap scripts, hosted AtoM stack definition).
+- **Integration boundary:** Root workflows and devcontainers may coordinate both submodules together, but implementation code should be changed in the owning submodule rather than recreated at the root.
 
 2. Key developer workflows & commands
 
-- **Run web dev server:** `npm run dev` (starts Next.js on `http://localhost:3000`).
-- **Run Electron in dev:** Start Next and Electron together: `npm run start` (uses `concurrently`). Alternatively run `npm run dev` then `npm run dev:electron`.
-- **Build app:** `npm run build` builds Next.js. To build Electron main/preload and prepare app assets run `npm run build:electron`.
-- **Package installers:** `npm run package` or `npm run package:all` after `build:electron`.
-- **Native deps:** `npm run prepare:electron` runs `electron-builder install-app-deps` and `ts-node scripts/check-native-dep.js`.
-- **Tests & linting:** `npm run test` (jest), `npm run lint` and `npm run lint:fix`.
+- **Sync submodules:** `npm run submodules.sync`
+- **Run app dev server from root:** `npm run workspace.app.dev`
+- **Run app Electron flow from submodule:** use commands inside `app.news-media-tracker/`
+- **Bring up shared AtoM stack:** `npm run workspace.service.stack.up`
+- **Bootstrap service integration:** `npm run workspace.service.bootstrap`
+- **Run integration checks from root:** `npm run verify.integrated`
 
 3. Important runtime behaviours to know
 
